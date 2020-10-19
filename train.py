@@ -1,8 +1,11 @@
-from resuneta.models.resunet_d6_causal_mtskcolor_ddist import *
+from resuneta.models.resunet_d6_causal_mtskcolor_ddist import ResUNet_d6
+from src.NormalizeDataset import Normalize
 import mxnet as mx
-# from mxnet import nd, gpu, gluon, autograd
+from mxnet import gluon #  , autograd
 from mxnet.gluon.data.vision import datasets, transforms
 import argparse
+import logging
+import os
 
 def str2bool(v):
     if isinstance(v, bool):
@@ -19,29 +22,33 @@ def compute_mcc(tp, tn, fp, fn):
     mcc = (tp*tn - fp*fn) / tf.math.sqrt((tp + fp)*(tp + fn)*(tn + fp)*(tn+fn))
     return mcc
 
+def train_model(net, dataloader):
 
-    # End functions definition -----------------------------------------------------
+
+# End functions definition -----------------------------------------------------
 
 
 if __name__ == '__main__':
-    # parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser()
     # parser.add_argument("--resunet_a", help="choose resunet-a model or not",
     #                     type=str2bool, default=False)
     # parser.add_argument("--multitasking", help="choose resunet-a multitasking \
     #                     or not", type=str2bool, default=False)
+    parser.add_argument("--debug", help="choose if you want to shoe debug logs",
+                        action='store_true', default=False)
     # parser.add_argument("--gpu_parallel",
     #                     help="choose 1 to train one multiple gpu",
     #                     type=str2bool, default=False)
-    # parser.add_argument("-rp", "--results_path", help="Path where to save logs and model checkpoint. \
-    #                     Logs and checkpoint will be saved inside this folder.",
-    #                     type=str, default='./results/results_run1')
-    # parser.add_argument("-cp", "--checkpoint_path", help="Path where to load \
-    #                     model checkpoint to continue training",
-    #                     type=str, default=None)
+    parser.add_argument("-rp", "--results_path", help="Path where to save logs and model checkpoint. \
+                        Logs and checkpoint will be saved inside this folder.",
+                        type=str, default='./results/results_run1')
+    parser.add_argument("-cp", "--checkpoint_path", help="Path where to load \
+                        model checkpoint to continue training",
+                        type=str, default=None)
     # parser.add_argument("-dp", "--dataset_path", help="Path where to load dataset",
     #                     type=str, default='./DATASETS/patch_size=256_stride=32')
-    # parser.add_argument("-bs", "--batch_size", help="Batch size on training",
-    #                     type=int, default=4)
+    parser.add_argument("-bs", "--batch_size", help="Batch size on training",
+                        type=int, default=4)
     # parser.add_argument("-lr", "--learning_rate",
     #                     help="Learning rate on training",
     #                     type=float, default=1e-3)
@@ -52,8 +59,8 @@ if __name__ == '__main__':
     # parser.add_argument("-optm", "--optimizer",
     #                     help="Choose which optmizer to use",
     #                     type=str, choices=['adam', 'sgd'], default='adam')
-    # parser.add_argument("--num_classes", help="Number of classes",
-    #                     type=int, default=5)
+    parser.add_argument("--num_classes", help="Number of classes",
+                         type=int, default=5)
     # parser.add_argument("--epochs", help="Number of epochs",
     #                     type=int, default=500)
     # parser.add_argument("-ps", "--patch_size", help="Size of patches extracted",
@@ -64,11 +71,44 @@ if __name__ == '__main__':
     #                     type=float, default=1.0)
     # parser.add_argument("--color_weight", help="HSV transform loss weight",
     #                     type=float, default=1.0)
-    # args = parser.parse_args()
+    args = parser.parse_args()
+
+    if args.debug:
+        file_path = os.path.join(args.results_path, 'train_debug.log')
+        logging.basicConfig(filename=file_path, level=logging.DEBUG)
+    else:
+        file_path = os.path.join(args.results_path, 'train_info.log')
+        logging.basicConfig(filename=file_path, level=logging.INFO)
+    logger = logging.getLogger('MAIN')
 
     n_gpus = mx.context.num_gpus()
     devices = []
     for i in range(n_gpus):
         devices.append(mx.gpu(i))
 
-    print(devices)
+    logger.info(f'Devices found: {devices}')
+
+    Nfilters_init = 32
+    net = ResUNet_d6(Nfilters_init, args.num_classes)
+
+    net.hybridize()
+    if args.checkpoint_path is None:
+        # net.collect_params().initialize(force_reinit=True, ctx=devices)
+        net.initialize(init=mx.init.Xavier(), ctx=devices)
+    else:
+        net.load_parameters(args.checkpoint_path, ctx=devices)
+
+    transformer = transforms.Compose([
+        transforms.ToTensor())
+
+    tnorm = Normalize()
+
+    train_dataset = ISPRSDataset(root=args.dataset_path,
+                           mode='train', color=True, mtsk=True, norm=tnorm)
+    val_dataset = ISPRSDataset(root=args.dataset_path,
+                          mode='val', color=True, mtsk=True, norm=tnorm)
+
+    dataloader['train'] = gluon.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
+    dataloader['val'] = gluon.data.DataLoader(val_dataset, batch_size=args.batch_size, shuffle=True)
+
+    train_model(net, dataloader)

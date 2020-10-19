@@ -1,6 +1,6 @@
 """
-DataSet reader for the ISPRS data competition. It assumes the structure under the root directory 
-where the data are saved 
+DataSet reader for the ISPRS data competition. It assumes the structure under the root directory
+where the data are saved
 /root/
     /training/
             /imgs/
@@ -18,82 +18,107 @@ from mxnet.gluon.data import dataset
 import cv2
 
 class ISPRSDataset(dataset.Dataset):
-    def __init__(self, root, mode='train', mtsk = True, color=True, transform=None, norm=None):
-        
+    def __init__(self, root, mode='train', mtsk=True, color=True, transform=None, norm=None):
+
         self._mode = mode
         self.mtsk = mtsk
         self.color = color
-        if (color):
-            self.colornorm = np.array([1./179, 1./255, 1./255])
+        # if color:
+        #     self.colornorm = np.array([1./179, 1./255, 1./255])
 
         self._transform = transform
         self._norm = norm # Normalization of img
-        
-        if (root[-1]=='/'):
-            self._root_train = root+'training/'
-            self._root_valid = root + 'validation/' 
-        else :
-            self._root_train = root+'/training/'
-            self._root_valid = root + '/validation/' 
 
+        if (root[-1] == '/'):
+            self._root_train = root + 'training/'
+            self._root_val = root + 'validation/'
+        else:
+            self._root_train = root + '/training/'
+            self._root_val = root + '/validation/'
 
-        if mode is 'train':
-            self._root_img  = self._root_train + r'imgs/'
-            self._root_mask = self._root_train + r'masks/'
-        elif mode is 'val':
-            self._root_img  = self._root_valid + r'imgs/'
-            self._root_mask = self._root_valid + r'masks/'
+        if mode == 'train':
+            self._root_img = os.path.join(self._root_train, 'imgs')
+            self._root_mask_seg = os.path.join(self._root_train, 'masks', 'seg')
+            self._root_mask_bound = os.path.join(self._root_train, 'masks', 'bound')
+            self._root_mask_dist = os.path.join(self._root_train, 'masks', 'dist')
+            self._root_mask_color = os.path.join(self._root_train, 'masks', 'color')
+        elif mode == 'val':
+            self._root_img = os.path.join(self._root_val, 'imgs')
+            self._root_mask_seg = os.path.join(self._root_val, 'masks', 'seg')
+            self._root_mask_bound = os.path.join(self._root_val, 'masks', 'bound')
+            self._root_mask_dist = os.path.join(self._root_val, 'masks', 'dist')
+            self._root_mask_color = os.path.join(self._root_val, 'masks', 'color')
         else:
             raise Exception ('I was given inconcistent mode, available choices: {train, val}, aborting ...')
 
-
-                
         self._img_list = sorted(os.listdir(self._root_img))
-        self._mask_list = sorted(os.listdir(self._root_mask))
-        
-        assert len(self._img_list) == len(self._mask_list), "Masks and labels do not have same numbers, error"
-        
-        self.img_names = list(zip(self._img_list, self._mask_list))
-    
+        self._mask_list_seg = sorted(os.listdir(self._root_mask_seg))
+        self._mask_list_bound = sorted(os.listdir(self._root_mask_bound))
+        self._mask_list_dist = sorted(os.listdir(self._root_mask_dist))
+        self._mask_list_color = sorted(os.listdir(self._root_mask_color))
+
+        assert len(self._img_list) == len(self._mask_list_seg), "Seg masks and labels do not have same numbers, error"
+        assert len(self._img_list) == len(self._mask_list_bound), "Bound masks and labels do not have same numbers, error"
+        assert len(self._img_list) == len(self._mask_list_dist), "Dist masks and labels do not have same numbers, error"
+        assert len(self._img_list) == len(self._mask_list_color), "Color masks and labels do not have same numbers, error"
+
+        self.img_names = list(zip(self._img_list, self._mask_list_seg,
+                                  self._mask_list_bound, self._mask_list_dist,
+                                  self._mask_list_color))
+
 
     def __getitem__(self, idx):
-                
+
         base_filepath = os.path.join(self._root_img, self.img_names[idx][0])
-        mask_filepath = os.path.join(self._root_mask, self.img_names[idx][1])
-        
+        mask_seg_filepath = os.path.join(self._root_mask_seg, self.img_names[idx][1])
+        mask_bound_filepath = os.path.join(self._root_mask_bound, self.img_names[idx][2])
+        mask_dist_filepath = os.path.join(self._root_mask_dist, self.img_names[idx][3])
+        mask_color_filepath = os.path.join(self._root_mask_color, self.img_names[idx][4])
+
         # load in float32
-        base = np.load(base_filepath) 
-        if self.color:
-            timg = base.transpose([1,2,0])[:,:,:3].astype(np.uint8)
-            base_hsv = cv2.cvtColor(timg,cv2.COLOR_RGB2HSV)
-            base_hsv = base_hsv *self.colornorm  
-            base_hsv = base_hsv.transpose([2,0,1]).astype(np.float32)
+        base = np.load(base_filepath)
+        # if self.color:
+        #     timg = base.transpose([1, 2, 0])[:, :, :3].astype(np.uint8)
+        #     base_hsv = cv2.cvtColor(timg,cv2.COLOR_RGB2HSV)
+        #     base_hsv = base_hsv *self.colornorm
+        #     base_hsv = base_hsv.transpose([2,0,1]).astype(np.float32)
 
-        
-        base = base.astype(np.float32) 
+        base = base.astype(np.float32)
 
-        mask = np.load(mask_filepath) 
-        mask = mask.astype(np.float32)
-        
+        # Maybe the masks shouldn't be float 32
+        mask_seg = np.load(mask_seg_filepath).astype(np.float32)
+        if self.mtsk:
+            mask_bound = np.load(mask_bound_filepath).astype(np.float32)
+            mask_dist = np.load(mask_dist_filepath).astype(np.float32)
+            mask_color = np.load(mask_color_filepath).astype(np.float32)
+            masks = np.concatenate([mask_seg, mask_bound, mask_dist, mask_color], axis=0)
 
-        if self.color:
-            mask = np.concatenate([mask,base_hsv],axis=0)
-        
-        if self.mtsk == False:
-            mask = mask[:6,:,:] 
+        # mask_seg = mask_seg.astype(np.float32)
+        # mask_bound = mask_bound.astype(np.float32)
+        # mask_dist = mask_dist.astype(np.float32)
+        # mask_color = mask_color.astype(np.float32)
+
+
+        # if self.color:
+        #     mask = np.concatenate([mask,base_hsv],axis=0)
+
+        # Maybe there is an error here
+        # if self.mtsk == False:
+        #     mask = mask[:6,:,:]
 
         if self._transform is not None:
-            base, mask = self._transform(base, mask)
+            base, masks = self._transform(base, masks)
             if self._norm is not None:
                 base = self._norm(base.astype(np.float32))
-
-            return base.astype(np.float32), mask.astype(np.float32)
-            
         else:
             if self._norm is not None:
                 base = self._norm(base.astype(np.float32))
 
-            return base.astype(np.float32), mask.astype(np.float32)
+        if self.mtsk:
+            return {'img': base.astype(np.float32), 'seg': masks[0].astype(np.float32), 'bound': masks[1].astype(np.float32)
+                    'dist': masks[2].astype(np.float32), 'color': masks[3].astype(np.float32)}
+        else:
+            return base.astype(np.float32), mask_seg.astype(np.float32)
 
     def __len__(self):
         return len(self.img_names)
