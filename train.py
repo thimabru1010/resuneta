@@ -65,11 +65,10 @@ def train_model(net, dataloader, batch_size, devices, losses, epochs):
                     bound_losses.append(tanimoto(bound_logits, y_bound))
                     dist_losses.append(tanimoto(dist_logits, y_dist))
                     color_losses.append(tanimoto(color_logits, y_color))
-            for l_seg, l_bound, l_dist, l_color in zip(seg_losses, bound_losses, dist_losses, color_losses):
-                l_seg.backward()
-                l_bound.backward()
-                l_dist.backward()
-                l_color.backward()
+            for l_tasks in zip(seg_losses, bound_losses, dist_losses, color_losses):
+                # This assumes all the tasks have weight 1.0. Maybe this should be changed
+                loss = l_tasks[0] + l_tasks[1] + l_tasks[2] + l_tasks[3]
+                loss.backward()
             trainer.step(batch_size)
             # Diff 5: sum losses over all devices
             seg_loss = []
