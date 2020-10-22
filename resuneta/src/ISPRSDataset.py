@@ -91,6 +91,7 @@ class ISPRSDataset(dataset.Dataset):
             mask_bound = np.load(mask_bound_filepath).astype(np.float32)
             mask_dist = np.load(mask_dist_filepath).astype(np.float32)
             mask_color = np.load(mask_color_filepath).astype(np.float32)
+            # Maybe mask_color will fucked up
             masks = np.concatenate([mask_seg, mask_bound, mask_dist, mask_color], axis=0)
 
         # mask_seg = mask_seg.astype(np.float32)
@@ -106,13 +107,16 @@ class ISPRSDataset(dataset.Dataset):
         # if self.mtsk == False:
         #     mask = mask[:6,:,:]
 
+        # Maybe there is an error here
         if self._transform is not None:
             base, masks = self._transform(base, masks)
             if self._norm is not None:
                 base = self._norm(base.astype(np.float32))
+                mask_color = mask_color * self.colornorm
         else:
             if self._norm is not None:
                 base = self._norm(base.astype(np.float32))
+                mask_color = mask_color * self.colornorm
 
         if self.mtsk:
             return {'img': base.astype(np.float32), 'seg': masks[0].astype(np.float32), 'bound': masks[1].astype(np.float32)

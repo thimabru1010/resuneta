@@ -1,11 +1,14 @@
 from resuneta.models.resunet_d6_causal_mtskcolor_ddist import ResUNet_d6
 from src.NormalizeDataset import Normalize
+from resuneta.nn.loss import Tanimoto_wth_dual
 import mxnet as mx
-from mxnet import gluon #  , autograd
+from mxnet import gluon, autograd
 from mxnet.gluon.data.vision import datasets, transforms
 import argparse
 import logging
 import os
+from prettytable import PrettyTable
+from tqdm import tqdm
 
 def str2bool(v):
     if isinstance(v, bool):
@@ -22,7 +25,74 @@ def compute_mcc(tp, tn, fp, fn):
     mcc = (tp*tn - fp*fn) / tf.math.sqrt((tp + fp)*(tp + fn)*(tn + fp)*(tn+fn))
     return mcc
 
-def train_model(net, dataloader):
+
+def train_model(net, dataloader, batch_size, devices, losses, epochs):
+    # softmax_cross_entropy = gluon.loss.SoftmaxCrossEntropyLoss()
+    tanimoto = Tanimoto_with_dual
+    trainer = gluon.Trainer(net.collect_params(), 'sgd', {'learning_rate': 0.1})
+    min_loss = float('inf')
+
+    for epoch in range(epochs):
+        epoch_seg_loss = {'train': 0.0, 'val': 0.0}
+        epoch_bound_loss = {'train': 0.0, 'val': 0.0}
+        epoch_dist_loss = {'train': 0.0, 'val': 0.0}
+        epoch_color_loss = {'train': 0.0, 'val': 0.0}
+        # epoch_cva_loss = {'Train': 0.0, 'Val': 0.0}
+        epoch_final_loss = {'train': 0.0, 'val': 0.0}
+
+        epoch_seg_acc = {'train': 0.0, 'val': 0.0}
+        # MCC is calculated for validation only
+        epoch_seg_mcc = 0.0
+
+        # Train loop
+        for data, label in tqdm(dataloader['train'], desc="Train"):
+            # Diff 3: split batch and load into corresponding devices (GPU)
+            data_list = gluon.utils.split_and_load(data, devices)
+            seg_label_list = gluon.utils.split_and_load(label['seg'], devices)
+            bound_label_list = gluon.utils.split_and_load(label['bound'], devices)
+            dist_label_list = gluon.utils.split_and_load(label['dist'], devices)
+            color_label_list = gluon.utils.split_and_load(label['color'], devices)
+            # Diff 4: run forward and backward on each devices.
+            # MXNet will automatically run them in parallel
+            seg_losses = []
+            bound_losses = []
+            dist_losses = []
+            color_losses = []
+            with autograd.record():
+                for X, y_seg, y_bound, y_dist, y_color in zip(data_list, seg_label_list, bound_label_list, dist_label_list, color_label_list):
+                    seg_logits, bound_logits, dist_logits, color_logits = net(X)
+                    seg_losses.append(tanimoto(seg_logits, y_seg))
+                    bound_losses.append(tanimoto(bound_logits, y_bound))
+                    dist_losses.append(tanimoto(dist_logits, y_dist))
+                    color_losses.append(tanimoto(color_logits, y_color))
+            for l_seg, l_bound, l_dist, l_color in zip(seg_losses, bound_losses, dist_losses, color_losses):
+                l_seg.backward()
+                l_bound.backward()
+                l_dist.backward()
+                l_color.backward()
+            trainer.step(batch_size)
+            # Diff 5: sum losses over all devices
+            seg_loss = []
+            bound_loss = []
+            dist_loss = []
+            color_loss = []
+            for l_seg, l_bound, l_dist, l_color in zip(seg_losses, bound_losses, dist_losses, color_losses):
+                seg_loss.append(l_seg.sum().asscalar())
+                bound_loss.append(l_bound.sum().asscalar())
+                dist_loss.append(l_dist.sum().asscalar())
+                color_loss.append(l_color.sum().asscalar())
+            # Sum loss from batch
+            epoch_seg_loss['train'] += sum(seg_loss)
+            epoch_bound_loss['train'] += sum(bound_loss)
+            epoch_dist_loss['train'] += sum(dist_loss)
+            epoch_color_loss['train'] += sum(color_loss)
+
+        # After batch loop take the mean of batches losses
+        epoch_seg_loss['train'] /= len(dataloader['train'])/batch_size
+        epoch_bound_loss['train'] /= len(dataloader['train'])/batch_size
+        epoch_dist_loss['train'] /= len(dataloader['train'])/batch_size
+        epoch_color_loss['train'] /= len(dataloader['train'])/batch_size
+
 
 
 # End functions definition -----------------------------------------------------
@@ -36,6 +106,8 @@ if __name__ == '__main__':
     #                     or not", type=str2bool, default=False)
     parser.add_argument("--debug", help="choose if you want to shoe debug logs",
                         action='store_true', default=False)
+    parser.add_argument("--norm_path", help="Load a txt with normalization you want to apply.",
+                        type=str, default=None)
     # parser.add_argument("--gpu_parallel",
     #                     help="choose 1 to train one multiple gpu",
     #                     type=str2bool, default=False)
@@ -61,8 +133,8 @@ if __name__ == '__main__':
     #                     type=str, choices=['adam', 'sgd'], default='adam')
     parser.add_argument("--num_classes", help="Number of classes",
                          type=int, default=5)
-    # parser.add_argument("--epochs", help="Number of epochs",
-    #                     type=int, default=500)
+    parser.add_argument("--epochs", help="Number of epochs",
+                        type=int, default=500)
     # parser.add_argument("-ps", "--patch_size", help="Size of patches extracted",
     #                     type=int, default=256)
     # parser.add_argument("--bound_weight", help="Boundary loss weight",
@@ -101,7 +173,13 @@ if __name__ == '__main__':
     transformer = transforms.Compose([
         transforms.ToTensor())
 
-    tnorm = Normalize()
+    if args.norm_path is not None:
+        with open(args.norm_path, 'r') as f:
+            mean, std = f.readlines()
+
+        tnorm = Normalize(mean=mean, std=std)
+    else:
+        tnorm = Normalize()
 
     train_dataset = ISPRSDataset(root=args.dataset_path,
                            mode='train', color=True, mtsk=True, norm=tnorm)
