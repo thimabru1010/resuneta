@@ -27,10 +27,10 @@ def compute_mcc(tp, tn, fp, fn):
     return mcc
 
 
-def train_model(net, dataloader, batch_size, devices, losses, epochs):
+def train_model(net, dataloader, batch_size, devices, epochs):
     # softmax_cross_entropy = gluon.loss.SoftmaxCrossEntropyLoss()
     tanimoto = Tanimoto_with_dual()
-    trainer = gluon.Trainer(net.collect_params(), 'sgd', {'learning_rate': 0.1})
+    trainer = gluon.Trainer(net.collect_params(), 'adam', {'learning_rate': 0.1})
     min_loss = float('inf')
 
     for epoch in range(epochs):
@@ -207,7 +207,6 @@ if __name__ == '__main__':
     print('='*40)
     logger.info(f'Training on {len(train_dataset)} images')
     logger.info(f'Validating on {len(val_dataset)} images')
-    logger.debug('Test')
     print('='*40)
 
-    train_model(net, dataloader)
+    train_model(net, dataloader, args.batch_size, devices, args.epochs)
