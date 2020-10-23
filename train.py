@@ -1,6 +1,6 @@
 from resuneta.models.resunet_d6_causal_mtskcolor_ddist import ResUNet_d6
 from resuneta.src.NormalizeDataset import Normalize
-from resuneta.src import ISPRSDataset
+from resuneta.src.ISPRSDataset import ISPRSDataset
 from resuneta.nn.loss.loss import Tanimoto_with_dual
 import mxnet as mx
 from mxnet import gluon, autograd
@@ -167,7 +167,7 @@ if __name__ == '__main__':
     net = ResUNet_d6(Nfilters_init, args.num_classes)
     net.initialize()
     # [TODO] Change this to receive right input size
-    net.summary(mx.nd.random.uniform(shape=(1, 3, 256, 256)))
+    net.summary(mx.nd.random.uniform(shape=(args.batch_size, 3, 256, 256)))
 
     if args.checkpoint_path is None:
         net.collect_params().initialize(force_reinit=True, ctx=devices)
