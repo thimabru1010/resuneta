@@ -196,9 +196,9 @@ if __name__ == '__main__':
         tnorm = Normalize()
 
     train_dataset = ISPRSDataset(root=args.dataset_path,
-                                 mode='train', color=True, mtsk=True, norm=tnorm)
+                                 mode='train', color=True, transform=transformer, mtsk=True, norm=tnorm)
     val_dataset = ISPRSDataset(root=args.dataset_path,
-                               mode='val', color=True, mtsk=True, norm=tnorm)
+                               mode='val', color=True, mtsk=True, transform=transformer, norm=tnorm)
 
     dataloader = {}
     dataloader['train'] = gluon.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
