@@ -167,12 +167,13 @@ if __name__ == '__main__':
     net = ResUNet_d6(Nfilters_init, args.num_classes)
     net.initialize()
     # [TODO] Change this to receive right input size
-    net.summary(mx.nd.random.uniform(shape=(args.batch_size, 3, 256, 256)))
+    net.summary(mx.nd.random.uniform(shape=(3, 256, 256)))
 
     if args.checkpoint_path is None:
         net.collect_params().initialize(force_reinit=True, ctx=devices)
         # net.initialize(init=mx.init.Xavier(), ctx=devices)
     else:
+        # [TODO] Load on CPU enable summary and then put on GPU
         net.load_parameters(args.checkpoint_path, ctx=devices)
 
     net.hybridize()
@@ -189,9 +190,9 @@ if __name__ == '__main__':
         tnorm = Normalize()
 
     train_dataset = ISPRSDataset(root=args.dataset_path,
-                           mode='train', color=True, mtsk=True, norm=tnorm)
+                                 mode='train', color=True, mtsk=True, norm=tnorm)
     val_dataset = ISPRSDataset(root=args.dataset_path,
-                          mode='val', color=True, mtsk=True, norm=tnorm)
+                               mode='val', color=True, mtsk=True, norm=tnorm)
 
     dataloader = {}
     dataloader['train'] = gluon.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
