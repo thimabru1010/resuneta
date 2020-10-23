@@ -167,7 +167,6 @@ if __name__ == '__main__':
     net = ResUNet_d6(Nfilters_init, args.num_classes)
     net.initialize()
 
-    net.hybridize()
     if args.checkpoint_path is None:
         net.collect_params().initialize(force_reinit=True, ctx=devices)
         # net.initialize(init=mx.init.Xavier(), ctx=devices)
@@ -176,6 +175,8 @@ if __name__ == '__main__':
 
     # [TODO] Change this to receive right input size
     net.summary(mx.nd.random.uniform(shape=(args.batch_size, 3, 256, 256)))
+
+    net.hybridize()
 
     transformer = transforms.Compose([
         transforms.ToTensor()])
