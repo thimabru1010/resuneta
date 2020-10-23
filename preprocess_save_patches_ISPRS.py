@@ -13,6 +13,8 @@ from skimage.util.shape import view_as_windows
 
 import tensorflow as tf
 
+import matplotlib.pyplot as plt
+
 
 def str2bool(v):
     if isinstance(v, bool):
@@ -159,7 +161,9 @@ print(img_train_ref.shape)
 label_dict = {'(255, 255, 255)': 0, '(0, 255, 0)': 1,
               '(0, 255, 255)': 2, '(0, 0, 255)': 3, '(255, 255, 0)': 4}
 
+# Convert from H x W x C --> C x H x W
 binary_img_train_ref = binarize_matrix(img_train_ref, label_dict)
+print(binary_img_train_ref.shape)
 del img_train_ref
 
 # stride = patch_size
@@ -177,6 +181,15 @@ print(process.memory_percent())
 gc.collect()
 print('[GC COLLECT]')
 print(process.memory_percent())
+
+# Convert from B x H x W x C --> B x C x H x W
+# print('[Checking channels]')
+# print(patches_tr.shape)
+# print(patches_tr_ref.shape)
+# patches_tr = patches_tr.transpose((0, 3, 1, 2))
+# patches_tr_ref = patches_tr_ref.transpose((0, 3, 1, 2))
+# print(patches_tr.shape)
+# print(patches_tr_ref.shape)
 
 
 def create_folders(folder_path, mode='train'):
@@ -217,17 +230,18 @@ def save_patches(patches_tr, patches_tr_ref, folder_path, mode='train'):
     for i in tqdm(range(len(patches_tr))):
         # Expand dims (Squeeze) to receive data_augmentation. Depreceated ?
         img_aug, label_aug = np.expand_dims(patches_tr[i], axis=0), np.expand_dims(patches_tr_ref[i], axis=0)
-        print(label_aug.shape)
         # label_aug_h = label_binarizer.transform(label_aug)
         # Performs the one hot encoding
         label_aug_h = tf.keras.utils.to_categorical(label_aug, args.num_classes)
+        # Convert from B x H x W x C --> B x C x H x W
+        label_aug_h = label_aug_h.transpose((0, 3, 1, 2))
         for j in range(len(img_aug)):
             # Input image RGB
             # Float32 its need to train the model
             img_float = img_aug[j].astype(np.float32)
             # img_normalized = normalize_rgb(img_float, norm_type=args.norm_type)
             np.save(os.path.join(folder_path, mode, 'imgs', filename(i*5 + j)),
-                    img_float)
+                    img_float.transpose((2, 0, 1)))
             # All multitasking labels are saved in one-hot
             # Segmentation
             np.save(os.path.join(folder_path, mode, 'masks/seg', filename(i*5 + j)),
@@ -247,7 +261,7 @@ def save_patches(patches_tr, patches_tr_ref, folder_path, mode='train'):
             # Float32 its need to train the model
             # hsv_patch = normalize_hsv(hsv_patch, norm_type=args.norm_type)
             np.save(os.path.join(folder_path, mode, 'masks/color', filename(i*5 + j)),
-                    hsv_patch)
+                    hsv_patch.transpose((2, 0, 1)))
 
 
 save_patches(patches_tr, patches_tr_lb, folder_path, mode='train')

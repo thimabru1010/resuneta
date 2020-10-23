@@ -1,9 +1,10 @@
 from resuneta.models.resunet_d6_causal_mtskcolor_ddist import ResUNet_d6
 from src.NormalizeDataset import Normalize
-from resuneta.nn.loss import Tanimoto_wth_dual
+from src import ISPRSDataset
+from resuneta.nn.loss import Tanimoto_with_dual
 import mxnet as mx
 from mxnet import gluon, autograd
-from mxnet.gluon.data.vision import datasets, transforms
+from mxnet.gluon.data.vision import transforms
 import argparse
 import logging
 import os
@@ -28,7 +29,7 @@ def compute_mcc(tp, tn, fp, fn):
 
 def train_model(net, dataloader, batch_size, devices, losses, epochs):
     # softmax_cross_entropy = gluon.loss.SoftmaxCrossEntropyLoss()
-    tanimoto = Tanimoto_with_dual
+    tanimoto = Tanimoto_with_dual()
     trainer = gluon.Trainer(net.collect_params(), 'sgd', {'learning_rate': 0.1})
     min_loss = float('inf')
 
@@ -174,7 +175,7 @@ if __name__ == '__main__':
     net.summary(mx.nd.random.uniform(shape=(args.batch_size, 3, 256, 256)))
 
     transformer = transforms.Compose([
-        transforms.ToTensor())
+        transforms.ToTensor()])
 
     if args.norm_path is not None:
         with open(args.norm_path, 'r') as f:
@@ -189,12 +190,13 @@ if __name__ == '__main__':
     val_dataset = ISPRSDataset(root=args.dataset_path,
                           mode='val', color=True, mtsk=True, norm=tnorm)
 
+    dataloader = {}
     dataloader['train'] = gluon.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
     dataloader['val'] = gluon.data.DataLoader(val_dataset, batch_size=args.batch_size, shuffle=True)
 
     print('='*40)
-    logging.info(f'Training on {len(train_dataset)} images')
-    logging.info(f'Validating on {len(val_dataset)} images')
+    logger.info(f'Training on {len(train_dataset)} images')
+    logger.info(f'Validating on {len(val_dataset)} images')
     print('='*40)
 
     train_model(net, dataloader)
