@@ -119,7 +119,7 @@ class ISPRSDataset(dataset.Dataset):
         else:
             if self._norm is not None:
                 base = self._norm(base.astype(np.float32))
-                mask_color = mask_color * self.colornorm
+                mask_color = (mask_color.transpose([1, 2, 0]) * self.colornorm).transpose([2,0,1])
 
         if self.mtsk:
             return {'img': base.astype(np.float32), 'seg': masks[0].astype(np.float32), 'bound': masks[1].astype(np.float32),
