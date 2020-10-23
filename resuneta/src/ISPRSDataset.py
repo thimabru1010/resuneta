@@ -16,6 +16,7 @@ import numpy as np
 
 from mxnet.gluon.data import dataset
 import cv2
+import mxnet as mx
 
 class ISPRSDataset(dataset.Dataset):
     def __init__(self, root, mode='train', mtsk=True, color=True, transform=None, norm=None):
@@ -125,6 +126,8 @@ class ISPRSDataset(dataset.Dataset):
                 mask_color = (mask_color.transpose([1, 2, 0]) * self.colornorm).transpose([2,0,1])
 
         if self.mtsk:
+            base = mx.nd.array(base)
+            masks = mx.nd.array(masks)
             return {'img': self._transform(base.astype(np.float32)), 'seg': self._transform(masks[0].astype(np.float32)), 'bound': self._transform(masks[1].astype(np.float32)),
                     'dist': self._transform(masks[2].astype(np.float32)), 'color': self._transform(masks[3].astype(np.float32))}
         else:
