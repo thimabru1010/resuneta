@@ -207,6 +207,7 @@ if __name__ == '__main__':
     print('='*40)
     logger.info(f'Training on {len(train_dataset)} images')
     logger.info(f'Validating on {len(val_dataset)} images')
+    logger.debug('Test')
     print('='*40)
 
     train_model(net, dataloader)
