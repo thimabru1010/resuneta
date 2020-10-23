@@ -154,14 +154,13 @@ if __name__ == '__main__':
     else:
         file_path = os.path.join(args.results_path, 'train_info.log')
         logging.basicConfig(filename=file_path, level=logging.INFO)
-    logger = logging.getLogger('MAIN')
+
+    logger = logging.getLogger('__main__')
 
     n_gpus = mx.context.num_gpus()
     devices = []
     for i in range(n_gpus):
         devices.append(mx.gpu(i))
-
-    logger.info(f'Devices found: {devices}')
 
     Nfilters_init = 32
     net = ResUNet_d6(Nfilters_init, args.num_classes)
@@ -177,6 +176,8 @@ if __name__ == '__main__':
         net.load_parameters(args.checkpoint_path, ctx=devices)
 
     net.hybridize()
+
+    logger.info(f'Devices found: {devices}')
 
     transformer = transforms.Compose([
         transforms.ToTensor()])
