@@ -145,6 +145,9 @@ if __name__ == '__main__':
     #                     type=float, default=1.0)
     args = parser.parse_args()
 
+    if not os.path.exists(os.path.join(args.results_path)):
+        os.makedirs(args.results_path)
+
     if args.debug:
         file_path = os.path.join(args.results_path, 'train_debug.log')
         logging.basicConfig(filename=file_path, level=logging.DEBUG)
