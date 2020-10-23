@@ -156,6 +156,8 @@ if __name__ == '__main__':
         logging.basicConfig(filename=file_path, level=logging.INFO)
 
     logger = logging.getLogger('__main__')
+    stream_handler = logging.StreamHandler()
+    logger.addHandler(stream_handler)
     logger.setLevel(logging.INFO)
 
     n_gpus = mx.context.num_gpus()
