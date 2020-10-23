@@ -161,13 +161,17 @@ if __name__ == '__main__':
 
     Nfilters_init = 32
     net = ResUNet_d6(Nfilters_init, args.num_classes)
+    net.initialize()
 
     net.hybridize()
     if args.checkpoint_path is None:
-        # net.collect_params().initialize(force_reinit=True, ctx=devices)
-        net.initialize(init=mx.init.Xavier(), ctx=devices)
+        net.collect_params().initialize(force_reinit=True, ctx=devices)
+        # net.initialize(init=mx.init.Xavier(), ctx=devices)
     else:
         net.load_parameters(args.checkpoint_path, ctx=devices)
+
+    # [TODO] Change this to receive right input size
+    net.summary(mx.nd.random.uniform(shape=(args.batch_size, 3, 256, 256)))
 
     transformer = transforms.Compose([
         transforms.ToTensor())
@@ -187,5 +191,10 @@ if __name__ == '__main__':
 
     dataloader['train'] = gluon.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
     dataloader['val'] = gluon.data.DataLoader(val_dataset, batch_size=args.batch_size, shuffle=True)
+
+    print('='*40)
+    logging.info(f'Training on {len(train_dataset)} images')
+    logging.info(f'Validating on {len(val_dataset)} images')
+    print('='*40)
 
     train_model(net, dataloader)

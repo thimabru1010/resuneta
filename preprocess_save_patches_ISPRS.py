@@ -1,18 +1,18 @@
-from utils import np, load_npy_image, data_augmentation
-import tensorflow as tf
-
-from multitasking_utils import get_boundary_label, get_distance_label
+from utils import load_npy_image, get_boundary_label, get_distance_label #, data_augmentation
+import numpy as np
 import argparse
 import os
-
-from skimage.util.shape import view_as_windows
-
 import gc
 import psutil
 import cv2
 from tqdm import tqdm
 
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler # , LabelBinarizer
+from sklearn.model_selection import train_test_split
+from skimage.util.shape import view_as_windows
+
+import tensorflow as tf
+
 
 def str2bool(v):
     if isinstance(v, bool):
@@ -55,6 +55,7 @@ def binarize_matrix(img_train_ref, label_dict):
     # c = img_train_ref.shape[2]
     # binary_img_train_ref = np.zeros((1,w,h))
     binary_img_train_ref = np.full((w, h), -1, dtype=np.uint8)
+    keys_ver = {}
     for i in range(w):
         for j in range(h):
             r = img_train_ref[i][j][0]
@@ -63,6 +64,10 @@ def binarize_matrix(img_train_ref, label_dict):
             rgb = (r, g, b)
             rgb_key = str(rgb)
             binary_img_train_ref[i][j] = label_dict[rgb_key]
+            if rgb_key not in keys_ver.keys():
+                keys_ver[rgb_key] = 0
+
+    print(f'Verifying rgb types: {keys_ver.keys()}')
 
     return binary_img_train_ref
 
@@ -108,7 +113,6 @@ def normalize_hsv(img, norm_type=1):
 
     return img
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument("--norm_type",
                     help="Choose type of normalization to be used", type=int,
@@ -123,7 +127,7 @@ parser.add_argument("--num_classes",
                     labels to one hot encoding", type=int, default=5)
 parser.add_argument("--data_aug",
                     help="Choose number of classes to convert \
-                    labels to one hot encoding", type=str2bool, default=True)
+                    labels to one hot encoding", action='store_true', default=False)
 args = parser.parse_args()
 
 print('='*50)
@@ -174,55 +178,77 @@ gc.collect()
 print('[GC COLLECT]')
 print(process.memory_percent())
 
+
+def create_folders(folder_path, mode='train'):
+    if not os.path.exists(os.path.join(folder_path, mode)):
+        # os.makedirs(folder_path)
+        os.makedirs(os.path.join(folder_path, mode, 'imgs'))
+        os.makedirs(os.path.join(folder_path, mode, 'masks/seg'))
+        os.makedirs(os.path.join(folder_path, mode, 'masks/bound'))
+        os.makedirs(os.path.join(folder_path, mode, 'masks/dist'))
+        os.makedirs(os.path.join(folder_path, mode, 'masks/color'))
+
+
+patches_tr, patches_val, patches_tr_lb, patches_val_lb = train_test_split(patches_tr, patches_tr_ref, test_size=0.2, random_state=42)
+
 print('saving images...')
 folder_path = f'./DATASETS/patch_size={args.patch_size}_' + \
             f'stride={args.stride}_norm_type={args.norm_type}_data_aug={args.data_aug}'
-if not os.path.exists(folder_path):
-    os.makedirs(folder_path)
-    os.makedirs(os.path.join(folder_path, 'train'))
-    os.makedirs(os.path.join(folder_path, 'labels'))
-    os.makedirs(os.path.join(folder_path, 'labels/seg'))
-    os.makedirs(os.path.join(folder_path, 'labels/bound'))
-    os.makedirs(os.path.join(folder_path, 'labels/dist'))
-    os.makedirs(os.path.join(folder_path, 'labels/color'))
+
+create_folders(folder_path, mode='train')
+create_folders(folder_path, mode='val')
 
 
 def filename(i):
     return f'patch_{i}.npy'
 
 
-print(f'Number of patches: {len(patches_tr)}')
-if args.data_aug:
-    print(f'Number of patches expected: {len(patches_tr)*5}')
-for i in tqdm(range(len(patches_tr))):
-    if args.data_aug:
-        img_aug, label_aug = data_augmentation(patches_tr[i], patches_tr_ref[i])
-    else:
+print(f'Number of train patches: {len(patches_tr)}')
+print(f'Number of val patches: {len(patches_val)}')
+# if args.data_aug:
+#     print(f'Number of patches expected: {len(patches_tr)*5}')
+
+# Performs the one hot encoding
+# label_binarizer = LabelBinarizer()
+# label_binarizer.fit(range(args.num_classes))
+# b = label_binarizer.transform(a)
+
+def save_patches(patches_tr, patches_tr_ref, folder_path, mode='train'):
+    for i in tqdm(range(len(patches_tr))):
+        # Expand dims (Squeeze) to receive data_augmentation. Depreceated ?
         img_aug, label_aug = np.expand_dims(patches_tr[i], axis=0), np.expand_dims(patches_tr_ref[i], axis=0)
-    label_aug_h = tf.keras.utils.to_categorical(label_aug, args.num_classes)
-    for j in range(len(img_aug)):
-        # Input image RGB
-        # Float32 its need to train the model
-        img_float = img_aug[j].astype(np.float32)
-        img_normalized = normalize_rgb(img_float, norm_type=args.norm_type)
-        np.save(os.path.join(folder_path, 'train', filename(i*5 + j)),
-                img_normalized)
-        # All multitasking labels are saved in one-hot
-        # Segmentation
-        np.save(os.path.join(folder_path, 'labels/seg', filename(i*5 + j)),
-                label_aug_h[j].astype(np.float32))
-        # Boundary
-        bound_label_h = get_boundary_label(label_aug_h[j]).astype(np.float32)
-        np.save(os.path.join(folder_path, 'labels/bound', filename(i*5 + j)),
-                bound_label_h)
-        # Distance
-        dist_label_h = get_distance_label(label_aug_h[j]).astype(np.float32)
-        np.save(os.path.join(folder_path, 'labels/dist', filename(i*5 + j)),
-                dist_label_h)
-        # Color
-        hsv_patch = cv2.cvtColor(img_aug[j],
-                                 cv2.COLOR_RGB2HSV).astype(np.float32)
-        # Float32 its need to train the model
-        hsv_patch = normalize_hsv(hsv_patch, norm_type=args.norm_type)
-        np.save(os.path.join(folder_path, 'labels/color', filename(i*5 + j)),
-                hsv_patch)
+        print(label_aug.shape)
+        # label_aug_h = label_binarizer.transform(label_aug)
+        # Performs the one hot encoding
+        label_aug_h = tf.keras.utils.to_categorical(label_aug, args.num_classes)
+        for j in range(len(img_aug)):
+            # Input image RGB
+            # Float32 its need to train the model
+            img_float = img_aug[j].astype(np.float32)
+            # img_normalized = normalize_rgb(img_float, norm_type=args.norm_type)
+            np.save(os.path.join(folder_path, mode, 'imgs', filename(i*5 + j)),
+                    img_float)
+            # All multitasking labels are saved in one-hot
+            # Segmentation
+            np.save(os.path.join(folder_path, mode, 'masks/seg', filename(i*5 + j)),
+                    label_aug_h[j].astype(np.float32))
+            # Boundary
+            bound_label_h = get_boundary_label(label_aug_h[j]).astype(np.float32)
+            np.save(os.path.join(folder_path, mode, 'masks/bound', filename(i*5 + j)),
+                    bound_label_h)
+            # Distance
+            dist_label_h = get_distance_label(label_aug_h[j]).astype(np.float32)
+            np.save(os.path.join(folder_path, mode, 'masks/dist', filename(i*5 + j)),
+                    dist_label_h)
+            # Color
+            # print(f'Checking if rgb img is in uint8 before hsv: {img_aug[j].dtype}')
+            hsv_patch = cv2.cvtColor(img_aug[j],
+                                     cv2.COLOR_RGB2HSV).astype(np.float32)
+            # Float32 its need to train the model
+            # hsv_patch = normalize_hsv(hsv_patch, norm_type=args.norm_type)
+            np.save(os.path.join(folder_path, mode, 'masks/color', filename(i*5 + j)),
+                    hsv_patch)
+
+
+save_patches(patches_tr, patches_tr_lb, folder_path, mode='train')
+save_patches(patches_val, patches_val_lb, folder_path, mode='val')
