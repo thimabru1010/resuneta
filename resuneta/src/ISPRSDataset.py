@@ -119,7 +119,7 @@ class ISPRSDataset(dataset.Dataset):
                 mask_color = mask_color * self.colornorm
 
         if self.mtsk:
-            return {'img': base.astype(np.float32), 'seg': masks[0].astype(np.float32), 'bound': masks[1].astype(np.float32)
+            return {'img': base.astype(np.float32), 'seg': masks[0].astype(np.float32), 'bound': masks[1].astype(np.float32),
                     'dist': masks[2].astype(np.float32), 'color': masks[3].astype(np.float32)}
         else:
             return base.astype(np.float32), mask_seg.astype(np.float32)
