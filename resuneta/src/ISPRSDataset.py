@@ -112,7 +112,9 @@ class ISPRSDataset(dataset.Dataset):
 
         # Maybe there is an error here
         if self._transform is not None:
-            base, masks = self._transform(base, masks)
+            # base, masks = self._transform(base, masks)
+            base = self._transform(base)
+            masks = self._transform(masks)
             if self._norm is not None:
                 base = self._norm(base.astype(np.float32))
                 mask_color = mask_color * self.colornorm
