@@ -117,8 +117,8 @@ if __name__ == '__main__':
     parser.add_argument("-cp", "--checkpoint_path", help="Path where to load \
                         model checkpoint to continue training",
                         type=str, default=None)
-    # parser.add_argument("-dp", "--dataset_path", help="Path where to load dataset",
-    #                     type=str, default='./DATASETS/patch_size=256_stride=32')
+    parser.add_argument("-dp", "--dataset_path", help="Path where to load dataset",
+                        type=str, default='./DATASETS/patch_size=256_stride=256_norm_type=1_data_aug=False')
     parser.add_argument("-bs", "--batch_size", help="Batch size on training",
                         type=int, default=4)
     # parser.add_argument("-lr", "--learning_rate",
