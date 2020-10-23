@@ -113,8 +113,8 @@ class ISPRSDataset(dataset.Dataset):
         # Maybe there is an error here
         if self._transform is not None:
             # base, masks = self._transform(base, masks)
-            base = self._transform(base)
-            masks = self._transform(masks)
+            # base = self._transform(base)
+            # masks = self._transform(masks)
             if self._norm is not None:
                 base = self._norm(base.astype(np.float32))
                 mask_color = mask_color * self.colornorm
@@ -124,8 +124,8 @@ class ISPRSDataset(dataset.Dataset):
                 mask_color = (mask_color.transpose([1, 2, 0]) * self.colornorm).transpose([2,0,1])
 
         if self.mtsk:
-            return {'img': base.astype(np.float32), 'seg': masks[0].astype(np.float32), 'bound': masks[1].astype(np.float32),
-                    'dist': masks[2].astype(np.float32), 'color': masks[3].astype(np.float32)}
+            return {'img': self._transform(base.astype(np.float32)), 'seg': self._transform(masks[0].astype(np.float32)), 'bound': self._transform(masks[1].astype(np.float32)),
+                    'dist': self._transform(masks[2].astype(np.float32)), 'color': self._transform(masks[3].astype(np.float32))}
         else:
             return base.astype(np.float32), mask_seg.astype(np.float32)
 
