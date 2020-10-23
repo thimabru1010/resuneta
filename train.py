@@ -156,6 +156,7 @@ if __name__ == '__main__':
         logging.basicConfig(filename=file_path, level=logging.INFO)
 
     logger = logging.getLogger('__main__')
+    logger.setLevel(logging.INFO)
 
     n_gpus = mx.context.num_gpus()
     devices = []
