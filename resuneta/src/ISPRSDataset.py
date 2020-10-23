@@ -29,12 +29,15 @@ class ISPRSDataset(dataset.Dataset):
         self._transform = transform
         self._norm = norm # Normalization of img
 
-        if (root[-1] == '/'):
-            self._root_train = root + 'training/'
-            self._root_val = root + 'validation/'
-        else:
-            self._root_train = root + '/training/'
-            self._root_val = root + '/validation/'
+        # if (root[-1] == '/'):
+        #     self._root_train = root + 'training/'
+        #     self._root_val = root + 'validation/'
+        # else:
+        #     self._root_train = root + '/training/'
+        #     self._root_val = root + '/validation/'
+
+        self._root_train = os.path.join(root, 'train')
+        self._root_val = os.path.join(root, 'val')
 
         if mode == 'train':
             self._root_img = os.path.join(self._root_train, 'imgs')
