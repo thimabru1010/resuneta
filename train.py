@@ -150,14 +150,16 @@ if __name__ == '__main__':
 
     if args.debug:
         file_path = os.path.join(args.results_path, 'train_debug.log')
-        logging.basicConfig(filename=file_path, level=logging.DEBUG)
+        # logging.basicConfig(filename=file_path, level=logging.DEBUG)
+        logging.basicConfig(level=logging.DEBUG)
     else:
         file_path = os.path.join(args.results_path, 'train_info.log')
-        logging.basicConfig(filename=file_path, level=logging.INFO)
+        # logging.basicConfig(filename=file_path, level=logging.INFO)
+        logging.basicConfig(level=logging.INFO)
 
     logger = logging.getLogger('__main__')
-    stream_handler = logging.StreamHandler()
-    logger.addHandler(stream_handler)
+    # stream_handler = logging.StreamHandler()
+    # logger.addHandler(stream_handler)
     logger.setLevel(logging.INFO)
 
     n_gpus = mx.context.num_gpus()
@@ -205,7 +207,6 @@ if __name__ == '__main__':
     print('='*40)
     logger.info(f'Training on {len(train_dataset)} images')
     logger.info(f'Validating on {len(val_dataset)} images')
-    logger.debug('Test')
     print('='*40)
 
     train_model(net, dataloader)
