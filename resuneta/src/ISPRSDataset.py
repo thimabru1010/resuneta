@@ -23,8 +23,8 @@ class ISPRSDataset(dataset.Dataset):
         self._mode = mode
         self.mtsk = mtsk
         self.color = color
-        # if color:
-        #     self.colornorm = np.array([1./179, 1./255, 1./255])
+        if color:
+            self.colornorm = np.array([1./179, 1./255, 1./255])
 
         self._transform = transform
         self._norm = norm # Normalization of img
