@@ -1,7 +1,7 @@
 from resuneta.models.resunet_d6_causal_mtskcolor_ddist import ResUNet_d6
 from resuneta.src.NormalizeDataset import Normalize
 from resuneta.src import ISPRSDataset
-from resuneta.nn.loss import Tanimoto_with_dual
+from resuneta.nn.loss.loss import Tanimoto_with_dual
 import mxnet as mx
 from mxnet import gluon, autograd
 from mxnet.gluon.data.vision import transforms
