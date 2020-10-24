@@ -87,7 +87,7 @@ def train_model(net, dataloader, batch_size, devices, epochs):
                     print(y_seg.shape)
                     seg_acc_res = (mx.nd.argmax(seg_logits, axis=1) == mx.nd.argmax(y_seg, axis=1))
                     print(seg_acc_res.shape)
-                    print(mx.nd.sum(seg_acc_res, axis=[1,2]))
+                    # print(mx.nd.sum(seg_acc_res, axis=[1,2]))
                     seg_corrects.append(mx.nd.sum(seg_acc_res, axis=[1,2]))
 
                     seg_outs.append(seg_logits)
