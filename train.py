@@ -65,10 +65,10 @@ def train_model(net, dataloader, batch_size, devices, epochs):
             with autograd.record():
                 for i, data in enumerate(zip(data_list, seg_label_list, bound_label_list, dist_label_list, color_label_list)):
                     X, y_seg, y_bound, y_dist, y_color = data
-                    print(X.shape)
-                    print(y_seg.shape)
-                    print(y_dist)
-                    print(y_color)
+                    # print(X.shape)
+                    # print(y_seg.shape)
+                    # print(y_dist)
+                    # print(y_color)
                     seg_logits, bound_logits, dist_logits, color_logits = net(X)
                     seg_losses.append(tanimoto(seg_logits, y_seg))
                     bound_losses.append(tanimoto(bound_logits, y_bound))
@@ -99,11 +99,11 @@ def train_model(net, dataloader, batch_size, devices, epochs):
             epoch_total_loss['train'] += sum(total_loss)
 
         # After batch loop take the mean of batches losses
-        epoch_seg_loss['train'] /= len(dataloader['train'])/batch_size
-        epoch_bound_loss['train'] /= len(dataloader['train'])/batch_size
-        epoch_dist_loss['train'] /= len(dataloader['train'])/batch_size
-        epoch_color_loss['train'] /= len(dataloader['train'])/batch_size
-        epoch_total_loss['train'] /= len(dataloader['train'])/batch_size/4
+        epoch_seg_loss['train'] /= (len(dataloader['train'])/batch_size)
+        epoch_bound_loss['train'] /= (len(dataloader['train'])/batch_size)
+        epoch_dist_loss['train'] /= (len(dataloader['train'])/batch_size)
+        epoch_color_loss['train'] /= (len(dataloader['train'])/batch_size)
+        epoch_total_loss['train'] /= (len(dataloader['train'])/batch_size/4)
 
         metrics_table = PrettyTable()
         metrics_table.title = f'Epoch: {epoch}'
