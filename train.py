@@ -97,9 +97,9 @@ def train_model(net, dataloader, batch_size, devices, epochs):
             for loss in total_losses:
                 loss.backward()
             for l, o in zip(seg_labels, seg_outs):
-                # seg_acc_res = (mx.nd.argmax(o, axis=1) == mx.nd.argmax(l, axis=1))
-                # seg_corrects.append(mx.nd.sum(seg_acc_res, axis=[1, 2]))
-                acc_metric.update(l, o)
+                seg_acc_res = (mx.nd.argmax(o, axis=1) == mx.nd.argmax(l, axis=1))
+                seg_corrects.append(mx.nd.sum(seg_acc_res, axis=[1, 2]))
+                acc_metric.update(mx.nd.argmax(o, axis=1), mx.nd.argmax(l, axis=1))
             trainer.step(batch_size)
             # Diff 5: sum losses over all devices
             seg_loss = []
@@ -121,10 +121,10 @@ def train_model(net, dataloader, batch_size, devices, epochs):
             epoch_color_loss['train'] += sum(color_loss)
             epoch_total_loss['train'] += sum(total_loss)
 
-            # seg_acc = []
-            # for seg_correct in seg_corrects:
-            #     seg_acc.append(seg_correct.sum().asscalar())
-            # epoch_seg_acc['train'] += sum(seg_acc)
+            seg_acc = []
+            for seg_correct in seg_corrects:
+                seg_acc.append(seg_correct.sum().asscalar())
+            epoch_seg_acc['train'] += sum(seg_acc)
         # After batch loop take the mean of batches losses
         n_batches_tr = len(dataloader['train'])
         epoch_seg_loss['train'] /= n_batches_tr
