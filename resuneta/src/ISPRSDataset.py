@@ -100,8 +100,8 @@ class ISPRSDataset(dataset.Dataset):
             # H x W x 18
             masks = np.concatenate([mask_seg, mask_bound, mask_dist, mask_color], axis=-1)
             # masks = np.stack([mask_seg, mask_bound, mask_dist], axis=-1)
-            print('dataset class')
-            print(masks.shape)
+            # print('dataset class')
+            # print(masks.shape)
 
         # mask_seg = mask_seg.astype(np.float32)
         # mask_bound = mask_bound.astype(np.float32)
