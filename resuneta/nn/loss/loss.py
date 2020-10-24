@@ -65,4 +65,4 @@ class Tanimoto_with_dual(Loss):
         labels_dual = 1.0-_label
         loss2 = self.Loss(preds_dual, labels_dual)
 
-        return 0.5*(loss1+loss2)
+        return 1 - 0.5*(loss1+loss2)
