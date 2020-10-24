@@ -83,10 +83,10 @@ def train_model(net, dataloader, batch_size, devices, epochs):
                     color_losses.append(tanimoto(color_logits, y_color))
                     total_losses.append(seg_losses[i] + bound_losses[i] + dist_losses[i] + color_losses[i])
 
-                    print(seg_logits.shape)
-                    print(y_seg.shape)
+                    # print(seg_logits.shape)
+                    # print(y_seg.shape)
                     seg_acc_res = (mx.nd.argmax(seg_logits, axis=1) == mx.nd.argmax(y_seg, axis=1))
-                    print(seg_acc_res.shape)
+                    # print(seg_acc_res.shape)
                     # print(mx.nd.sum(seg_acc_res, axis=[1,2]))
                     seg_corrects.append(mx.nd.sum(seg_acc_res, axis=[1,2]))
 
