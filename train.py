@@ -58,6 +58,7 @@ def train_model(net, dataloader, batch_size, devices, epochs):
             # Diff 4: run forward and backward on each devices.
             # MXNet will automatically run them in parallel
             seg_losses = []
+            seg_acc = []
             bound_losses = []
             dist_losses = []
             color_losses = []
@@ -65,17 +66,18 @@ def train_model(net, dataloader, batch_size, devices, epochs):
             with autograd.record():
                 for i, data in enumerate(zip(data_list, seg_label_list, bound_label_list, dist_label_list, color_label_list)):
                     X, y_seg, y_bound, y_dist, y_color = data
-                    # print(X.shape)
-                    # print(y_seg.shape)
-                    # print(y_dist)
-                    # print(y_color)
                     seg_logits, bound_logits, dist_logits, color_logits = net(X)
                     seg_losses.append(tanimoto(seg_logits, y_seg))
                     bound_losses.append(tanimoto(bound_logits, y_bound))
                     dist_losses.append(tanimoto(dist_logits, y_dist))
                     color_losses.append(tanimoto(color_logits, y_color))
-
                     total_losses.append(seg_losses[i] + bound_losses[i] + dist_losses[i] + color_losses[i])
+
+                    seg_acc_res = seg_logits.max(axis=-1) == y_seg.max(axis=-1)
+                    print(seg_acc_res)
+                    print(seg_acc_res.shape)
+                    print(seg_acc_res.sum)
+                    seg_acc.append(seg_acc_res)
             for loss in total_losses:
                 loss.backward()
             trainer.step(batch_size)
