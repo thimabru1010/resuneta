@@ -61,6 +61,7 @@ def train_model(net, dataloader, batch_size, devices, epochs):
             bound_losses = []
             dist_losses = []
             color_losses = []
+            losses = []
             with autograd.record():
                 for X, y_seg, y_bound, y_dist, y_color in zip(data_list, seg_label_list, bound_label_list, dist_label_list, color_label_list):
                     # print(X.shape)
@@ -68,18 +69,23 @@ def train_model(net, dataloader, batch_size, devices, epochs):
                     # print(X.context)
                     # print(X.stype)
                     seg_logits, bound_logits, dist_logits, color_logits = net(X)
-                    seg_losses.append(tanimoto(seg_logits, y_seg))
-                    bound_losses.append(tanimoto(bound_logits, y_bound))
-                    dist_losses.append(tanimoto(dist_logits, y_dist))
-                    color_losses.append(tanimoto(color_logits, y_color))
-            for l_tasks in zip(seg_losses, bound_losses, dist_losses, color_losses):
-                # This assumes all the tasks have weight 1.0. Maybe this should be changed
-                loss = l_tasks[0] + l_tasks[1] + l_tasks[2] + l_tasks[3]
-                loss.backward()
-                # l_tasks[0].backward()
-                # l_tasks[1].backward()
-                # l_tasks[2].backward()
-                # l_tasks[3].backward()
+                    # seg_losses.append(tanimoto(seg_logits, y_seg))
+                    # bound_losses.append(tanimoto(bound_logits, y_bound))
+                    # dist_losses.append(tanimoto(dist_logits, y_dist))
+                    # color_losses.append(tanimoto(color_logits, y_color))
+
+                    losses.append(tanimoto(seg_logits, y_seg) + tanimoto(bound_logits, y_bound) + tanimoto(dist_logits, y_dist) + tanimoto(color_logits, y_color))
+            # for l_tasks in zip(seg_losses, bound_losses, dist_losses, color_losses):
+            #     # This assumes all the tasks have weight 1.0. Maybe this should be changed
+            #     print(l_tasks)
+            #     loss = l_tasks[0] + l_tasks[1] + l_tasks[2] + l_tasks[3]
+            #     loss.backward()
+            #     # l_tasks[0].backward()
+            #     # l_tasks[1].backward()
+            #     # l_tasks[2].backward()
+            #     # l_tasks[3].backward()
+            for l in losses:
+                l.backward()
             trainer.step(batch_size)
             # Diff 5: sum losses over all devices
             seg_loss = []
