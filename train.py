@@ -131,6 +131,8 @@ def train_model(net, dataloader, batch_size, devices, epochs):
                                0,
                                0])
 
+        print(metrics_table)
+
 
 
 
