@@ -90,8 +90,8 @@ def train_model(net, dataloader, batch_size, devices, epochs):
                     # print(mx.nd.sum(seg_acc_res, axis=[1,2]))
                     # seg_corrects.append(mx.nd.sum(seg_acc_res, axis=[1,2]))
 
-                    seg_outs.append(seg_logits.cpu())
-                    seg_labels.append(y_seg.cpu())
+                    seg_outs.append(seg_logits.copyto(mx.cpu()))
+                    seg_labels.append(y_seg.copyto(mx.cpu()))
             for loss in total_losses:
                 loss.backward()
             for l, o in zip(seg_labels, seg_outs):
