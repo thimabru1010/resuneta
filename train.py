@@ -75,7 +75,7 @@ def train_model(net, dataloader, batch_size, devices, epochs):
 
                     seg_acc_res = seg_logits.max(axis=1) == y_seg.max(axis=1)
                     print(seg_acc_res.shape)
-                    print(seg_acc_res.sum)
+                    print(seg_acc_res.sum(axis=[1,2]))
                     seg_acc.append(seg_acc_res)
             for loss in total_losses:
                 loss.backward()
