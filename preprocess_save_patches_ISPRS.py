@@ -234,14 +234,16 @@ def save_patches(patches_tr, patches_tr_ref, folder_path, mode='train'):
         # Performs the one hot encoding
         label_aug_h = tf.keras.utils.to_categorical(label_aug, args.num_classes)
         # Convert from B x H x W x C --> B x C x H x W
-        label_aug_h = label_aug_h.transpose((0, 3, 1, 2))
+        # label_aug_h = label_aug_h.transpose((0, 3, 1, 2))
         for j in range(len(img_aug)):
             # Input image RGB
             # Float32 its need to train the model
             img_float = img_aug[j].astype(np.float32)
             # img_normalized = normalize_rgb(img_float, norm_type=args.norm_type)
+            # np.save(os.path.join(folder_path, mode, 'imgs', filename(i*5 + j)),
+            #         img_float.transpose((2, 0, 1)))
             np.save(os.path.join(folder_path, mode, 'imgs', filename(i*5 + j)),
-                    img_float.transpose((2, 0, 1)))
+                    img_float)
             # All multitasking labels are saved in one-hot
             # Segmentation
             np.save(os.path.join(folder_path, mode, 'masks/seg', filename(i*5 + j)),
@@ -260,8 +262,10 @@ def save_patches(patches_tr, patches_tr_ref, folder_path, mode='train'):
                                      cv2.COLOR_RGB2HSV).astype(np.float32)
             # Float32 its need to train the model
             # hsv_patch = normalize_hsv(hsv_patch, norm_type=args.norm_type)
+            # np.save(os.path.join(folder_path, mode, 'masks/color', filename(i*5 + j)),
+            #         hsv_patch.transpose((2, 0, 1)))
             np.save(os.path.join(folder_path, mode, 'masks/color', filename(i*5 + j)),
-                    hsv_patch.transpose((2, 0, 1)))
+                    hsv_patch)
 
 
 save_patches(patches_tr, patches_tr_lb, folder_path, mode='train')
