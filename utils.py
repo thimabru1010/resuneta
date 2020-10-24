@@ -46,27 +46,32 @@ def data_augmentation(image, labels):
 
     return aug_imgs, aug_lbs
 
-    def get_boundary_label(label, kernel_size=(3, 3)):
-        _, _, channel = label.shape
-        bounds = np.empty_like(label, dtype=np.float32)
-        for c in range(channel):
-            tlabel = label.astype(np.uint8)
-            # Apply filter per channel
-            temp = cv2.Canny(tlabel[:, :, c], 0, 1)
-            tlabel = cv2.dilate(temp,
-                                cv2.getStructuringElement(
-                                    cv2.MORPH_CROSS,
-                                    kernel_size),
-                                iterations=1)
-            # Convert to be used on training (Need to be float32)
-            tlabel = tlabel.astype(np.float32)
-            # Normalize between [0, 1]
-            tlabel /= 255.
-            bounds[:, :, c] = tlabel
-        return bounds
+
+def get_boundary_label(label, kernel_size=(3, 3)):
+    _, _, channel = label.shape
+    bounds = np.empty_like(label, dtype=np.float32)
+    for c in range(channel):
+        tlabel = label.astype(np.uint8)
+        # Apply filter per channel
+        temp = cv2.Canny(tlabel[:, :, c], 0, 1)
+        tlabel = cv2.dilate(temp,
+                            cv2.getStructuringElement(
+                                cv2.MORPH_CROSS,
+                                kernel_size),
+                            iterations=1)
+        # Convert to be used on training (Need to be float32)
+        tlabel = tlabel.astype(np.float32)
+        # Normalize between [0, 1]
+        tlabel /= 255.
+        bounds[:, :, c] = tlabel
+    return bounds
 
 
     def get_distance_label(label):
+        '''
+            Input: label in one-hot encoding. Img formato --> H x W x C
+            Output: Distance tranform for each class.
+        '''
         label = label.copy()
         dists = np.empty_like(label, dtype=np.float32)
         for channel in range(label.shape[2]):
