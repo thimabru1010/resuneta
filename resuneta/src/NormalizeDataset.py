@@ -34,18 +34,25 @@ class Normalize(object):
 
     def __call__(self, img):
 
+        # temp = img.astype(np.float32)
+        # temp2 = temp.T
+        # temp2 -= self._mean
+        # temp2 /= self._std
+        #
+        # temp = temp2.T
+
         temp = img.astype(np.float32)
-        temp2 = temp.T
+        temp2 = temp
         temp2 -= self._mean
         temp2 /= self._std
 
-        temp = temp2.T
+        temp = temp2
 
         return temp
 
 
-
-    def restore(self,normed_img):
+    def restore(self, normed_img):
+        # Watch out the transpose here
 
         d2 = normed_img.T * self._std
         d2 = d2 + self._mean
