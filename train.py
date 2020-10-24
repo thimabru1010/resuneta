@@ -107,7 +107,7 @@ def train_model(net, dataloader, batch_size, devices, epochs):
         epoch_bound_loss['train'] /= n_batches_tr
         epoch_dist_loss['train'] /= n_batches_tr
         epoch_color_loss['train'] /= n_batches_tr
-        epoch_total_loss['train'] /= n_batches_tr/4
+        epoch_total_loss['train'] /= n_batches_tr
 
         metrics_table = PrettyTable()
         metrics_table.title = f'Epoch: {epoch}'
@@ -134,7 +134,7 @@ def train_model(net, dataloader, batch_size, devices, epochs):
                             0,
                             0])
 
-        metrics_table.add_row(['Total', round(epoch_total_loss['train'], 5),
+        metrics_table.add_row(['Total', round(epoch_total_loss['train']/4, 5),
                                0,
                                0,
                                0])
