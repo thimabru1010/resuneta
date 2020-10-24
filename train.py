@@ -64,6 +64,9 @@ def train_model(net, dataloader, batch_size, devices, epochs):
             dist_losses = []
             color_losses = []
             total_losses = []
+
+            seg_outs = []
+            seg_labels = []
             with autograd.record():
                 # Gather results from all devices into a single list
                 for i, data in enumerate(zip(data_list, seg_label_list, bound_label_list, dist_label_list, color_label_list)):
@@ -81,9 +84,12 @@ def train_model(net, dataloader, batch_size, devices, epochs):
                     # print(seg_acc_res.shape)
                     # print(mx.nd.sum(seg_acc_res, axis=[1,2]))
                     # seg_corrects.append(mx.nd.sum(seg_acc_res, axis=[1,2]))
-                    acc_metric.update(y_seg, seg_logits)
+                    seg_outs.append(seg_logits)
+                    seg_labels.append(y_seg)
             for loss in total_losses:
                 loss.backward()
+            for l, o in zip(seg_labels, seg_outs):
+                acc_metric.update(l, o)
             trainer.step(batch_size)
             # Diff 5: sum losses over all devices
             # Sums for each batch per device
@@ -118,8 +124,7 @@ def train_model(net, dataloader, batch_size, devices, epochs):
         epoch_total_loss['train'] = (epoch_total_loss['train'] / n_batches_tr) / 4
 
         # epoch_seg_acc['train'] /= n_batches_tr
-        name, epoch_seg_acc['train'] = acc_metric.get()
-        print(name)
+        _, epoch_seg_acc['train'] = acc_metric.get()
         acc_metric.reset()
 
         metrics_table = PrettyTable()
