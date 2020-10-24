@@ -96,9 +96,7 @@ def train_model(net, dataloader, batch_size, devices, epochs):
                 loss.backward()
             for l, o in zip(seg_labels, seg_outs):
                 seg_acc_res = (mx.nd.argmax(o, axis=1) == mx.nd.argmax(l, axis=1))
-                s = mx.nd.sum(seg_acc_res, axis=[1, 2])
-                print(s)
-                seg_corrects.append(s)
+                seg_corrects.append(mx.nd.sum(seg_acc_res, axis=[1, 2]))
                 # acc_metric.update(l, o)
             trainer.step(batch_size)
             # Diff 5: sum losses over all devices
