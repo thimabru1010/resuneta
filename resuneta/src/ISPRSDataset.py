@@ -135,7 +135,7 @@ class ISPRSDataset(dataset.Dataset):
             # return {'img': self._transform(base), 'seg': self._transform(masks[0]), 'bound': self._transform(masks[1]),
             #         'dist': self._transform(masks[2]), 'color': self._transform(mask_color)}
             return self._transform(base), self._transform(masks[0]), self._transform(masks[1]),
-                    self._transform(masks[2]), self._transform(mask_color)
+            self._transform(masks[2]), self._transform(mask_color)
         else:
             return base.astype(np.float32), mask_seg.astype(np.float32)
 
