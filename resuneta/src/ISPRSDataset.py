@@ -88,7 +88,7 @@ class ISPRSDataset(dataset.Dataset):
         #     base_hsv = base_hsv.transpose([2,0,1]).astype(np.float32)
 
         base = base.astype(np.float32)#.transpose([1, 2, 0])
-        print(base.shape)
+        # print(base.shape)
 
         # Maybe the masks shouldn't be float 32
         mask_seg = np.load(mask_seg_filepath).astype(np.float32)
@@ -99,7 +99,7 @@ class ISPRSDataset(dataset.Dataset):
             # Maybe mask_color will fucked up
             # masks = np.concatenate([mask_seg, mask_bound, mask_dist, mask_color], axis=-1)
             masks = np.stack([mask_seg, mask_bound, mask_dist], axis=0)
-            print(masks.shape)
+            # print(masks.shape)
 
         # mask_seg = mask_seg.astype(np.float32)
         # mask_bound = mask_bound.astype(np.float32)

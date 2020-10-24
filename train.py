@@ -47,6 +47,8 @@ def train_model(net, dataloader, batch_size, devices, epochs):
 
         # Train loop
         for data, label in tqdm(dataloader['train'], desc="Train"):
+            print(data.shape)
+            print(label.shape)
             # Diff 3: split batch and load into corresponding devices (GPU)
             data_list = gluon.utils.split_and_load(data, devices)
             seg_label_list = gluon.utils.split_and_load(label[1], devices)
@@ -61,10 +63,10 @@ def train_model(net, dataloader, batch_size, devices, epochs):
             color_losses = []
             with autograd.record():
                 for X, y_seg, y_bound, y_dist, y_color in zip(data_list, seg_label_list, bound_label_list, dist_label_list, color_label_list):
-                    print(X.shape)
-                    print(X.dtype)
-                    print(X.context)
-                    print(X.stype)
+                    # print(X.shape)
+                    # print(X.dtype)
+                    # print(X.context)
+                    # print(X.stype)
                     seg_logits, bound_logits, dist_logits, color_logits = net(X)
                     seg_losses.append(tanimoto(seg_logits, y_seg))
                     bound_losses.append(tanimoto(bound_logits, y_bound))
