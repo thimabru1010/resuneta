@@ -51,10 +51,10 @@ def train_model(net, dataloader, batch_size, devices, epochs):
             print(label.shape)
             # Diff 3: split batch and load into corresponding devices (GPU)
             data_list = gluon.utils.split_and_load(data, devices)
-            seg_label_list = gluon.utils.split_and_load(label[:, :, :, :, 0:4], devices)
-            bound_label_list = gluon.utils.split_and_load(label[:, :, :, :, 5:9], devices)
-            dist_label_list = gluon.utils.split_and_load(label[:, :, :, :, 10:14], devices)
-            color_label_list = gluon.utils.split_and_load(label[:, :, :, :, 15:17], devices)
+            seg_label_list = gluon.utils.split_and_load(label[:, :, :, :, 0:5], devices)
+            bound_label_list = gluon.utils.split_and_load(label[:, :, :, :, 5:10], devices)
+            dist_label_list = gluon.utils.split_and_load(label[:, :, :, :, 10:15], devices)
+            color_label_list = gluon.utils.split_and_load(label[:, :, :, :, 15:18], devices)
             # Diff 4: run forward and backward on each devices.
             # MXNet will automatically run them in parallel
             seg_losses = []
