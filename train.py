@@ -30,6 +30,7 @@ def compute_mcc(tp, tn, fp, fn):
 def train_model(net, dataloader, batch_size, devices, epochs):
     # softmax_cross_entropy = gluon.loss.SoftmaxCrossEntropyLoss()
     tanimoto = Tanimoto_with_dual()
+    acc_metric = mx.metric.Accuracy()
     trainer = gluon.Trainer(net.collect_params(), 'adam', {'learning_rate': 0.1})
     min_loss = float('inf')
 
@@ -74,12 +75,13 @@ def train_model(net, dataloader, batch_size, devices, epochs):
                     color_losses.append(tanimoto(color_logits, y_color))
                     total_losses.append(seg_losses[i] + bound_losses[i] + dist_losses[i] + color_losses[i])
 
-                    print(seg_logits.shape)
-                    print(y_seg.shape)
-                    seg_acc_res = seg_logits.max(axis=1) == y_seg.max(axis=1)
-                    print(seg_acc_res.shape)
-                    print(mx.nd.sum(seg_acc_res, axis=[1,2]))
-                    seg_corrects.append(mx.nd.sum(seg_acc_res, axis=[1,2]))
+                    # print(seg_logits.shape)
+                    # print(y_seg.shape)
+                    # seg_acc_res = seg_logits.max(axis=1) == y_seg.max(axis=1)
+                    # print(seg_acc_res.shape)
+                    # print(mx.nd.sum(seg_acc_res, axis=[1,2]))
+                    # seg_corrects.append(mx.nd.sum(seg_acc_res, axis=[1,2]))
+                    acc_metric.update(y_seg, seg_logits)
             for loss in total_losses:
                 loss.backward()
             trainer.step(batch_size)
@@ -103,22 +105,21 @@ def train_model(net, dataloader, batch_size, devices, epochs):
             epoch_color_loss['train'] += sum(color_loss)
             epoch_total_loss['train'] += sum(total_loss)
 
-            seg_acc = []
-            for seg_correct in seg_corrects:
-                seg_acc.append(seg_correct.sum())
-            epoch_seg_acc['train'] += sum(seg_acc)
+            # seg_acc = []
+            # for seg_correct in seg_corrects:
+            #     seg_acc.append(seg_correct.sum())
+            # epoch_seg_acc['train'] += sum(seg_acc)
         # After batch loop take the mean of batches losses
-        print(len(dataloader['train']))
-        print(batch_size)
         n_batches_tr = len(dataloader['train'])
-        print(n_batches_tr)
         epoch_seg_loss['train'] /= n_batches_tr
         epoch_bound_loss['train'] /= n_batches_tr
         epoch_dist_loss['train'] /= n_batches_tr
         epoch_color_loss['train'] /= n_batches_tr
         epoch_total_loss['train'] = (epoch_total_loss['train'] / n_batches_tr) / 4
 
-        epoch_seg_acc['train'] /= n_batches_tr
+        # epoch_seg_acc['train'] /= n_batches_tr
+        epoch_seg_acc['train'] = acc_metric.get()
+        acc_metric.reset()
 
         metrics_table = PrettyTable()
         metrics_table.title = f'Epoch: {epoch}'
