@@ -67,17 +67,17 @@ def get_boundary_label(label, kernel_size=(3, 3)):
     return bounds
 
 
-    def get_distance_label(label):
-        '''
-            Input: label in one-hot encoding. Img formato --> H x W x C
-            Output: Distance tranform for each class.
-        '''
-        label = label.copy()
-        dists = np.empty_like(label, dtype=np.float32)
-        for channel in range(label.shape[2]):
-            patch = label[:, :, channel].astype(np.uint8)
-            dist = cv2.distanceTransform(patch, cv2.DIST_L2, 0)
-            dist = cv2.normalize(dist, dist, 0, 1.0, cv2.NORM_MINMAX)
-            dists[:, :, channel] = dist
+def get_distance_label(label):
+    '''
+        Input: label in one-hot encoding. Img formato --> H x W x C
+        Output: Distance tranform for each class.
+    '''
+    label = label.copy()
+    dists = np.empty_like(label, dtype=np.float32)
+    for channel in range(label.shape[2]):
+        patch = label[:, :, channel].astype(np.uint8)
+        dist = cv2.distanceTransform(patch, cv2.DIST_L2, 0)
+        dist = cv2.normalize(dist, dist, 0, 1.0, cv2.NORM_MINMAX)
+        dists[:, :, channel] = dist
 
-        return dists
+    return dists
