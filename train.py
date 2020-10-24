@@ -47,8 +47,8 @@ def train_model(net, dataloader, batch_size, devices, epochs):
 
         # Train loop
         for data, label in tqdm(dataloader['train'], desc="Train"):
-            print(data.shape)
-            print(label.shape)
+            # print(data.shape)
+            # print(label.shape)
             # Diff 3: split batch and load into corresponding devices (GPU)
             data_list = gluon.utils.split_and_load(data, devices)
             seg_label_list = gluon.utils.split_and_load(label[:, 0:5, :, :], devices)
