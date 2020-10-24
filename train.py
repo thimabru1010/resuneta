@@ -125,7 +125,6 @@ def train_model(net, dataloader, batch_size, devices, epochs):
 
         # epoch_seg_acc['train'] /= n_batches_tr
         _, epoch_seg_acc['train'] = acc_metric.get()
-        acc_metric.reset()
 
         metrics_table = PrettyTable()
         metrics_table.title = f'Epoch: {epoch}'
@@ -158,6 +157,7 @@ def train_model(net, dataloader, batch_size, devices, epochs):
                                0])
 
         print(metrics_table)
+        acc_metric.reset()
 
 
 
