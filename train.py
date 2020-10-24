@@ -58,12 +58,13 @@ def train_model(net, dataloader, batch_size, devices, epochs):
             # Diff 4: run forward and backward on each devices.
             # MXNet will automatically run them in parallel
             seg_losses = []
-            seg_acc = []
+            seg_corrects = []
             bound_losses = []
             dist_losses = []
             color_losses = []
             total_losses = []
             with autograd.record():
+                # Gather results from all devices into a single list
                 for i, data in enumerate(zip(data_list, seg_label_list, bound_label_list, dist_label_list, color_label_list)):
                     X, y_seg, y_bound, y_dist, y_color = data
                     seg_logits, bound_logits, dist_logits, color_logits = net(X)
@@ -73,14 +74,17 @@ def train_model(net, dataloader, batch_size, devices, epochs):
                     color_losses.append(tanimoto(color_logits, y_color))
                     total_losses.append(seg_losses[i] + bound_losses[i] + dist_losses[i] + color_losses[i])
 
+                    print(seg_logits.shape)
+                    print(y_seg.shape)
                     seg_acc_res = seg_logits.max(axis=1) == y_seg.max(axis=1)
                     print(seg_acc_res.shape)
                     print(seg_acc_res.sum(axis=[1,2]))
-                    seg_acc.append(seg_acc_res)
+                    seg_corrects.append(seg_acc_res)
             for loss in total_losses:
                 loss.backward()
             trainer.step(batch_size)
             # Diff 5: sum losses over all devices
+            # Sums for each batch per device
             seg_loss = []
             bound_loss = []
             dist_loss = []
@@ -92,13 +96,17 @@ def train_model(net, dataloader, batch_size, devices, epochs):
                 dist_loss.append(l_dist.sum().asscalar())
                 color_loss.append(l_color.sum().asscalar())
                 total_loss.append(l_total.sum().asscalar())
-            # Sum loss from batch
+            # Sum loss from all batches batch
             epoch_seg_loss['train'] += sum(seg_loss)
             epoch_bound_loss['train'] += sum(bound_loss)
             epoch_dist_loss['train'] += sum(dist_loss)
             epoch_color_loss['train'] += sum(color_loss)
             epoch_total_loss['train'] += sum(total_loss)
 
+            seg_acc = []
+            for seg_correct in seg_corrects:
+                seg_acc.append(seg_correct.sum())
+            epoch_seg_acc['train'] += sum(seg_acc)
         # After batch loop take the mean of batches losses
         print(len(dataloader['train']))
         print(batch_size)
@@ -110,6 +118,8 @@ def train_model(net, dataloader, batch_size, devices, epochs):
         epoch_color_loss['train'] /= n_batches_tr
         epoch_total_loss['train'] = (epoch_total_loss['train'] / n_batches_tr) / 4
 
+        epoch_seg_acc['train'] /= n_batches_tr
+
         metrics_table = PrettyTable()
         metrics_table.title = f'Epoch: {epoch}'
         metrics_table.field_names = ['Task', 'Loss', 'Val Loss',
@@ -117,7 +127,7 @@ def train_model(net, dataloader, batch_size, devices, epochs):
 
         metrics_table.add_row(['Seg', round(epoch_seg_loss['train'], 5),
                                0,
-                               0,
+                               round(100*epoch_seg_acc['train'], 5),
                                0])
 
         metrics_table.add_row(['Bound', round(epoch_bound_loss['train'], 5),
