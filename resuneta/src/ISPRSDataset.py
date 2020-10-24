@@ -130,10 +130,10 @@ class ISPRSDataset(dataset.Dataset):
                 # mask_color = (mask_color.transpose([1, 2, 0]) * self.colornorm).transpose([2,0,1])
 
         if self.mtsk:
-            base = mx.nd.array(base)
-            masks = mx.nd.array(masks)
-            return {'img': self._transform(base.astype(np.float32)), 'seg': self._transform(masks[0].astype(np.float32)), 'bound': self._transform(masks[1].astype(np.float32)),
-                    'dist': self._transform(masks[2].astype(np.float32)), 'color': self._transform(mask_color.astype(np.float32))}
+            base = mx.nd.array(base.astype(np.float32))
+            masks = mx.nd.array(masks.astype(np.float32))
+            return {'img': self._transform(base), 'seg': self._transform(masks[0]), 'bound': self._transform(masks[1]),
+                    'dist': self._transform(masks[2]), 'color': self._transform(mask_color)}
         else:
             return base.astype(np.float32), mask_seg.astype(np.float32)
 
