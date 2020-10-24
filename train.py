@@ -31,7 +31,7 @@ def train_model(net, dataloader, batch_size, devices, epochs):
     # softmax_cross_entropy = gluon.loss.SoftmaxCrossEntropyLoss()
     tanimoto = Tanimoto_with_dual()
     # tanimoto = gluon.loss.SoftmaxCELoss()
-    acc_metric = mx.metric.Accuracy()
+    # acc_metric = mx.metric.Accuracy()
     trainer = gluon.Trainer(net.collect_params(), 'adam', {'learning_rate': 0.1})
     min_loss = float('inf')
 
@@ -165,7 +165,7 @@ def train_model(net, dataloader, batch_size, devices, epochs):
                                0])
 
         print(metrics_table)
-        acc_metric.reset()
+        # acc_metric.reset()
 
 
 
