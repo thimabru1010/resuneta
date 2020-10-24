@@ -94,8 +94,8 @@ def train_model(net, dataloader, batch_size, devices, epochs):
                     seg_labels.append(y_seg)
             for loss in total_losses:
                 loss.backward()
-            for l, o in zip(seg_labels, seg_outs):
-                acc_metric.update(l, o)
+            # for l, o in zip(seg_labels, seg_outs):
+            #     acc_metric.update(l, o)
             trainer.step(batch_size)
             # Diff 5: sum losses over all devices
             seg_loss = []
