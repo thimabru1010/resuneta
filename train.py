@@ -118,7 +118,8 @@ def train_model(net, dataloader, batch_size, devices, epochs):
         epoch_total_loss['train'] = (epoch_total_loss['train'] / n_batches_tr) / 4
 
         # epoch_seg_acc['train'] /= n_batches_tr
-        epoch_seg_acc['train'] = acc_metric.get()
+        name, epoch_seg_acc['train'] = acc_metric.get()
+        print(name)
         acc_metric.reset()
 
         metrics_table = PrettyTable()
