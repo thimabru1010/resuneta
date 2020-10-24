@@ -29,7 +29,8 @@ def compute_mcc(tp, tn, fp, fn):
 
 def train_model(net, dataloader, batch_size, devices, epochs):
     # softmax_cross_entropy = gluon.loss.SoftmaxCrossEntropyLoss()
-    tanimoto = Tanimoto_with_dual()
+    # tanimoto = Tanimoto_with_dual()
+    tanimoto = gluon.loss.SoftmaxCrossEntropyLoss()
     acc_metric = mx.metric.Accuracy()
     trainer = gluon.Trainer(net.collect_params(), 'adam', {'learning_rate': 0.1})
     min_loss = float('inf')
