@@ -31,7 +31,7 @@ def train_model(net, dataloader, batch_size, devices, epochs):
     # softmax_cross_entropy = gluon.loss.SoftmaxCrossEntropyLoss()
     tanimoto = Tanimoto_with_dual()
     # tanimoto = gluon.loss.SoftmaxCELoss()
-    # acc_metric = mx.metric.Accuracy()
+    acc_metric = mx.metric.Accuracy()
     trainer = gluon.Trainer(net.collect_params(), 'adam', {'learning_rate': 0.1})
     min_loss = float('inf')
 
@@ -97,9 +97,9 @@ def train_model(net, dataloader, batch_size, devices, epochs):
             for loss in total_losses:
                 loss.backward()
             for l, o in zip(seg_labels, seg_outs):
-                seg_acc_res = (mx.nd.argmax(o, axis=1) == mx.nd.argmax(l, axis=1))
-                seg_corrects.append(mx.nd.sum(seg_acc_res, axis=[1, 2]))
-                # acc_metric.update(l, o)
+                # seg_acc_res = (mx.nd.argmax(o, axis=1) == mx.nd.argmax(l, axis=1))
+                # seg_corrects.append(mx.nd.sum(seg_acc_res, axis=[1, 2]))
+                acc_metric.update(l, o)
             trainer.step(batch_size)
             # Diff 5: sum losses over all devices
             seg_loss = []
@@ -121,10 +121,10 @@ def train_model(net, dataloader, batch_size, devices, epochs):
             epoch_color_loss['train'] += sum(color_loss)
             epoch_total_loss['train'] += sum(total_loss)
 
-            seg_acc = []
-            for seg_correct in seg_corrects:
-                seg_acc.append(seg_correct.sum().asscalar())
-            epoch_seg_acc['train'] += sum(seg_acc)
+            # seg_acc = []
+            # for seg_correct in seg_corrects:
+            #     seg_acc.append(seg_correct.sum().asscalar())
+            # epoch_seg_acc['train'] += sum(seg_acc)
         # After batch loop take the mean of batches losses
         n_batches_tr = len(dataloader['train'])
         epoch_seg_loss['train'] /= n_batches_tr
@@ -133,8 +133,8 @@ def train_model(net, dataloader, batch_size, devices, epochs):
         epoch_color_loss['train'] /= n_batches_tr
         epoch_total_loss['train'] = (epoch_total_loss['train'] / n_batches_tr) / 4
 
-        epoch_seg_acc['train'] = (epoch_seg_acc['train'] / n_batches_tr) / (batch_size * n_batches_tr * 256 * 256)
-        # _, epoch_seg_acc['train'] = acc_metric.get()
+        # epoch_seg_acc['train'] = (epoch_seg_acc['train'] / n_batches_tr) / (batch_size * n_batches_tr * 256 * 256)
+        _, epoch_seg_acc['train'] = acc_metric.get()
 
         metrics_table = PrettyTable()
         metrics_table.title = f'Epoch: {epoch}'
@@ -167,7 +167,7 @@ def train_model(net, dataloader, batch_size, devices, epochs):
                                0])
 
         print(metrics_table)
-        # acc_metric.reset()
+        acc_metric.reset()
 
 
 
