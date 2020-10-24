@@ -29,8 +29,8 @@ def compute_mcc(tp, tn, fp, fn):
 
 def train_model(net, dataloader, batch_size, devices, epochs):
     # softmax_cross_entropy = gluon.loss.SoftmaxCrossEntropyLoss()
-    # tanimoto = Tanimoto_with_dual()
-    tanimoto = gluon.loss.SoftmaxCrossEntropyLoss()
+    tanimoto = Tanimoto_with_dual()
+    # tanimoto = gluon.loss.SoftmaxCELoss()
     acc_metric = mx.metric.Accuracy()
     trainer = gluon.Trainer(net.collect_params(), 'adam', {'learning_rate': 0.1})
     min_loss = float('inf')
@@ -59,7 +59,8 @@ def train_model(net, dataloader, batch_size, devices, epochs):
             color_label_list = gluon.utils.split_and_load(label[:, 15:18, :, :], devices)
 
             print(f'data shape: {data.shape}')
-            print(f'data per gpu shape: {data_list.shape}')
+            print(f'data per gpu shape: {data_list}')
+            print(f'data per gpu shape: {len(data_list)}')
             # Diff 4: run forward and backward on each devices.
             # MXNet will automatically run them in parallel
             seg_losses = []
