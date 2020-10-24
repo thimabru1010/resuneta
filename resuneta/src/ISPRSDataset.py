@@ -99,7 +99,8 @@ class ISPRSDataset(dataset.Dataset):
             # Maybe mask_color will fucked up
             # masks = np.concatenate([mask_seg, mask_bound, mask_dist, mask_color], axis=-1)
             masks = np.stack([mask_seg, mask_bound, mask_dist], axis=-1)
-            # print(masks.shape)
+            print('dataset class')
+            print(masks.shape)
 
         # mask_seg = mask_seg.astype(np.float32)
         # mask_bound = mask_bound.astype(np.float32)
@@ -131,6 +132,7 @@ class ISPRSDataset(dataset.Dataset):
 
         if self.mtsk:
             base = self._transform(mx.nd.array(base.astype(np.float32)))
+            masks = np.concatenate([masks, mask_color], axis=-1)
             masks = self._transform(mx.nd.array(masks.astype(np.float32)))
             # return {'img': self._transform(base), 'seg': self._transform(masks[0]), 'bound': self._transform(masks[1]),
             #         'dist': self._transform(masks[2]), 'color': self._transform(mask_color)}
