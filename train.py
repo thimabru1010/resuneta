@@ -99,6 +99,8 @@ def train_model(net, dataloader, batch_size, devices, epochs):
             epoch_total_loss['train'] += sum(total_loss)
 
         # After batch loop take the mean of batches losses
+        print(len(dataloader['train']))
+        print(batch_size)
         n_batches_tr = len(dataloader['train'])/batch_size
         print(n_batches_tr)
         epoch_seg_loss['train'] /= n_batches_tr
