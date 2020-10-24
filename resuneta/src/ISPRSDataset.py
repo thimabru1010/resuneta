@@ -97,8 +97,9 @@ class ISPRSDataset(dataset.Dataset):
             mask_dist = np.load(mask_dist_filepath).astype(np.float32)
             mask_color = np.load(mask_color_filepath).astype(np.float32)
             # Maybe mask_color will fucked up
-            # masks = np.concatenate([mask_seg, mask_bound, mask_dist, mask_color], axis=-1)
-            masks = np.stack([mask_seg, mask_bound, mask_dist], axis=-1)
+            # H x W x 18
+            masks = np.concatenate([mask_seg, mask_bound, mask_dist, mask_color], axis=-1)
+            # masks = np.stack([mask_seg, mask_bound, mask_dist], axis=-1)
             print('dataset class')
             print(masks.shape)
 
@@ -122,17 +123,18 @@ class ISPRSDataset(dataset.Dataset):
             # masks = self._transform(masks)
             if self._norm is not None:
                 base = self._norm(base.astype(np.float32))
-                mask_color = mask_color * self.colornorm
+                # mask_color = mask_color * self.colornorm
+                masks[:, :, 15:17] = masks[:, :, 15:17] * self.colornorm
                 # mask_color = (mask_color.transpose([1, 2, 0]) * self.colornorm).transpose([2,0,1])
         else:
             if self._norm is not None:
                 base = self._norm(base.astype(np.float32))
-                mask_color = mask_color * self.colornorm
+                # mask_color = mask_color * self.colornorm
+                masks[:, :, 15:17] = masks[:, :, 15:17] * self.colornorm
                 # mask_color = (mask_color.transpose([1, 2, 0]) * self.colornorm).transpose([2,0,1])
 
         if self.mtsk:
             base = self._transform(mx.nd.array(base.astype(np.float32)))
-            masks = np.concatenate([masks, mask_color], axis=-1)
             masks = self._transform(mx.nd.array(masks.astype(np.float32)))
             # return {'img': self._transform(base), 'seg': self._transform(masks[0]), 'bound': self._transform(masks[1]),
             #         'dist': self._transform(masks[2]), 'color': self._transform(mask_color)}
