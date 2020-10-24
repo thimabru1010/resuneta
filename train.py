@@ -48,11 +48,11 @@ def train_model(net, dataloader, batch_size, devices, epochs):
         # Train loop
         for data in tqdm(dataloader['train'], desc="Train"):
             # Diff 3: split batch and load into corresponding devices (GPU)
-            data_list = gluon.utils.split_and_load(data['img'], devices)
-            seg_label_list = gluon.utils.split_and_load(data['seg'], devices)
-            bound_label_list = gluon.utils.split_and_load(data['bound'], devices)
-            dist_label_list = gluon.utils.split_and_load(data['dist'], devices)
-            color_label_list = gluon.utils.split_and_load(data['color'], devices)
+            data_list = gluon.utils.split_and_load(data[0], devices)
+            seg_label_list = gluon.utils.split_and_load(data[1], devices)
+            bound_label_list = gluon.utils.split_and_load(data[2], devices)
+            dist_label_list = gluon.utils.split_and_load(data[3], devices)
+            color_label_list = gluon.utils.split_and_load(data[4], devices)
             # Diff 4: run forward and backward on each devices.
             # MXNet will automatically run them in parallel
             seg_losses = []
