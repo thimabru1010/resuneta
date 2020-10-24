@@ -124,13 +124,13 @@ class ISPRSDataset(dataset.Dataset):
             if self._norm is not None:
                 base = self._norm(base.astype(np.float32))
                 # mask_color = mask_color * self.colornorm
-                masks[:, :, 15:17] = masks[:, :, 15:17] * self.colornorm
+                masks[:, :, 15:18] = masks[:, :, 15:18] * self.colornorm
                 # mask_color = (mask_color.transpose([1, 2, 0]) * self.colornorm).transpose([2,0,1])
         else:
             if self._norm is not None:
                 base = self._norm(base.astype(np.float32))
                 # mask_color = mask_color * self.colornorm
-                masks[:, :, 15:17] = masks[:, :, 15:17] * self.colornorm
+                masks[:, :, 15:18] = masks[:, :, 15:18] * self.colornorm
                 # mask_color = (mask_color.transpose([1, 2, 0]) * self.colornorm).transpose([2,0,1])
 
         if self.mtsk:
