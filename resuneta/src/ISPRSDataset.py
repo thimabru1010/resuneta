@@ -87,7 +87,7 @@ class ISPRSDataset(dataset.Dataset):
         #     base_hsv = base_hsv *self.colornorm
         #     base_hsv = base_hsv.transpose([2,0,1]).astype(np.float32)
 
-        base = base.astype(np.float32).transpose([1, 2, 0])
+        base = base.astype(np.float32)#.transpose([1, 2, 0])
         print(base.shape)
 
         # Maybe the masks shouldn't be float 32
