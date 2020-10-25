@@ -27,13 +27,15 @@ def compute_mcc(tp, tn, fp, fn):
     return mcc
 
 
-def train_model(net, dataloader, batch_size, devices, epochs):
+def train_model(args, net, dataloader, batch_size, devices, epochs, patience=10, delta=0.001):
+    # [TODO] substitute args parsers for variables
     # softmax_cross_entropy = gluon.loss.SoftmaxCrossEntropyLoss()
     tanimoto = Tanimoto_with_dual()
     # tanimoto = gluon.loss.SoftmaxCELoss()
     acc_metric = mx.metric.Accuracy()
     trainer = gluon.Trainer(net.collect_params(), 'adam', {'learning_rate': 1e-4})
     min_loss = float('inf')
+    early_cont = 0
 
     for epoch in range(epochs):
         epoch_seg_loss = {'train': 0.0, 'val': 0.0}
@@ -178,7 +180,6 @@ def train_model(net, dataloader, batch_size, devices, epochs):
         _, epoch_seg_acc['val'] = acc_metric.get()
 
         # Show metrics ---------------------------------------------------------
-
         metrics_table = PrettyTable()
         metrics_table.title = f'Epoch: {epoch}'
         metrics_table.field_names = ['Task', 'Loss', 'Val Loss',
@@ -203,7 +204,19 @@ def train_model(net, dataloader, batch_size, devices, epochs):
 
         print(metrics_table)
 
-
+        # Early stopping -------------------------------------------------------
+        if epoch_total_loss['val'] >= min_loss + delta:
+            early_cont += 1
+            print(f'EarlyStopping counter: {early_cont} out of {patience}')
+            if early_cont >= patience:
+                print("Early Stopping! \t Training Stopped")
+                break
+        else:
+            early_cont = 0
+            min_loss = epoch_total_loss['val']
+            print("Saving best model...")
+            net.save_parameters(os.path.join(args.results_path,
+                                             'best_model.params'))
 
 
 # End functions definition -----------------------------------------------------
