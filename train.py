@@ -238,7 +238,7 @@ if __name__ == '__main__':
                         help="Learning rate on training",
                         type=float, default=1e-4)
     parser.add_argument("--loss", help="choose which loss you want to use",
-                        type=str, default='weighted_cross_entropy',
+                        type=str, default='tanimoto',
                         choices=['weighted_cross_entropy', 'cross_entropy',
                                  'tanimoto'])
     parser.add_argument("-optm", "--optimizer",
