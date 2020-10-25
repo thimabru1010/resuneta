@@ -54,10 +54,12 @@ class Normalize(object):
     def restore(self, normed_img):
         # Watch out the transpose here
 
-        d2 = normed_img.T * self._std
+        d2 = normed_img * self._std
         d2 = d2 + self._mean
-        d2 = d2.T
+        # d2 = normed_img + self._mean
+        # d2 = d2 * 2
+        d2 = d2
         d2 = np.round(d2)
-        d2 = d2.astype('uint8')
+        d2 = d2.astype(np.uint8)
 
         return d2

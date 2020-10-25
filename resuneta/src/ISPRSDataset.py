@@ -18,6 +18,8 @@ from mxnet.gluon.data import dataset
 import cv2
 import mxnet as mx
 
+import matplotlib.pyplot as plt
+
 class ISPRSDataset(dataset.Dataset):
     def __init__(self, root, mode='train', mtsk=True, color=True, transform=None, norm=None):
 
@@ -99,9 +101,6 @@ class ISPRSDataset(dataset.Dataset):
             # Maybe mask_color will fucked up
             # H x W x 18
             masks = np.concatenate([mask_seg, mask_bound, mask_dist, mask_color], axis=-1)
-            # masks = np.stack([mask_seg, mask_bound, mask_dist], axis=-1)
-            # print('dataset class')
-            # print(masks.shape)
 
         # mask_seg = mask_seg.astype(np.float32)
         # mask_bound = mask_bound.astype(np.float32)
@@ -118,12 +117,11 @@ class ISPRSDataset(dataset.Dataset):
 
         # Maybe there is an error here
         if self._transform is not None:
-            # base, masks = self._transform(base, masks)
+            base, masks = self._transform(base, masks)
             # base = self._transform(base)
             # masks = self._transform(masks)
             if self._norm is not None:
                 base = self._norm(base.astype(np.float32))
-                # mask_color = mask_color * self.colornorm
                 masks[:, :, 15:18] = masks[:, :, 15:18] * self.colornorm
                 # mask_color = (mask_color.transpose([1, 2, 0]) * self.colornorm).transpose([2,0,1])
         else:
@@ -134,14 +132,11 @@ class ISPRSDataset(dataset.Dataset):
                 # mask_color = (mask_color.transpose([1, 2, 0]) * self.colornorm).transpose([2,0,1])
 
         if self.mtsk:
-            base = self._transform(mx.nd.array(base.astype(np.float32)))
-            masks = self._transform(mx.nd.array(masks.astype(np.float32)))
-            # return {'img': self._transform(base), 'seg': self._transform(masks[0]), 'bound': self._transform(masks[1]),
-            #         'dist': self._transform(masks[2]), 'color': self._transform(mask_color)}
-            # data = [self._transform(base), self._transform(masks[0]), self._transform(masks[1]), self._transform(masks[2]), self._transform(mask_color)]
-            return base, masks
+            # Don't need to cast to Mxnet tensor. Dataset does this alone
+            # Beware of casting with transforms. Zero the image. Leads to an error.
+            return base.astype(np.float32).transpose((2, 0, 1)), masks.astype(np.float32).transpose((2, 0, 1))
         else:
-            return base.astype(np.float32), mask_seg.astype(np.float32)
+            return base.astype(np.float32).transpose((2, 0, 1)), mask_seg.astype(np.float32).transpose((2, 0, 1))
 
     def __len__(self):
         return len(self.img_names)

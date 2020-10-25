@@ -21,8 +21,10 @@ from mxnet.gluon.data.vision import transforms
 
 # from resuneta.models.resunet_d7_causal_mtskcolor_ddist import *
 from resuneta.models.resunet_d6_causal_mtskcolor_ddist import ResUNet_d6
-# from resuneta.nn.loss.loss import *
+from utils import load_npy_image, get_boundary_label, get_distance_label
 from tqdm import tqdm
+import matplotlib.pyplot as plt
+from tensorflow.keras.utils import to_categorical
 
 def Test(model, patches, args):
     num_patches, weight, height, _ = patches.shape
@@ -51,7 +53,7 @@ def pred_recostruction(patch_size, pred_labels, binary_img_test_ref, img_type=1)
     if img_type == 1:
         stride = patch_size
 
-        height, width = binary_img_test_ref.shape
+        _, height, width = binary_img_test_ref.shape
 
         num_patches_h = height // stride
         num_patches_w = width // stride
@@ -145,17 +147,20 @@ args = parser.parse_args()
 
 root_path = args.dataset_path
 
+img_test_ref_path = 'Reference_Test.npy'
+img_test_ref = load_npy_image(os.path.join('DATASETS/ISPRS_npy', img_test_ref_path))
 # Dictionary used in training
 label_dict = {'(255, 255, 255)': 0, '(0, 255, 0)': 1,
               '(0, 255, 255)': 2, '(0, 0, 255)': 3, '(255, 255, 0)': 4}
 
 # Load model
 ctx = mx.gpu(0)
+# ctx = mx.cpu()
 nfilters_init = 32
 Nbatch = 8
 net = ResUNet_d6(nfilters_init, args.num_classes)
-# net.initialize()
-# net.collect_params().initialize(force_reinit=True, ctx=ctx)
+net.initialize()
+net.collect_params().initialize(force_reinit=True, ctx=ctx)
 net.load_parameters(args.model_path, ctx=ctx)
 # net.summary(mx.nd.random.uniform(shape=(Nbatch, 3, 256, 256)))
 net.hybridize()
@@ -164,45 +169,86 @@ tnorm = Normalize()
 ttrans = transforms.Compose([transforms.ToTensor()])
 
 dataset = ISPRSDataset(root=args.dataset_path, mode='train', color=True, mtsk=True, norm=tnorm, transform=ttrans)
-datagen = gluon.data.DataLoader(dataset, batch_size=Nbatch, shuffle=True)
+datagen = gluon.data.DataLoader(dataset, batch_size=Nbatch, shuffle=False)
 
 preds = []
-seg_preds = np.zeros((len(datagen), Nbatch, args.num_classes, args.patch_size, args.patch_size))
-for i, data in tqdm(enumerate(datagen)):
+# seg_preds = np.zeros((len(datagen), Nbatch, args.num_classes, args.patch_size, args.patch_size))
+seg_preds = []
+bound_preds = []
+dist_preds = []
+color_preds = []
+seg_refs = []
+patches_test = []
+for i, data in enumerate(tqdm(datagen)):
     imgs, label = data
+    print(imgs.shape)
+    # # rest_img = tnorm.restore(imgs[0].asnumpy().transpose((1, 2, 0)))
+    # rest_img = tnorm.restore(imgs[0].asnumpy())
+    # print(rest_img.shape)
+    # plt.imshow(rest_img)
+    # plt.show()
     with autograd.predict_mode():
-        preds1, preds2, preds3, preds4 = net(imgs.copyto(mx.gpu(0)))
-        preds.append([preds1, preds2, preds3, preds4])
-        # seg_preds.append(preds1)
-        print(preds1)
-        seg_preds[i] = preds1.copyto(mx.cpu())
+        #preds1, preds2, preds3, preds4 = net(imgs)
+        preds1, preds2, preds3, preds4 = net(imgs.copyto(ctx))
+        preds.append([preds1.asnumpy(), preds2.asnumpy(), preds3.asnumpy(), preds4.asnumpy()])
+        #print(preds1)
+        print(preds1.shape)
+        seg_preds.append(preds1.asnumpy())
+        bound_preds.append(preds2.asnumpy())
+        dist_preds.append(preds3.asnumpy())
+        color_preds.append(preds4.asnumpy())
+        # print(preds1)
+        # seg_preds[i] = preds1.copyto(mx.cpu())
 
         seg_label = label[:, 0:5, :, :]
         bound_label = label[:, 5:10, :, :]
         dist_label = label[:, 10:15, :, :]
         color_label = label[:, 15:18, :, :]
 
+        seg_refs.append(seg_label.asnumpy())
+        patches_test.append(imgs.asnumpy())
+
 # Prediction
 # patches_pred = Test(model, patches_test, args)
 print('='*40)
 print(len(datagen))
 print('[TEST]')
-# print(preds.shape)
+seg_preds = np.array(seg_preds)
+print(seg_preds.shape)
+seg_preds = np.concatenate(seg_preds, axis=0)
+print(seg_preds.shape)
 print(len(preds))
 print(len(preds[0]))
 print(type(preds[0]))
 print(preds[0][0].shape)
 
+seg_refs = np.array(seg_refs)
+seg_refs = np.concatenate(seg_refs, axis=0)
+seg_refs = seg_refs.transpose((0, 2, 3, 1))
+patches_test_ref = np.argmax(seg_refs, axis=-1)
+
+def gather_preds(pred, img_type=1):
+    pred = np.array(pred)
+    pred = np.concatenate(pred, axis=0)
+    pred = pred.transpose((0, 2, 3, 1))
+    if img_type == 1:
+        new_pred = np.argmax(pred, axis=-1)
+        return new_pred
+    else:
+        return pred
+
 if args.use_multitasking:
-    seg_preds = preds[0]
+    seg_preds = seg_preds.transpose((0, 2, 3, 1))
     print(f'seg shape: {seg_preds.shape}')
     seg_pred = np.argmax(seg_preds, axis=-1)
     print(f'seg shape argmax: {seg_pred.shape}')
-    patches_pred = [preds[0], preds[1], preds[2], preds[3]]
+    patches_pred = [seg_preds, gather_preds(bound_preds, 2), gather_preds(dist_preds, 2), gather_preds(color_preds, 2)]
 else:
     seg_pred = patches_pred
 
 # Metrics
+print(patches_test_ref.shape)
+print(seg_pred.shape)
 true_labels = np.reshape(patches_test_ref, (patches_test_ref.shape[0] *
                                             patches_test_ref.shape[1] *
                                             patches_test_ref.shape[2]))
@@ -222,17 +268,23 @@ print('F1score: ', metrics[1])
 print('Recall: ', metrics[2])
 print('Precision: ', metrics[3])
 
-# Reconstruct entire image segmentation predction
-img_reconstructed = pred_recostruction(args.patch_size, seg_pred,
-                                       binary_img_test_ref, img_type=1)
-img_reconstructed_rgb = convert_preds2rgb(img_reconstructed,
-                                          label_dict)
+# # Reconstruct entire image segmentation predction
+# img_reconstructed = pred_recostruction(args.patch_size, seg_pred,
+#                                        img_test_ref, img_type=1)
+# img_reconstructed_rgb = convert_preds2rgb(img_reconstructed,
+#                                           label_dict)
+#
+# if not os.path.exists(args.output_path):
+#     os.makedirs(args.output_path)
+#
+# plt.imsave(os.path.join(args.output_path, 'pred_seg_reconstructed.jpeg'),
+#            img_reconstructed_rgb)
 
-if not os.path.exists(args.output_path):
-    os.makedirs(args.output_path)
+print('Image Saved!')
 
-plt.imsave(os.path.join(args.output_path, 'pred_seg_reconstructed.jpeg'),
-           img_reconstructed_rgb)
+patches_test = gather_preds(patches_test, img_type=2)
+print(patches_test.shape)
+# patches_test = tnorm.restore(patches_test)
 
 # Visualize inference per class
 if args.use_multitasking:
@@ -243,9 +295,12 @@ if args.use_multitasking:
         # class and has its predictions of each task
         fig1, axes = plt.subplots(nrows=args.num_classes, ncols=7, figsize=(15, 10))
         img = patches_test[i]
-        img = (img * np.array([255, 255, 255])).astype(np.uint8)
+        # img = (img * np.array([255, 255, 255])).astype(np.uint8)
+        # print(img)
+        img = tnorm.restore(img)
+
         img_ref = patches_test_ref[i]
-        img_ref_h = tf.keras.utils.to_categorical(img_ref, args.num_classes)
+        img_ref_h = to_categorical(img_ref, args.num_classes)
         bound_ref_h = get_boundary_label(img_ref_h)
         dist_ref_h = get_distance_label(img_ref_h)
         # Put the first plot as the patch to be observed on each row
@@ -300,12 +355,6 @@ if args.use_multitasking:
         hsv_patch = (hsv_pred * np.array([179, 255, 255])).astype(np.uint8)
         rgb_patch = cv2.cvtColor(hsv_patch, cv2.COLOR_HSV2RGB)
         ax2.imshow(rgb_patch)
-        # ax3.set_title('Difference between both')
-        # diff = np.mean(rgb_patch - img, axis=-1)
-        # diff = 2*(diff-diff.min())/(diff.max()-diff.min()) - np.ones_like(diff)
-        # # ax3.imshow(img - rgb_patch)
-        # im = ax3.imshow(diff, cmap=cm.Greys_r)
-        # colorbar(im, ax3, fig2)
         ax3.set_title('Difference between both')
         hsv_label = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
         diff = np.mean(hsv_patch - hsv_label, axis=-1)
