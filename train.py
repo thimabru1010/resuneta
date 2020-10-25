@@ -330,4 +330,4 @@ if __name__ == '__main__':
     logger.info(f'Validating on {len(val_dataset)} images')
     print('='*40)
 
-    train_model(net, dataloader, args.batch_size, devices, args.epochs)
+    train_model(args, net, dataloader, args.batch_size, devices, args.epochs)
