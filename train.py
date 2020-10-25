@@ -20,9 +20,9 @@ def train_model(args, net, dataloader, batch_size, devices, epochs, patience=10,
     # [TODO] substitute args parsers for variables
     # softmax_cross_entropy = gluon.loss.SoftmaxCrossEntropyLoss()
     if args.loss == 'tanimoto':
-        loss = Tanimoto_with_dual()
+        loss_f = Tanimoto_with_dual()
     elif args.loss == 'cross_entropy':
-        loss = gluon.loss.SoftmaxCELoss(axis=1, sparse_label=False)
+        loss_f = gluon.loss.SoftmaxCELoss(axis=1, sparse_label=False)
     acc_metric = mx.metric.Accuracy()
     trainer = gluon.Trainer(net.collect_params(), 'adam', {'learning_rate': 1e-4})
     min_loss = float('inf')
@@ -65,10 +65,10 @@ def train_model(args, net, dataloader, batch_size, devices, epochs, patience=10,
                 for i, data in enumerate(zip(data_list, seg_label_list, bound_label_list, dist_label_list, color_label_list)):
                     X, y_seg, y_bound, y_dist, y_color = data
                     seg_logits, bound_logits, dist_logits, color_logits = net(X)
-                    seg_losses.append(loss(seg_logits, y_seg))
-                    bound_losses.append(loss(bound_logits, y_bound))
-                    dist_losses.append(loss(dist_logits, y_dist))
-                    color_losses.append(loss(color_logits, y_color))
+                    seg_losses.append(loss_f(seg_logits, y_seg))
+                    bound_losses.append(loss_f(bound_logits, y_bound))
+                    dist_losses.append(loss_f(dist_logits, y_dist))
+                    color_losses.append(loss_f(color_logits, y_color))
                     total_losses.append(seg_losses[i] + args.wbound*bound_losses[i] + args.wdist*dist_losses[i] + args.wcolor*color_losses[i])
 
                     acc_metric.update(mx.nd.argmax(seg_logits, axis=1), mx.nd.argmax(y_seg, axis=1))
@@ -129,10 +129,10 @@ def train_model(args, net, dataloader, batch_size, devices, epochs, patience=10,
             for i, data in enumerate(zip(data_list, seg_label_list, bound_label_list, dist_label_list, color_label_list)):
                 X, y_seg, y_bound, y_dist, y_color = data
                 seg_logits, bound_logits, dist_logits, color_logits = net(X)
-                seg_losses.append(loss(seg_logits, y_seg))
-                bound_losses.append(loss(bound_logits, y_bound))
-                dist_losses.append(loss(dist_logits, y_dist))
-                color_losses.append(loss(color_logits, y_color))
+                seg_losses.append(loss_f(seg_logits, y_seg))
+                bound_losses.append(loss_f(bound_logits, y_bound))
+                dist_losses.append(loss_f(dist_logits, y_dist))
+                color_losses.append(loss_f(color_logits, y_color))
                 total_losses.append(seg_losses[i] + args.wbound*bound_losses[i] + args.wdist*dist_losses[i] + args.wcolor*color_losses[i])
 
                 acc_metric.update(mx.nd.argmax(seg_logits, axis=1), mx.nd.argmax(y_seg, axis=1))
