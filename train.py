@@ -22,7 +22,7 @@ def train_model(args, net, dataloader, batch_size, devices, epochs, patience=10,
     if args.loss == 'tanimoto':
         loss = Tanimoto_with_dual()
     elif args.loss == 'cross_entropy':
-        loss = gluon.loss.SoftmaxCELoss(axis=1)
+        loss = gluon.loss.SoftmaxCELoss(axis=1, sparse_label=False)
     acc_metric = mx.metric.Accuracy()
     trainer = gluon.Trainer(net.collect_params(), 'adam', {'learning_rate': 1e-4})
     min_loss = float('inf')
