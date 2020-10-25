@@ -190,13 +190,13 @@ def train_model(net, dataloader, batch_size, devices, epochs):
                                round(100*epoch_seg_acc['val'], 5)])
 
         metrics_table.add_row(['Bound', round(epoch_bound_loss['train'], 5),
-                              round(epoch_bound_loss['val'], 5), 0, 0])
+                               round(epoch_bound_loss['val'], 5), 0, 0])
 
         metrics_table.add_row(['Dist', round(epoch_dist_loss['train'], 5),
                                round(epoch_dist_loss['val'], 5), 0, 0])
 
         metrics_table.add_row(['Color', round(epoch_color_loss['train'], 5),
-                            round(epoch_color_loss['val'], 0, 0])
+                               round(epoch_color_loss['val'], 5) 0, 0])
 
         metrics_table.add_row(['Total', round(epoch_total_loss['train'], 5),
                                round(epoch_total_loss['val'], 5), 0, 0])
