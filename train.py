@@ -118,7 +118,7 @@ def train_model(net, dataloader, batch_size, devices, epochs):
         acc_metric.reset()
 
         # Validation loop ------------------------------------------------------
-        for data, label in dataloader['val']:
+        for data, label in tqdm(dataloader['val'], desc="Val"):
             data_list = gluon.utils.split_and_load(data, devices)
             seg_label_list = gluon.utils.split_and_load(label[:, 0:5, :, :], devices)
             bound_label_list = gluon.utils.split_and_load(label[:, 5:10, :, :], devices)
@@ -201,7 +201,7 @@ def train_model(net, dataloader, batch_size, devices, epochs):
         metrics_table.add_row(['Total', round(epoch_total_loss['train'], 5),
                                round(epoch_total_loss['val'], 5), 0, 0])
 
-        logger.info(metrics_table)
+        logger.info("\n" + metrics_table)
 
 
 
