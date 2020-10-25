@@ -11,17 +11,6 @@ import os
 from prettytable import PrettyTable
 from tqdm import tqdm
 
-def str2bool(v):
-    if isinstance(v, bool):
-       return v
-    if v.lower() in ('yes', 'true', 't', 'y', '1'):
-        return True
-    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
-        return False
-    else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
-
-
 def compute_mcc(tp, tn, fp, fn):
     mcc = (tp*tn - fp*fn) / tf.math.sqrt((tp + fp)*(tp + fn)*(tn + fp)*(tn+fn))
     return mcc
@@ -30,8 +19,10 @@ def compute_mcc(tp, tn, fp, fn):
 def train_model(args, net, dataloader, batch_size, devices, epochs, patience=10, delta=0.001):
     # [TODO] substitute args parsers for variables
     # softmax_cross_entropy = gluon.loss.SoftmaxCrossEntropyLoss()
-    tanimoto = Tanimoto_with_dual()
-    # tanimoto = gluon.loss.SoftmaxCELoss()
+    if args.loss == 'tanimoto':
+        loss = Tanimoto_with_dual()
+    elif args.loss == 'cross_entropy':
+        loss = gluon.loss.SoftmaxCELoss()
     acc_metric = mx.metric.Accuracy()
     trainer = gluon.Trainer(net.collect_params(), 'adam', {'learning_rate': 1e-4})
     min_loss = float('inf')
@@ -55,6 +46,7 @@ def train_model(args, net, dataloader, batch_size, devices, epochs, patience=10,
             # Diff 3: split batch and load into corresponding devices (GPU)
             data_list = gluon.utils.split_and_load(data, devices)
             seg_label_list = gluon.utils.split_and_load(label[:, 0:5, :, :], devices)
+            # if args.multitasking:
             bound_label_list = gluon.utils.split_and_load(label[:, 5:10, :, :], devices)
             dist_label_list = gluon.utils.split_and_load(label[:, 10:15, :, :], devices)
             color_label_list = gluon.utils.split_and_load(label[:, 15:18, :, :], devices)
@@ -73,11 +65,11 @@ def train_model(args, net, dataloader, batch_size, devices, epochs, patience=10,
                 for i, data in enumerate(zip(data_list, seg_label_list, bound_label_list, dist_label_list, color_label_list)):
                     X, y_seg, y_bound, y_dist, y_color = data
                     seg_logits, bound_logits, dist_logits, color_logits = net(X)
-                    seg_losses.append(tanimoto(seg_logits, y_seg))
-                    bound_losses.append(tanimoto(bound_logits, y_bound))
-                    dist_losses.append(tanimoto(dist_logits, y_dist))
-                    color_losses.append(tanimoto(color_logits, y_color))
-                    total_losses.append(seg_losses[i] + bound_losses[i] + dist_losses[i] + color_losses[i])
+                    seg_losses.append(loss(seg_logits, y_seg))
+                    bound_losses.append(loss(bound_logits, y_bound))
+                    dist_losses.append(loss(dist_logits, y_dist))
+                    color_losses.append(loss(color_logits, y_color))
+                    total_losses.append(seg_losses[i] + args.wbound*bound_losses[i] + args.wdist*dist_losses[i] + args.wcolor*color_losses[i])
 
                     acc_metric.update(mx.nd.argmax(seg_logits, axis=1), mx.nd.argmax(y_seg, axis=1))
             for loss in total_losses:
@@ -137,11 +129,11 @@ def train_model(args, net, dataloader, batch_size, devices, epochs, patience=10,
             for i, data in enumerate(zip(data_list, seg_label_list, bound_label_list, dist_label_list, color_label_list)):
                 X, y_seg, y_bound, y_dist, y_color = data
                 seg_logits, bound_logits, dist_logits, color_logits = net(X)
-                seg_losses.append(tanimoto(seg_logits, y_seg))
-                bound_losses.append(tanimoto(bound_logits, y_bound))
-                dist_losses.append(tanimoto(dist_logits, y_dist))
-                color_losses.append(tanimoto(color_logits, y_color))
-                total_losses.append(seg_losses[i] + bound_losses[i] + dist_losses[i] + color_losses[i])
+                seg_losses.append(loss(seg_logits, y_seg))
+                bound_losses.append(loss(bound_logits, y_bound))
+                dist_losses.append(loss(dist_logits, y_dist))
+                color_losses.append(loss(color_logits, y_color))
+                total_losses.append(seg_losses[i] + args.wbound*bound_losses[i] + args.wdist*dist_losses[i] + args.wcolor*color_losses[i])
 
                 acc_metric.update(mx.nd.argmax(seg_logits, axis=1), mx.nd.argmax(y_seg, axis=1))
 
@@ -226,8 +218,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # parser.add_argument("--resunet_a", help="choose resunet-a model or not",
     #                     type=str2bool, default=False)
-    # parser.add_argument("--multitasking", help="choose resunet-a multitasking \
-    #                     or not", type=str2bool, default=False)
+    parser.add_argument("--multitasking", help="choose resunet-a multitasking \
+                        or not", action='store_true', default=True)
     parser.add_argument("--debug", help="choose if you want to shoe debug logs",
                         action='store_true', default=False)
     parser.add_argument("--norm_path", help="Load a txt with normalization you want to apply.",
@@ -245,10 +237,10 @@ if __name__ == '__main__':
     parser.add_argument("-lr", "--learning_rate",
                         help="Learning rate on training",
                         type=float, default=1e-4)
-    # parser.add_argument("--loss", help="choose which loss you want to use",
-    #                     type=str, default='weighted_cross_entropy',
-    #                     choices=['weighted_cross_entropy', 'cross_entropy',
-    #                              'tanimoto'])
+    parser.add_argument("--loss", help="choose which loss you want to use",
+                        type=str, default='weighted_cross_entropy',
+                        choices=['weighted_cross_entropy', 'cross_entropy',
+                                 'tanimoto'])
     parser.add_argument("-optm", "--optimizer",
                         help="Choose which optmizer to use",
                         type=str, choices=['adam', 'sgd'], default='adam')
@@ -256,14 +248,14 @@ if __name__ == '__main__':
                          type=int, default=5)
     parser.add_argument("--epochs", help="Number of epochs",
                         type=int, default=500)
-    # parser.add_argument("-ps", "--patch_size", help="Size of patches extracted",
-    #                     type=int, default=256)
-    # parser.add_argument("--bound_weight", help="Boundary loss weight",
-    #                     type=float, default=1.0)
-    # parser.add_argument("--dist_weight", help="Distance transform loss weight",
-    #                     type=float, default=1.0)
-    # parser.add_argument("--color_weight", help="HSV transform loss weight",
-    #                     type=float, default=1.0)
+    parser.add_argument("-ps", "--patch_size", help="Size of patches extracted",
+                        type=int, default=256)
+    parser.add_argument("--wbound", help="Boundary loss weight",
+                        type=float, default=1.0)
+    parser.add_argument("--wdist", help="Distance transform loss weight",
+                        type=float, default=1.0)
+    parser.add_argument("--wcolor", help="HSV transform loss weight",
+                        type=float, default=1.0)
     args = parser.parse_args()
 
     if not os.path.exists(os.path.join(args.results_path)):
@@ -303,7 +295,7 @@ if __name__ == '__main__':
 
     net.hybridize()
 
-    logger.info(f'Devices found: {devices}')
+    logger.info(f' {len(devices)} Devices found: {devices}')
 
     transformer = transforms.Compose([
         transforms.ToTensor()])

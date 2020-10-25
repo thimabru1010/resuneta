@@ -141,7 +141,8 @@ print('='*50)
 
 root_path = './DATASETS/ISPRS_npy'
 # Load images
-img_train_path = 'Image_Train.npy'
+# img_train_path = 'Image_Train.npy'
+img_train_path = 'Image_Test.npy'
 img_train = load_npy_image(os.path.join(root_path,
                                         img_train_path))
 # Convert shape from C x H x W --> H x W x C
@@ -151,7 +152,8 @@ print('Imagem RGB')
 print(img_train.shape)
 
 # Load reference
-img_train_ref_path = 'Reference_Train.npy'
+# img_train_ref_path = 'Reference_Train.npy'
+img_train_ref_path = 'Reference_Test.npy'
 img_train_ref = load_npy_image(os.path.join(root_path, img_train_ref_path))
 # Convert from C x H x W --> H x W x C
 img_train_ref = img_train_ref.transpose((1, 2, 0))
