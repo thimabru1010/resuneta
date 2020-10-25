@@ -201,7 +201,7 @@ def train_model(net, dataloader, batch_size, devices, epochs):
         metrics_table.add_row(['Total', round(epoch_total_loss['train'], 5),
                                round(epoch_total_loss['val'], 5), 0, 0])
 
-        logger.info("\n" + metrics_table)
+        print(metrics_table)
 
 
 
