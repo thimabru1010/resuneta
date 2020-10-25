@@ -65,8 +65,6 @@ def train_model(net, dataloader, batch_size, devices, epochs):
             color_losses = []
             total_losses = []
 
-            seg_outs = []
-            seg_labels = []
             with autograd.record():
                 # Gather results from all devices into a single list
                 for i, data in enumerate(zip(data_list, seg_label_list, bound_label_list, dist_label_list, color_label_list)):
@@ -81,15 +79,9 @@ def train_model(net, dataloader, batch_size, devices, epochs):
                     seg_outs.append(seg_logits)
                     seg_labels.append(y_seg)
 
-                    # seg_acc_res = (mx.nd.argmax(seg_logits, axis=1) == mx.nd.argmax(y_seg, axis=1))
-                    # seg_corrects.append(mx.nd.sum(seg_acc_res, axis=[1, 2]))
                     acc_metric.update(mx.nd.argmax(seg_logits, axis=1), mx.nd.argmax(y_seg, axis=1))
             for loss in total_losses:
                 loss.backward()
-            # for l, o in zip(seg_labels, seg_outs):
-            #     seg_acc_res = (mx.nd.argmax(o, axis=1) == mx.nd.argmax(l, axis=1))
-            #     seg_corrects.append(mx.nd.sum(seg_acc_res, axis=[1, 2]))
-            #     acc_metric.update(mx.nd.argmax(o, axis=1), mx.nd.argmax(l, axis=1))
             trainer.step(batch_size)
             # Diff 5: sum losses over all devices
             seg_loss = []
@@ -123,7 +115,6 @@ def train_model(net, dataloader, batch_size, devices, epochs):
         epoch_color_loss['train'] /= n_batches_tr
         epoch_total_loss['train'] = (epoch_total_loss['train'] / n_batches_tr) / 4
 
-        # epoch_seg_acc['train'] = (epoch_seg_acc['train'] / n_batches_tr) / (batch_size * n_batches_tr * 256 * 256)
         _, epoch_seg_acc['train'] = acc_metric.get()
 
         # Validation loop ------------------------------------------------------
