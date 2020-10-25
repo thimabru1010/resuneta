@@ -32,7 +32,7 @@ def train_model(net, dataloader, batch_size, devices, epochs):
     tanimoto = Tanimoto_with_dual()
     # tanimoto = gluon.loss.SoftmaxCELoss()
     acc_metric = mx.metric.Accuracy()
-    trainer = gluon.Trainer(net.collect_params(), 'adam', {'learning_rate': 0.1})
+    trainer = gluon.Trainer(net.collect_params(), 'adam', {'learning_rate': 1e-4})
     min_loss = float('inf')
 
     for epoch in range(epochs):
@@ -44,6 +44,7 @@ def train_model(net, dataloader, batch_size, devices, epochs):
         epoch_total_loss = {'train': 0.0, 'val': 0.0}
 
         epoch_seg_acc = {'train': 0.0, 'val': 0.0}
+        acc_metric.reset()
         # MCC is calculated for validation only
         epoch_seg_mcc = 0.0
 
@@ -76,9 +77,6 @@ def train_model(net, dataloader, batch_size, devices, epochs):
                     color_losses.append(tanimoto(color_logits, y_color))
                     total_losses.append(seg_losses[i] + bound_losses[i] + dist_losses[i] + color_losses[i])
 
-                    seg_outs.append(seg_logits)
-                    seg_labels.append(y_seg)
-
                     acc_metric.update(mx.nd.argmax(seg_logits, axis=1), mx.nd.argmax(y_seg, axis=1))
             for loss in total_losses:
                 loss.backward()
@@ -107,6 +105,7 @@ def train_model(net, dataloader, batch_size, devices, epochs):
             for seg_correct in seg_corrects:
                 seg_acc.append(seg_correct.sum().asscalar())
             epoch_seg_acc['train'] += sum(seg_acc)
+
         # After batch loop take the mean of batches losses
         n_batches_tr = len(dataloader['train'])
         epoch_seg_loss['train'] /= n_batches_tr
@@ -116,9 +115,69 @@ def train_model(net, dataloader, batch_size, devices, epochs):
         epoch_total_loss['train'] = (epoch_total_loss['train'] / n_batches_tr) / 4
 
         _, epoch_seg_acc['train'] = acc_metric.get()
+        acc_metric.reset()
 
         # Validation loop ------------------------------------------------------
-        # for data, label in dataloader['val']:
+        for data, label in dataloader['val']:
+            data_list = gluon.utils.split_and_load(data, devices)
+            seg_label_list = gluon.utils.split_and_load(label[:, 0:5, :, :], devices)
+            bound_label_list = gluon.utils.split_and_load(label[:, 5:10, :, :], devices)
+            dist_label_list = gluon.utils.split_and_load(label[:, 10:15, :, :], devices)
+            color_label_list = gluon.utils.split_and_load(label[:, 15:18, :, :], devices)
+
+            seg_losses = []
+            seg_corrects = []
+            bound_losses = []
+            dist_losses = []
+            color_losses = []
+            total_losses = []
+
+            for i, data in enumerate(zip(data_list, seg_label_list, bound_label_list, dist_label_list, color_label_list)):
+                X, y_seg, y_bound, y_dist, y_color = data
+                seg_logits, bound_logits, dist_logits, color_logits = net(X)
+                seg_losses.append(tanimoto(seg_logits, y_seg))
+                bound_losses.append(tanimoto(bound_logits, y_bound))
+                dist_losses.append(tanimoto(dist_logits, y_dist))
+                color_losses.append(tanimoto(color_logits, y_color))
+                total_losses.append(seg_losses[i] + bound_losses[i] + dist_losses[i] + color_losses[i])
+
+                acc_metric.update(mx.nd.argmax(seg_logits, axis=1), mx.nd.argmax(y_seg, axis=1))
+
+            seg_loss = []
+            bound_loss = []
+            dist_loss = []
+            color_loss = []
+            total_loss = []
+            for l_seg, l_bound, l_dist, l_color, l_total in zip(seg_losses, bound_losses, dist_losses, color_losses, total_losses):
+                # Sums for each device batch
+                seg_loss.append(l_seg.sum().asscalar())
+                bound_loss.append(l_bound.sum().asscalar())
+                dist_loss.append(l_dist.sum().asscalar())
+                color_loss.append(l_color.sum().asscalar())
+                total_loss.append(l_total.sum().asscalar())
+            # Sum loss from all inferences on the batch
+            epoch_seg_loss['val'] += sum(seg_loss)
+            epoch_bound_loss['val'] += sum(bound_loss)
+            epoch_dist_loss['val'] += sum(dist_loss)
+            epoch_color_loss['val'] += sum(color_loss)
+            epoch_total_loss['val'] += sum(total_loss)
+
+            seg_acc = []
+            for seg_correct in seg_corrects:
+                seg_acc.append(seg_correct.sum().asscalar())
+            epoch_seg_acc['val'] += sum(seg_acc)
+
+        # After batch loop take the mean of batches losses
+        n_batches_val = len(dataloader['val'])
+        epoch_seg_loss['val'] /= n_batches_val
+        epoch_bound_loss['val'] /= n_batches_val
+        epoch_dist_loss['val'] /= n_batches_val
+        epoch_color_loss['val'] /= n_batches_val
+        epoch_total_loss['val'] = (epoch_total_loss['val'] / n_batches_val) / 4
+
+        _, epoch_seg_acc['val'] = acc_metric.get()
+
+        # Show metrics ---------------------------------------------------------
 
         metrics_table = PrettyTable()
         metrics_table.title = f'Epoch: {epoch}'
@@ -126,32 +185,23 @@ def train_model(net, dataloader, batch_size, devices, epochs):
                                      'Acc %', 'Val Acc %']
 
         metrics_table.add_row(['Seg', round(epoch_seg_loss['train'], 5),
-                               0,
+                               round(epoch_seg_loss['val'], 5),
                                round(100*epoch_seg_acc['train'], 5),
-                               0])
+                               round(100*epoch_seg_acc['val'], 5)])
 
         metrics_table.add_row(['Bound', round(epoch_bound_loss['train'], 5),
-                              0,
-                              0,
-                              0])
+                              round(epoch_bound_loss['val'], 5), 0, 0])
 
         metrics_table.add_row(['Dist', round(epoch_dist_loss['train'], 5),
-                             0,
-                             0,
-                             0])
+                               round(epoch_dist_loss['val'], 5), 0, 0])
 
         metrics_table.add_row(['Color', round(epoch_color_loss['train'], 5),
-                            0,
-                            0,
-                            0])
+                            round(epoch_color_loss['val'], 0, 0])
 
         metrics_table.add_row(['Total', round(epoch_total_loss['train'], 5),
-                               0,
-                               0,
-                               0])
+                               round(epoch_total_loss['val'], 5), 0, 0])
 
-        print(metrics_table)
-        acc_metric.reset()
+        logger.info(metrics_table)
 
 
 
@@ -169,9 +219,6 @@ if __name__ == '__main__':
                         action='store_true', default=False)
     parser.add_argument("--norm_path", help="Load a txt with normalization you want to apply.",
                         type=str, default=None)
-    # parser.add_argument("--gpu_parallel",
-    #                     help="choose 1 to train one multiple gpu",
-    #                     type=str2bool, default=False)
     parser.add_argument("-rp", "--results_path", help="Path where to save logs and model checkpoint. \
                         Logs and checkpoint will be saved inside this folder.",
                         type=str, default='./results/results_run1')
@@ -182,16 +229,16 @@ if __name__ == '__main__':
                         type=str, default='./DATASETS/patch_size=256_stride=256_norm_type=1_data_aug=False')
     parser.add_argument("-bs", "--batch_size", help="Batch size on training",
                         type=int, default=4)
-    # parser.add_argument("-lr", "--learning_rate",
-    #                     help="Learning rate on training",
-    #                     type=float, default=1e-3)
+    parser.add_argument("-lr", "--learning_rate",
+                        help="Learning rate on training",
+                        type=float, default=1e-4)
     # parser.add_argument("--loss", help="choose which loss you want to use",
     #                     type=str, default='weighted_cross_entropy',
     #                     choices=['weighted_cross_entropy', 'cross_entropy',
     #                              'tanimoto'])
-    # parser.add_argument("-optm", "--optimizer",
-    #                     help="Choose which optmizer to use",
-    #                     type=str, choices=['adam', 'sgd'], default='adam')
+    parser.add_argument("-optm", "--optimizer",
+                        help="Choose which optmizer to use",
+                        type=str, choices=['adam', 'sgd'], default='adam')
     parser.add_argument("--num_classes", help="Number of classes",
                          type=int, default=5)
     parser.add_argument("--epochs", help="Number of epochs",
