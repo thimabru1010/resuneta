@@ -297,9 +297,6 @@ if __name__ == '__main__':
 
     logger.info(f' {len(devices)} Devices found: {devices}')
 
-    transformer = transforms.Compose([
-        transforms.ToTensor()])
-
     if args.norm_path is not None:
         with open(args.norm_path, 'r') as f:
             mean, std = f.readlines()
@@ -309,9 +306,9 @@ if __name__ == '__main__':
         tnorm = Normalize()
 
     train_dataset = ISPRSDataset(root=args.dataset_path,
-                                 mode='train', color=True, transform=transformer, mtsk=True, norm=tnorm)
+                                 mode='train', color=True, mtsk=True, norm=tnorm)
     val_dataset = ISPRSDataset(root=args.dataset_path,
-                               mode='val', color=True, mtsk=True, transform=transformer, norm=tnorm)
+                               mode='val', color=True, mtsk=True, norm=tnorm)
 
     dataloader = {}
     dataloader['train'] = gluon.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
