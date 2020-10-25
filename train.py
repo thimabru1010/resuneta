@@ -47,10 +47,8 @@ def train_model(net, dataloader, batch_size, devices, epochs):
         # MCC is calculated for validation only
         epoch_seg_mcc = 0.0
 
-        # Train loop
+        # Train loop -----------------------------------------------------------
         for data, label in tqdm(dataloader['train'], desc="Train"):
-            # print(data.shape)
-            # print(label.shape)
             # Diff 3: split batch and load into corresponding devices (GPU)
             data_list = gluon.utils.split_and_load(data, devices)
             seg_label_list = gluon.utils.split_and_load(label[:, 0:5, :, :], devices)
@@ -58,9 +56,6 @@ def train_model(net, dataloader, batch_size, devices, epochs):
             dist_label_list = gluon.utils.split_and_load(label[:, 10:15, :, :], devices)
             color_label_list = gluon.utils.split_and_load(label[:, 15:18, :, :], devices)
 
-            # print(f'data shape: {data.shape}')
-            # print(f'data per gpu shape: {data_list}')
-            # print(f'data per gpu shape: {len(data_list)}')
             # Diff 4: run forward and backward on each devices.
             # MXNet will automatically run them in parallel
             seg_losses = []
@@ -83,23 +78,18 @@ def train_model(net, dataloader, batch_size, devices, epochs):
                     color_losses.append(tanimoto(color_logits, y_color))
                     total_losses.append(seg_losses[i] + bound_losses[i] + dist_losses[i] + color_losses[i])
 
-                    # print(seg_logits.shape)
-                    # print(y_seg.shape)
-                    # seg_acc_res = (mx.nd.argmax(seg_logits, axis=1) == mx.nd.argmax(y_seg, axis=1))
-                    # print(seg_acc_res.shape)
-                    # print(mx.nd.sum(seg_acc_res, axis=[1,2]))
-                    # seg_corrects.append(mx.nd.sum(seg_acc_res, axis=[1,2]))
-
-                    # seg_outs.append(seg_logits.copyto(mx.cpu()))
-                    # seg_labels.append(y_seg.copyto(mx.cpu()))
                     seg_outs.append(seg_logits)
                     seg_labels.append(y_seg)
+
+                    # seg_acc_res = (mx.nd.argmax(seg_logits, axis=1) == mx.nd.argmax(y_seg, axis=1))
+                    # seg_corrects.append(mx.nd.sum(seg_acc_res, axis=[1, 2]))
+                    acc_metric.update(mx.nd.argmax(seg_logits, axis=1), mx.nd.argmax(y_seg, axis=1))
             for loss in total_losses:
                 loss.backward()
-            for l, o in zip(seg_labels, seg_outs):
-                seg_acc_res = (mx.nd.argmax(o, axis=1) == mx.nd.argmax(l, axis=1))
-                seg_corrects.append(mx.nd.sum(seg_acc_res, axis=[1, 2]))
-                acc_metric.update(mx.nd.argmax(o, axis=1), mx.nd.argmax(l, axis=1))
+            # for l, o in zip(seg_labels, seg_outs):
+            #     seg_acc_res = (mx.nd.argmax(o, axis=1) == mx.nd.argmax(l, axis=1))
+            #     seg_corrects.append(mx.nd.sum(seg_acc_res, axis=[1, 2]))
+            #     acc_metric.update(mx.nd.argmax(o, axis=1), mx.nd.argmax(l, axis=1))
             trainer.step(batch_size)
             # Diff 5: sum losses over all devices
             seg_loss = []
@@ -135,6 +125,9 @@ def train_model(net, dataloader, batch_size, devices, epochs):
 
         # epoch_seg_acc['train'] = (epoch_seg_acc['train'] / n_batches_tr) / (batch_size * n_batches_tr * 256 * 256)
         _, epoch_seg_acc['train'] = acc_metric.get()
+
+        # Validation loop ------------------------------------------------------
+        # for data, label in dataloader['val']:
 
         metrics_table = PrettyTable()
         metrics_table.title = f'Epoch: {epoch}'
