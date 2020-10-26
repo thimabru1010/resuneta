@@ -58,7 +58,6 @@ class ISPRSDataset(dataset.Dataset):
             raise Exception ('I was given inconcistent mode, available choices: {train, val}, aborting ...')
 
         self._img_list = sorted(os.listdir(self._root_img))
-        print(self._img_list)
         self._mask_list_seg = sorted(os.listdir(self._root_mask_seg))
         self._mask_list_bound = sorted(os.listdir(self._root_mask_bound))
         self._mask_list_dist = sorted(os.listdir(self._root_mask_dist))
