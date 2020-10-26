@@ -204,7 +204,7 @@ def create_folders(folder_path, mode='train'):
         os.makedirs(os.path.join(folder_path, mode, 'masks/color'))
 
 
-patches_tr, patches_val, patches_tr_lb, patches_val_lb = train_test_split(patches_tr, patches_tr_ref, test_size=0.0, random_state=42)
+patches_tr, patches_val, patches_tr_lb, patches_val_lb = train_test_split(patches_tr, patches_tr_ref, test_size=0.2, random_state=42)
 
 print('saving images...')
 folder_path = f'./DATASETS/patch_size={args.patch_size}_' + \
