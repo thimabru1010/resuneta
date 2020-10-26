@@ -10,13 +10,28 @@ import logging
 import os
 from prettytable import PrettyTable
 from tqdm import tqdm
+from mxboard import SummaryWriter
 
 def compute_mcc(tp, tn, fp, fn):
     mcc = (tp*tn - fp*fn) / tf.math.sqrt((tp + fp)*(tp + fn)*(tn + fp)*(tn+fn))
     return mcc
 
 
-def train_model(args, net, dataloader, batch_size, devices, epochs, patience=10, delta=0.001):
+def add_tensorboard_scalars(result_path, epoch, task, loss, acc=None, val_mcc=None):
+    log_path = os.path.join(result_path, 'logs')
+    # [TODO] Maybe 'Loss' need to be at logdir
+    with SummaryWriter(logdir=os.path.join(log_path, task)) as sw:
+        sw.add_scalar(tag='Loss', value=loss, global_step=epoch)
+
+    if acc is not None:
+        with SummaryWriter(logdir=os.path.join(log_path, task)) as sw:
+            sw.add_scalar(tag='Accuracy', value=acc, global_step=epoch)
+
+    if val_mcc is not None:
+        with SummaryWriter(logdir=os.path.join(log_path, task)) as sw:
+            sw.add_scalar(tag='MCC', value=val_mcc, global_step=epoch)
+
+def train_model(args, net, dataloader, devices, patience=10, delta=0.001):
     # [TODO] substitute args parsers for variables
     # softmax_cross_entropy = gluon.loss.SoftmaxCrossEntropyLoss()
     if args.loss == 'tanimoto':
@@ -28,7 +43,7 @@ def train_model(args, net, dataloader, batch_size, devices, epochs, patience=10,
     min_loss = float('inf')
     early_cont = 0
 
-    for epoch in range(epochs):
+    for epoch in range(args.epochs):
         epoch_seg_loss = {'train': 0.0, 'val': 0.0}
         epoch_bound_loss = {'train': 0.0, 'val': 0.0}
         epoch_dist_loss = {'train': 0.0, 'val': 0.0}
@@ -74,7 +89,7 @@ def train_model(args, net, dataloader, batch_size, devices, epochs, patience=10,
                     acc_metric.update(mx.nd.argmax(seg_logits, axis=1), mx.nd.argmax(y_seg, axis=1))
             for loss in total_losses:
                 loss.backward()
-            trainer.step(batch_size)
+            trainer.step(args.batch_size)
             # Diff 5: sum losses over all devices
             seg_loss = []
             bound_loss = []
@@ -195,6 +210,20 @@ def train_model(args, net, dataloader, batch_size, devices, epochs, patience=10,
                                round(epoch_total_loss['val'], 5), 0, 0])
 
         print(metrics_table)
+
+        # Add tensorboard scalars ----------------------------------------------
+
+        add_tensorboard_scalars(args.result_path, args.epoch, 'Segmentation',
+                                epoch_seg_loss, acc=epoch_seg_acc, val_mcc=None)
+
+        add_tensorboard_scalars(args.result_path, args.epoch, 'Boundary',
+                                epoch_bound_loss)
+
+        add_tensorboard_scalars(args.result_path, args.epoch, 'Distance',
+                                epoch_dist_loss)
+
+        add_tensorboard_scalars(args.result_path, args.epoch, 'Color',
+                                epoch_color_loss)
 
         # Early stopping -------------------------------------------------------
         if epoch_total_loss['val'] >= min_loss + delta:
