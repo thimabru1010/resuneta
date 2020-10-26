@@ -31,6 +31,7 @@ def add_tensorboard_scalars(result_path, epoch, task, loss, acc=None, val_mcc=No
         with SummaryWriter(logdir=os.path.join(log_path, task)) as sw:
             sw.add_scalar(tag='MCC', value=val_mcc, global_step=epoch)
 
+
 def train_model(args, net, dataloader, devices, patience=10, delta=0.001):
     # [TODO] substitute args parsers for variables
     # softmax_cross_entropy = gluon.loss.SoftmaxCrossEntropyLoss()
@@ -350,4 +351,4 @@ if __name__ == '__main__':
     logger.info(f'Validating on {len(val_dataset)} images')
     print('='*40)
 
-    train_model(args, net, dataloader, args.batch_size, devices, args.epochs)
+    train_model(args, net, dataloader, devices)
