@@ -53,7 +53,7 @@ def pred_recostruction(patch_size, pred_labels, binary_img_test_ref, img_type=1)
     if img_type == 1:
         stride = patch_size
 
-        _, height, width = binary_img_test_ref.shape
+        height, width, _= binary_img_test_ref.shape
 
         num_patches_h = height // stride
         num_patches_w = width // stride
@@ -120,6 +120,60 @@ def convert_hsvpatches2rgb(patches):
 
     return color_patches
 
+
+def RGB2Categories(img_ref_rgb, label_dict):
+    # Convert Reference Image in RGB to a single channel integer category
+    w = img_ref_rgb.shape[0]
+    h = img_ref_rgb.shape[1]
+    # c = img_train_ref.shape[2]
+    cat_img_train_ref = np.full((w, h), -1, dtype=np.uint8)
+    for i in range(w):
+        for j in range(h):
+            r = img_ref_rgb[i][j][0]
+            g = img_ref_rgb[i][j][1]
+            b = img_ref_rgb[i][j][2]
+            rgb = (r, g, b)
+            rgb_key = str(rgb)
+            cat_img_train_ref[i][j] = label_dict[rgb_key]
+
+    return cat_img_train_ref
+
+def extract_patches(img_complete, patch_size, img_type=1):
+    stride = patch_size
+
+    if img_type == 1:
+        height, width, channel = img_complete.shape
+    else:
+        height, width = img_complete.shape
+
+    #print(height, width)
+
+    num_patches_h = height // stride
+    num_patches_w = width // stride
+    #print(num_patches_h, num_patches_w)
+
+    if img_type == 1:
+        new_shape = (num_patches_h*num_patches_w, patch_size, patch_size, channel)
+    else:
+        new_shape = (num_patches_h*num_patches_w, patch_size, patch_size)
+    new_img = np.zeros(new_shape)
+    cont = 0
+    # rows
+    for h in range(num_patches_h):
+        # columns
+        for w in range(num_patches_w):
+            new_img[cont] = img_complete[h*stride:(h+1)*stride, w*stride:(w+1)*stride]
+            cont += 1
+    #print(cont)
+
+    return new_img
+
+def gather_preds(pred):
+    pred = np.array(pred)
+    pred = np.concatenate(pred, axis=0)
+    pred = pred.transpose((0, 2, 3, 1))
+    return pred
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--use_multitasking",
                     help="Choose resunet-a model or not", action='store_true')
@@ -144,14 +198,38 @@ parser.add_argument("--output_path",
 args = parser.parse_args()
 
 # Test model
-
 root_path = args.dataset_path
 
-img_test_ref_path = 'Reference_Test.npy'
-img_test_ref = load_npy_image(os.path.join('DATASETS/ISPRS_npy', img_test_ref_path))
+# # Load images
+img_input_path = 'Image_Test.npy'
+img_input = load_npy_image(os.path.join(args.dataset_path,
+                                       img_input_path)).astype(np.float32)
+# # Transform the image into W x H x C shape
+img_input = img_input.transpose((1, 2, 0))
+print(img_input.shape)
+# img_test_normalized = img_test_normalized.transpose((1, 2, 0))
+# print(img_test_normalized.shape)
+#
+# # Load reference
+img_ref_path = 'Reference_Test.npy'
+img_ref = load_npy_image(os.path.join(args.dataset_path, img_ref_path))
+# Transform the image into W x H x C shape
+img_ref = img_ref.transpose((1, 2, 0))
+print(img_ref.shape)
+# img_test_ref = img_test_ref.transpose((1, 2, 0))
+# print(img_test_ref.shape)
+
 # Dictionary used in training
 label_dict = {'(255, 255, 255)': 0, '(0, 255, 0)': 1,
               '(0, 255, 255)': 2, '(0, 0, 255)': 3, '(255, 255, 0)': 4}
+
+cat_img_ref = RGB2Categories(img_ref, label_dict)
+
+# Put the patch size according to you training here
+input_patches = extract_patches(img_input, args.patch_size, img_type=1)
+ref_patches = extract_patches(cat_img_ref, args.patch_size, img_type=2)
+
+assert len(input_patches) == len(ref_patches), "Input patches and Reference patches have a different lenght"
 
 # Load model
 ctx = mx.gpu(0)
@@ -166,92 +244,54 @@ net.load_parameters(args.model_path, ctx=ctx)
 net.hybridize()
 
 tnorm = Normalize()
-ttrans = transforms.Compose([transforms.ToTensor()])
 
-dataset = ISPRSDataset(root=args.dataset_path, mode='train', color=True, mtsk=True, norm=tnorm, transform=ttrans)
-datagen = gluon.data.DataLoader(dataset, batch_size=Nbatch, shuffle=False)
+# dataset = ISPRSDataset(root=args.dataset_path, mode='train', color=True, mtsk=True, norm=tnorm)
+# datagen = gluon.data.DataLoader(dataset, batch_size=Nbatch, shuffle=False)
 
 preds = []
 # seg_preds = np.zeros((len(datagen), Nbatch, args.num_classes, args.patch_size, args.patch_size))
 seg_preds = []
+seg_preds2 = []
 bound_preds = []
 dist_preds = []
 color_preds = []
 seg_refs = []
 patches_test = []
-for i, data in enumerate(tqdm(datagen)):
-    imgs, label = data
-    print(imgs.shape)
-    # # rest_img = tnorm.restore(imgs[0].asnumpy().transpose((1, 2, 0)))
-    # rest_img = tnorm.restore(imgs[0].asnumpy())
-    # print(rest_img.shape)
-    # plt.imshow(rest_img)
+
+for i in range(len(input_patches)):
+    img = input_patches[i]
+    # plt.imshow(img.astype(np.uint8))
     # plt.show()
-    with autograd.predict_mode():
-        #preds1, preds2, preds3, preds4 = net(imgs)
-        preds1, preds2, preds3, preds4 = net(imgs.copyto(ctx))
-        preds.append([preds1.asnumpy(), preds2.asnumpy(), preds3.asnumpy(), preds4.asnumpy()])
-        #print(preds1)
-        print(preds1.shape)
-        seg_preds.append(preds1.asnumpy())
-        bound_preds.append(preds2.asnumpy())
-        dist_preds.append(preds3.asnumpy())
-        color_preds.append(preds4.asnumpy())
-        # print(preds1)
-        # seg_preds[i] = preds1.copyto(mx.cpu())
+    img_normed = mx.ndarray.array(tnorm(img).transpose((2, 0, 1)))
+    # plt.imshow(tnorm.restore(img_normed.asnumpy().transpose((1, 2, 0))))
+    # plt.show()
+    img_normed = mx.nd.expand_dims(img_normed, axis=0)
 
-        seg_label = label[:, 0:5, :, :]
-        bound_label = label[:, 5:10, :, :]
-        dist_label = label[:, 10:15, :, :]
-        color_label = label[:, 15:18, :, :]
+    preds1, preds2, preds3, preds4 = net(img_normed.copyto(ctx))
 
-        seg_refs.append(seg_label.asnumpy())
-        patches_test.append(imgs.asnumpy())
+    seg_preds.append(preds1.asnumpy())
+    bound_preds.append(preds2.asnumpy())
+    dist_preds.append(preds3.asnumpy())
+    color_preds.append(preds4.asnumpy())
 
-# Prediction
-# patches_pred = Test(model, patches_test, args)
 print('='*40)
-print(len(datagen))
 print('[TEST]')
-seg_preds = np.array(seg_preds)
-print(seg_preds.shape)
-seg_preds = np.concatenate(seg_preds, axis=0)
-print(seg_preds.shape)
-print(len(preds))
-print(len(preds[0]))
-print(type(preds[0]))
-print(preds[0][0].shape)
-
-seg_refs = np.array(seg_refs)
-seg_refs = np.concatenate(seg_refs, axis=0)
-seg_refs = seg_refs.transpose((0, 2, 3, 1))
-patches_test_ref = np.argmax(seg_refs, axis=-1)
-
-def gather_preds(pred, img_type=1):
-    pred = np.array(pred)
-    pred = np.concatenate(pred, axis=0)
-    pred = pred.transpose((0, 2, 3, 1))
-    if img_type == 1:
-        new_pred = np.argmax(pred, axis=-1)
-        return new_pred
-    else:
-        return pred
 
 if args.use_multitasking:
-    seg_preds = seg_preds.transpose((0, 2, 3, 1))
+    seg_preds = gather_preds(seg_preds)
     print(f'seg shape: {seg_preds.shape}')
     seg_pred = np.argmax(seg_preds, axis=-1)
     print(f'seg shape argmax: {seg_pred.shape}')
-    patches_pred = [seg_preds, gather_preds(bound_preds, 2), gather_preds(dist_preds, 2), gather_preds(color_preds, 2)]
+    patches_pred = [seg_preds, gather_preds(bound_preds), gather_preds(dist_preds), gather_preds(color_preds)]
 else:
     seg_pred = patches_pred
 
 # Metrics
-print(patches_test_ref.shape)
+print(ref_patches.shape)
 print(seg_pred.shape)
-true_labels = np.reshape(patches_test_ref, (patches_test_ref.shape[0] *
-                                            patches_test_ref.shape[1] *
-                                            patches_test_ref.shape[2]))
+true_labels = np.reshape(ref_patches, (ref_patches.shape[0] *
+                                            ref_patches.shape[1] *
+                                            ref_patches.shape[2]))
 
 predicted_labels = np.reshape(seg_pred, (seg_pred.shape[0] *
                                          seg_pred.shape[1] *
@@ -268,38 +308,37 @@ print('F1score: ', metrics[1])
 print('Recall: ', metrics[2])
 print('Precision: ', metrics[3])
 
-# # Reconstruct entire image segmentation predction
-# img_reconstructed = pred_recostruction(args.patch_size, seg_pred,
-#                                        img_test_ref, img_type=1)
-# img_reconstructed_rgb = convert_preds2rgb(img_reconstructed,
-#                                           label_dict)
-#
-# if not os.path.exists(args.output_path):
-#     os.makedirs(args.output_path)
-#
-# plt.imsave(os.path.join(args.output_path, 'pred_seg_reconstructed.jpeg'),
-#            img_reconstructed_rgb)
+# Reconstruct entire image segmentation predction
+img_reconstructed = pred_recostruction(args.patch_size, seg_pred,
+                                       img_ref, img_type=1)
+img_reconstructed_rgb = convert_preds2rgb(img_reconstructed,
+                                          label_dict)
+
+if not os.path.exists(args.output_path):
+    os.makedirs(args.output_path)
+
+plt.imsave(os.path.join(args.output_path, 'pred_seg_reconstructed.jpeg'),
+           img_reconstructed_rgb)
 
 print('Image Saved!')
 
-patches_test = gather_preds(patches_test, img_type=2)
-print(patches_test.shape)
-# patches_test = tnorm.restore(patches_test)
+print(f'Input patches: {type(input_patches)}')
+print(f'Input patches: {input_patches.dtype}')
 
 # Visualize inference per class
 if args.use_multitasking:
 
-    for i in range(len(patches_test)):
+    for i in range(len(input_patches)):
         print(f'Patch: {i}')
         # Plot predictions for each class and each task; Each row corresponds to a
         # class and has its predictions of each task
         fig1, axes = plt.subplots(nrows=args.num_classes, ncols=7, figsize=(15, 10))
-        img = patches_test[i]
+        img = input_patches[i].astype(np.uint8)
         # img = (img * np.array([255, 255, 255])).astype(np.uint8)
         # print(img)
-        img = tnorm.restore(img)
+        # img = tnorm.restore(img)
 
-        img_ref = patches_test_ref[i]
+        img_ref = ref_patches[i]
         img_ref_h = to_categorical(img_ref, args.num_classes)
         bound_ref_h = get_boundary_label(img_ref_h)
         dist_ref_h = get_distance_label(img_ref_h)

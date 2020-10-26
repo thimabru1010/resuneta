@@ -19,6 +19,7 @@ import cv2
 import mxnet as mx
 
 import matplotlib.pyplot as plt
+from natsort import natsorted
 
 class ISPRSDataset(dataset.Dataset):
     def __init__(self, root, mode='train', mtsk=True, color=True, transform=None, norm=None):
@@ -58,10 +59,11 @@ class ISPRSDataset(dataset.Dataset):
             raise Exception ('I was given inconcistent mode, available choices: {train, val}, aborting ...')
 
         self._img_list = sorted(os.listdir(self._root_img))
-        self._mask_list_seg = sorted(os.listdir(self._root_mask_seg))
-        self._mask_list_bound = sorted(os.listdir(self._root_mask_bound))
-        self._mask_list_dist = sorted(os.listdir(self._root_mask_dist))
-        self._mask_list_color = sorted(os.listdir(self._root_mask_color))
+        print(self._img_list)
+        self._mask_list_seg = natsorted(os.listdir(self._root_mask_seg))
+        self._mask_list_bound = natsorted(os.listdir(self._root_mask_bound))
+        self._mask_list_dist = natsorted(os.listdir(self._root_mask_dist))
+        self._mask_list_color = natsorted(os.listdir(self._root_mask_color))
 
         assert len(self._img_list) == len(self._mask_list_seg), "Seg masks and labels do not have same numbers, error"
         assert len(self._img_list) == len(self._mask_list_bound), "Bound masks and labels do not have same numbers, error"
