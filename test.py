@@ -202,8 +202,7 @@ root_path = args.dataset_path
 
 # # Load images
 img_input_path = 'Image_Test.npy'
-img_input = load_npy_image(os.path.join(args.dataset_path,
-                                       img_input_path)).astype(np.float32)
+img_input = load_npy_image(os.path.join(args.dataset_path, img_input_path)).astype(np.float32)
 # # Transform the image into W x H x C shape
 img_input = img_input.transpose((1, 2, 0))
 print(img_input.shape)

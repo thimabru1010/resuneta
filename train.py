@@ -81,10 +81,10 @@ def train_model(args, net, dataloader, devices, patience=10, delta=0.001):
                     X, y_seg, y_bound, y_dist, y_color = data
                     seg_logits, bound_logits, dist_logits, color_logits = net(X)
                     seg_losses.append(loss_f(seg_logits, y_seg))
-                    bound_losses.append(loss_f(bound_logits, y_bound))
-                    dist_losses.append(loss_f(dist_logits, y_dist))
-                    color_losses.append(loss_f(color_logits, y_color))
-                    total_losses.append(seg_losses[i] + args.wbound*bound_losses[i] + args.wdist*dist_losses[i] + args.wcolor*color_losses[i])
+                    bound_losses.append(args.wbound*loss_f(bound_logits, y_bound))
+                    dist_losses.append(args.wdist*loss_f(dist_logits, y_dist))
+                    color_losses.append(args.wcolor*loss_f(color_logits, y_color))
+                    total_losses.append(seg_losses[i] + bound_losses[i] + dist_losses[i] + color_losses[i])
 
                     acc_metric.update(mx.nd.argmax(seg_logits, axis=1), mx.nd.argmax(y_seg, axis=1))
             for loss in total_losses:
