@@ -1,5 +1,7 @@
 import numpy as np
 import cv2
+# from skimage.morphology import disk
+# import skimage
 # from osgeo import ogr, gdal
 
 # Functions
@@ -81,3 +83,15 @@ def get_distance_label(label):
         dists[:, :, channel] = dist
 
     return dists
+
+
+# def mask_no_considered(image_ref, buffer, past_ref):
+#     # Creation of buffer for pixel no considered
+#     image_ref_ = image_ref.copy()
+#     im_dilate = skimage.morphology.dilation(image_ref_, disk(buffer))
+#     outer_buffer = im_dilate - image_ref_
+#     outer_buffer[outer_buffer == 1] = 2
+#     # 1 deforestation, 2 past deforastation
+#     final_mask = image_ref_ + outer_buffer
+#     final_mask[past_ref == 1] = 2
+#     return final_mask

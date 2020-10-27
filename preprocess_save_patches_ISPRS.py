@@ -15,18 +15,6 @@ import tensorflow as tf
 
 import matplotlib.pyplot as plt
 
-
-def str2bool(v):
-    if isinstance(v, bool):
-       return v
-    if v.lower() in ('yes', 'true', 't', 'y', '1'):
-        return True
-    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
-        return False
-    else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
-
-
 def extract_patches(image, reference, patch_size, stride):
     window_shape = patch_size
     window_shape_array = (window_shape, window_shape, image.shape[2])
@@ -50,70 +38,23 @@ def extract_patches(image, reference, patch_size, stride):
     return patches_array, patches_ref
 
 
-def binarize_matrix(img_train_ref, label_dict):
-    # Create binarized matrix
-    w = img_train_ref.shape[0]
-    h = img_train_ref.shape[1]
+def RGB2Categories(img_ref_rgb, label_dict):
+    # Convert Reference Image in RGB to a single channel integer category
+    w = img_ref_rgb.shape[0]
+    h = img_ref_rgb.shape[1]
     # c = img_train_ref.shape[2]
-    # binary_img_train_ref = np.zeros((1,w,h))
-    binary_img_train_ref = np.full((w, h), -1, dtype=np.uint8)
-    keys_ver = {}
+    cat_img_train_ref = np.full((w, h), -1, dtype=np.uint8)
     for i in range(w):
         for j in range(h):
-            r = img_train_ref[i][j][0]
-            g = img_train_ref[i][j][1]
-            b = img_train_ref[i][j][2]
+            r = img_ref_rgb[i][j][0]
+            g = img_ref_rgb[i][j][1]
+            b = img_ref_rgb[i][j][2]
             rgb = (r, g, b)
             rgb_key = str(rgb)
-            binary_img_train_ref[i][j] = label_dict[rgb_key]
-            if rgb_key not in keys_ver.keys():
-                keys_ver[rgb_key] = 0
+            cat_img_train_ref[i][j] = label_dict[rgb_key]
 
-    print(f'Verifying rgb types: {keys_ver.keys()}')
+    return cat_img_train_ref
 
-    return binary_img_train_ref
-
-
-def normalize_rgb(img, norm_type=1):
-    # OBS: Images need to be converted to before float32 to be normalized
-    # TODO: Maybe should implement normalization with StandardScaler
-    # Normalize image between [0, 1]
-    if norm_type == 1:
-        img /= 255.
-    # Normalize image between [-1, 1]
-    elif norm_type == 2:
-        img /= 127.5 - 1.
-    elif norm_type == 3:
-        image_reshaped = img.reshape((img.shape[0]*img.shape[1]), img.shape[2])
-        scaler = StandardScaler()
-        scaler = scaler.fit(image_reshaped)
-        image_normalized = scaler.fit_transform(image_reshaped)
-        img = image_normalized.reshape(img.shape[0], img.shape[1], img.shape[2])
-
-    return img
-
-
-def normalize_hsv(img, norm_type=1):
-    # OBS: Images need to be converted to before float32 to be normalized
-    # TODO: Maybe should implement normalization with StandardScaler
-    # Normalize image between [0, 1]
-    if norm_type == 1:
-        img[:, :, 0] /= 179.
-        img[:, :, 1] /= 255.
-        img[:, :, 2] /= 255.
-    # Normalize image between [-1, 1]
-    elif norm_type == 2:
-        img[:, :, 0] /= 89.5 - 1.
-        img[:, :, 1] /= 127.5 - 1.
-        img[:, :, 2] /= 127.5 - 1.
-    elif norm_type == 3:
-        image_reshaped = img.reshape((img.shape[0]*img.shape[1]), img.shape[2])
-        scaler = StandardScaler()
-        scaler = scaler.fit(image_reshaped)
-        image_normalized = scaler.fit_transform(image_reshaped)
-        img = image_normalized.reshape(img.shape[0], img.shape[1], img.shape[2])
-
-    return img
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--norm_type",
@@ -164,7 +105,7 @@ label_dict = {'(255, 255, 255)': 0, '(0, 255, 0)': 1,
               '(0, 255, 255)': 2, '(0, 0, 255)': 3, '(255, 255, 0)': 4}
 
 # Convert from H x W x C --> C x H x W
-binary_img_train_ref = binarize_matrix(img_train_ref, label_dict)
+binary_img_train_ref = RGB2Categories(img_train_ref, label_dict)
 print(binary_img_train_ref.shape)
 del img_train_ref
 
