@@ -20,15 +20,15 @@ def compute_mcc(tp, tn, fp, fn):
 def add_tensorboard_scalars(result_path, epoch, task, loss, acc=None, val_mcc=None):
     log_path = os.path.join(result_path, 'logs')
     # [TODO] Maybe 'Loss' need to be at logdir
-    with SummaryWriter(logdir=os.path.join(log_path, task)) as sw:
+    with SummaryWriter(logdir=os.path.join(log_path, task), verbose=False) as sw:
         sw.add_scalar(tag='Loss', value=loss, global_step=epoch)
 
     if acc is not None:
-        with SummaryWriter(logdir=os.path.join(log_path, task)) as sw:
+        with SummaryWriter(logdir=os.path.join(log_path, task), verbose=False) as sw:
             sw.add_scalar(tag='Accuracy', value=acc, global_step=epoch)
 
     if val_mcc is not None:
-        with SummaryWriter(logdir=os.path.join(log_path, task)) as sw:
+        with SummaryWriter(logdir=os.path.join(log_path, task), verbose=False) as sw:
             sw.add_scalar(tag='MCC', value=val_mcc, global_step=epoch)
 
 
