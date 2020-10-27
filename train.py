@@ -4,7 +4,6 @@ from resuneta.src.ISPRSDataset import ISPRSDataset
 from resuneta.nn.loss.loss import Tanimoto_with_dual
 import mxnet as mx
 from mxnet import gluon, autograd
-from mxnet.gluon.data.vision import transforms
 import argparse
 import logging
 import os
@@ -12,23 +11,19 @@ from prettytable import PrettyTable
 from tqdm import tqdm
 from mxboard import SummaryWriter
 
-def compute_mcc(tp, tn, fp, fn):
-    mcc = (tp*tn - fp*fn) / tf.math.sqrt((tp + fp)*(tp + fn)*(tn + fp)*(tn+fn))
-    return mcc
-
 
 def add_tensorboard_scalars(result_path, epoch, task, loss, acc=None, val_mcc=None):
-    log_path = os.path.join(result_path, 'logs')
+    log_path = os.path.join(result_path, 'logs', task)
     # [TODO] Maybe 'Loss' need to be at logdir
-    with SummaryWriter(logdir=os.path.join(log_path, task), verbose=False) as sw:
+    with SummaryWriter(logdir=log_path, verbose=False) as sw:
         sw.add_scalar(tag='Loss', value=loss, global_step=epoch)
 
     if acc is not None:
-        with SummaryWriter(logdir=os.path.join(log_path, task), verbose=False) as sw:
+        with SummaryWriter(logdir=log_path, verbose=False) as sw:
             sw.add_scalar(tag='Accuracy', value=acc, global_step=epoch)
 
     if val_mcc is not None:
-        with SummaryWriter(logdir=os.path.join(log_path, task), verbose=False) as sw:
+        with SummaryWriter(logdir=log_path, verbose=False) as sw:
             sw.add_scalar(tag='MCC', value=val_mcc, global_step=epoch)
 
 
