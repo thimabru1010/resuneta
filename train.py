@@ -16,15 +16,15 @@ def add_tensorboard_scalars(result_path, epoch, task, loss, acc=None, val_mcc=No
     log_path = os.path.join(result_path, 'logs', task)
     # [TODO] Maybe 'Loss' need to be at logdir
     with SummaryWriter(logdir=log_path, verbose=False) as sw:
-        sw.add_scalar(tag='Loss', value=loss, global_step=epoch)
+        sw.add_scalar(tag=task+'/Loss', value=loss, global_step=epoch)
 
     if acc is not None:
         with SummaryWriter(logdir=log_path, verbose=False) as sw:
-            sw.add_scalar(tag='Accuracy', value=acc, global_step=epoch)
+            sw.add_scalar(tag=task+'/Accuracy', value=acc, global_step=epoch)
 
     if val_mcc is not None:
         with SummaryWriter(logdir=log_path, verbose=False) as sw:
-            sw.add_scalar(tag='MCC', value=val_mcc, global_step=epoch)
+            sw.add_scalar(tag=task+'/MCC', value=val_mcc, global_step=epoch)
 
 
 def train_model(args, net, dataloader, devices, patience=10, delta=0.001):
