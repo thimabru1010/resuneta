@@ -12,22 +12,22 @@ from tqdm import tqdm
 from mxboard import SummaryWriter
 
 
-def add_tensorboard_scalars(result_path, epoch, task, loss, acc=None, val_mcc=None):
-    log_path = os.path.join(result_path, 'logs', task)
+def add_tensorboard_scalars(summary_writer, result_path, epoch, task, loss, acc=None, val_mcc=None):
+    # log_path = os.path.join(result_path, 'logs', task)
     # [TODO] Maybe 'Loss' need to be at logdir
-    with SummaryWriter(logdir=log_path, verbose=False) as sw:
-        sw.add_scalar(tag=task+'/Loss', value=loss, global_step=epoch)
+    # with SummaryWriter(logdir=log_path, verbose=False):
+    summary_writer.add_scalar(tag=task+'/Loss', value=loss, global_step=epoch)
 
     if acc is not None:
-        with SummaryWriter(logdir=log_path, verbose=False) as sw:
-            sw.add_scalar(tag=task+'/Accuracy', value=acc, global_step=epoch)
+        # with SummaryWriter(logdir=log_path, verbose=False) as sw:
+        summary_writer.add_scalar(tag=task+'/Accuracy', value=acc, global_step=epoch)
 
     if val_mcc is not None:
-        with SummaryWriter(logdir=log_path, verbose=False) as sw:
-            sw.add_scalar(tag=task+'/MCC', value=val_mcc, global_step=epoch)
+        # with SummaryWriter(logdir=log_path, verbose=False) as sw:
+        summary_writer.add_scalar(tag=task+'/MCC', value=val_mcc, global_step=epoch)
 
 
-def train_model(args, net, dataloader, devices, patience=10, delta=0.001):
+def train_model(args, net, dataloader, devices, summary_writer, patience=10, delta=0.001):
     # [TODO] substitute args parsers for variables
     # softmax_cross_entropy = gluon.loss.SoftmaxCrossEntropyLoss()
     if args.loss == 'tanimoto':
@@ -209,20 +209,21 @@ def train_model(args, net, dataloader, devices, patience=10, delta=0.001):
 
         # Add tensorboard scalars ----------------------------------------------
 
-        add_tensorboard_scalars(args.results_path, epoch, 'Segmentation',
-                                epoch_seg_loss, acc=epoch_seg_acc, val_mcc=None)
+        add_tensorboard_scalars(summary_writer, args.results_path, epoch,
+                                'Segmentation', epoch_seg_loss,
+                                acc=epoch_seg_acc, val_mcc=None)
 
-        add_tensorboard_scalars(args.results_path, epoch, 'Boundary',
-                                epoch_bound_loss)
+        add_tensorboard_scalars(summary_writer, args.results_path, epoch,
+                                'Boundary', epoch_bound_loss)
 
-        add_tensorboard_scalars(args.results_path, epoch, 'Distance',
-                                epoch_dist_loss)
+        add_tensorboard_scalars(summary_writer, args.results_path, epoch,
+                                'Distance', epoch_dist_loss)
 
-        add_tensorboard_scalars(args.results_path, epoch, 'Color',
-                                epoch_color_loss)
+        add_tensorboard_scalars(summary_writer, args.results_path, epoch,
+                                'Color', epoch_color_loss)
 
-        add_tensorboard_scalars(args.results_path, epoch, 'Total',
-                                epoch_total_loss)
+        add_tensorboard_scalars(summary_writer, args.results_path, epoch,
+                                'Total', epoch_total_loss)
 
         # Early stopping -------------------------------------------------------
         if epoch_total_loss['val'] >= min_loss + delta:
@@ -237,6 +238,7 @@ def train_model(args, net, dataloader, devices, patience=10, delta=0.001):
             print("Saving best model...")
             net.save_parameters(os.path.join(args.results_path,
                                              'best_model.params'))
+    summary_writer.close()
 
 
 # End functions definition -----------------------------------------------------
@@ -347,4 +349,6 @@ if __name__ == '__main__':
     logger.info(f'Validating on {len(val_dataset)} images')
     print('='*40)
 
-    train_model(args, net, dataloader, devices)
+    log_path = os.path.join(args.results_path, 'logs')
+    summary_writer = SummaryWriter(logdir=log_path, verbose=False)
+    train_model(args, net, dataloader, devices, summary_writer)
