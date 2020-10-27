@@ -212,16 +212,16 @@ def train_model(args, net, dataloader, devices, patience=10, delta=0.001):
         add_tensorboard_scalars(args.results_path, args.epochs, 'Segmentation',
                                 epoch_seg_loss, acc=epoch_seg_acc, val_mcc=None)
 
-        add_tensorboard_scalars(args.results_path, args.epochs, 'Boundary',
+        add_tensorboard_scalars(args.results_path, epoch, 'Boundary',
                                 epoch_bound_loss)
 
-        add_tensorboard_scalars(args.results_path, args.epochs, 'Distance',
+        add_tensorboard_scalars(args.results_path, epoch, 'Distance',
                                 epoch_dist_loss)
 
-        add_tensorboard_scalars(args.results_path, args.epochs, 'Color',
+        add_tensorboard_scalars(args.results_path, epoch, 'Color',
                                 epoch_color_loss)
 
-        add_tensorboard_scalars(args.results_path, args.epochs, 'Total',
+        add_tensorboard_scalars(args.results_path, epoch, 'Total',
                                 epoch_total_loss)
 
         # Early stopping -------------------------------------------------------
