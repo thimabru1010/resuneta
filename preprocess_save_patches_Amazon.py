@@ -69,7 +69,9 @@ def count_deforastation(image_ref, image_mask_ref):
 
 
 def mask_no_considered(image_ref, buffer, past_ref):
-    # Creation of buffer for pixel no considered
+    '''
+        Creation of buffer for pixel no considered
+    '''
     image_ref_ = image_ref.copy()
     im_dilate = skimage.morphology.dilation(image_ref_, disk(buffer))
     outer_buffer = im_dilate - image_ref_
@@ -329,6 +331,7 @@ if __name__ == '__main__':
     # Trainig tiles
     tr_tiles = [tr1, tr2, tr3, tr4]
 
+    # [TODO] Create a function to show deforestaion for all the tiles
     patches_tr, patches_tr_ref = extract_tiles2patches(tr_tiles, mask_tiles, input_image,
                                                        final_mask, args.patch_size,
                                                        args.stride, args.def_percent)
