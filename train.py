@@ -221,6 +221,9 @@ def train_model(args, net, dataloader, devices, patience=10, delta=0.001):
         add_tensorboard_scalars(args.results_path, args.epochs, 'Color',
                                 epoch_color_loss)
 
+        add_tensorboard_scalars(args.results_path, args.epochs, 'Total',
+                                epoch_total_loss)
+
         # Early stopping -------------------------------------------------------
         if epoch_total_loss['val'] >= min_loss + delta:
             early_cont += 1
