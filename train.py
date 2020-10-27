@@ -209,7 +209,7 @@ def train_model(args, net, dataloader, devices, patience=10, delta=0.001):
 
         # Add tensorboard scalars ----------------------------------------------
 
-        add_tensorboard_scalars(args.results_path, args.epochs, 'Segmentation',
+        add_tensorboard_scalars(args.results_path, epoch, 'Segmentation',
                                 epoch_seg_loss, acc=epoch_seg_acc, val_mcc=None)
 
         add_tensorboard_scalars(args.results_path, epoch, 'Boundary',
