@@ -35,6 +35,7 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
     elif args.loss == 'cross_entropy':
         loss_f = gluon.loss.SoftmaxCrossEntropyLoss(axis=1, sparse_label=False)
     acc_metric = mx.metric.Accuracy()
+    mcc_metric = mx.metric.MCC()
     trainer = gluon.Trainer(net.collect_params(), 'adam', {'learning_rate': 1e-4})
     min_loss = float('inf')
     early_cont = 0
@@ -65,7 +66,6 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
             # Diff 4: run forward and backward on each devices.
             # MXNet will automatically run them in parallel
             seg_losses = []
-            seg_corrects = []
             bound_losses = []
             dist_losses = []
             color_losses = []
@@ -106,11 +106,6 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
             epoch_color_loss['train'] += sum(color_loss)
             epoch_total_loss['train'] += sum(total_loss)
 
-            seg_acc = []
-            for seg_correct in seg_corrects:
-                seg_acc.append(seg_correct.sum().asscalar())
-            epoch_seg_acc['train'] += sum(seg_acc)
-
         # After batch loop take the mean of batches losses
         n_batches_tr = len(dataloader['train'])
         epoch_seg_loss['train'] /= n_batches_tr
@@ -121,6 +116,7 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
 
         _, epoch_seg_acc['train'] = acc_metric.get()
         acc_metric.reset()
+        mcc_metric.reset()
 
         # Validation loop ------------------------------------------------------
         for data, label in tqdm(dataloader['val'], desc="Val"):
@@ -131,7 +127,6 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
             color_label_list = gluon.utils.split_and_load(label[:, 15:18, :, :], devices)
 
             seg_losses = []
-            seg_corrects = []
             bound_losses = []
             dist_losses = []
             color_losses = []
@@ -147,6 +142,7 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
                 total_losses.append(seg_losses[i] + bound_losses[i] + dist_losses[i] + color_losses[i])
 
                 acc_metric.update(mx.nd.argmax(seg_logits, axis=1), mx.nd.argmax(y_seg, axis=1))
+                mcc_metric.update(mx.nd.argmax(seg_logits, axis=1), mx.nd.argmax(y_seg, axis=1))
 
             seg_loss = []
             bound_loss = []
@@ -167,11 +163,6 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
             epoch_color_loss['val'] += sum(color_loss)
             epoch_total_loss['val'] += sum(total_loss)
 
-            seg_acc = []
-            for seg_correct in seg_corrects:
-                seg_acc.append(seg_correct.sum().asscalar())
-            epoch_seg_acc['val'] += sum(seg_acc)
-
         # After batch loop take the mean of batches losses
         n_batches_val = len(dataloader['val'])
         epoch_seg_loss['val'] /= n_batches_val
@@ -181,29 +172,31 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
         epoch_total_loss['val'] = (epoch_total_loss['val'] / n_batches_val) / 4
 
         _, epoch_seg_acc['val'] = acc_metric.get()
+        _, epoch_seg_mcc = mcc_metric.get()
 
         # Show metrics ---------------------------------------------------------
         metrics_table = PrettyTable()
         metrics_table.title = f'Epoch: {epoch}'
         metrics_table.field_names = ['Task', 'Loss', 'Val Loss',
-                                     'Acc %', 'Val Acc %']
+                                     'Acc %', 'Val Acc %', 'Val MCC']
 
         metrics_table.add_row(['Seg', round(epoch_seg_loss['train'], 5),
                                round(epoch_seg_loss['val'], 5),
                                round(100*epoch_seg_acc['train'], 5),
-                               round(100*epoch_seg_acc['val'], 5)])
+                               round(100*epoch_seg_acc['val'], 5),
+                               round(epoch_seg_mcc, 5)])
 
         metrics_table.add_row(['Bound', round(epoch_bound_loss['train'], 5),
-                               round(epoch_bound_loss['val'], 5), 0, 0])
+                               round(epoch_bound_loss['val'], 5), 0, 0, 0])
 
         metrics_table.add_row(['Dist', round(epoch_dist_loss['train'], 5),
-                               round(epoch_dist_loss['val'], 5), 0, 0])
+                               round(epoch_dist_loss['val'], 5), 0, 0, 0])
 
         metrics_table.add_row(['Color', round(epoch_color_loss['train'], 5),
-                               round(epoch_color_loss['val'], 5), 0, 0])
+                               round(epoch_color_loss['val'], 5), 0, 0, 0])
 
         metrics_table.add_row(['Total', round(epoch_total_loss['train'], 5),
-                               round(epoch_total_loss['val'], 5), 0, 0])
+                               round(epoch_total_loss['val'], 5), 0, 0, 0])
 
         print(metrics_table)
 
@@ -211,7 +204,7 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
 
         add_tensorboard_scalars(summary_writer, args.results_path, epoch,
                                 'Segmentation', epoch_seg_loss,
-                                acc=epoch_seg_acc, val_mcc=None)
+                                acc=epoch_seg_acc, val_mcc=epoch_seg_mcc)
 
         add_tensorboard_scalars(summary_writer, args.results_path, epoch,
                                 'Boundary', epoch_bound_loss)
