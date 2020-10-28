@@ -86,7 +86,6 @@ def extract_tiles2patches(tiles, mask_amazon, input_image, image_ref, patch_size
                           stride, percent):
     patches_out = []
     labels_out = []
-    label_past_out = []
     for num_tile in tiles:
         print('='*60)
         print(num_tile)
@@ -123,6 +122,36 @@ def extract_tiles2patches(tiles, mask_amazon, input_image, image_ref, patch_size
     labels_out = np.concatenate(labels_out)
     return patches_out, labels_out
 
+
+def show_deforastation_per_tile(tiles, mask_amazon, image_ref, percent):
+    defs = []
+    for num_tile in tiles:
+        print('='*60)
+        print(f'Tile: {num_tile}')
+        rows, cols = np.where(mask_amazon == num_tile)
+        x1 = np.min(rows)
+        y1 = np.min(cols)
+        x2 = np.max(rows)
+        y2 = np.max(cols)
+
+        tile_ref = image_ref[x1:x2+1, y1:y2+1]
+        # Check deforastation percentage for each tile
+        unique, counts = np.unique(tile_ref, return_counts=True)
+        counts_dict = dict(zip(unique, counts))
+        print(counts_dict)
+        if 0 not in counts_dict.keys():
+            counts_dict[0] = 0
+        if 1 not in counts_dict.keys():
+            counts_dict[1] = 0
+        if 2 not in counts_dict.keys():
+            counts_dict[2] = 0
+        deforastation = counts_dict[1] / (counts_dict[0] + counts_dict[1] + counts_dict[2])
+        print(f"Deforastation of tile {num_tile}: {deforastation * 100}%")
+        print(f"Deforastation > {percent}% ? --> {deforastation > percent/100}")
+        defs.append(deforastation*100)
+    print('-'*60)
+    print(sorted(zip(defs, tiles), reverse=True))
+    print('='*60)
 
 def filename(i):
     return f'patch_{i}.npy'
@@ -327,6 +356,11 @@ if __name__ == '__main__':
     mask_tr_val[mask_tiles == val2] = 2
     # mask_tr_val[mask_tiles == tr5] = 1
     # mask_tr_val[mask_tiles == tr6] = 1
+
+    all_tiles = [i for i in range(1, 16)]
+    print(f'All tiles: {all_tiles}')
+    show_deforastation_per_tile(all_tiles, mask_tiles, final_mask,
+                                args.def_percent)
 
     # Trainig tiles
     tr_tiles = [tr1, tr2, tr3, tr4]
