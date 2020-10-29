@@ -255,7 +255,7 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", help="choose resunet-a model or not",
-                        type=str, choices=['resuneta', 'unet'] default='resuneta')
+                        type=str, choices=['resuneta', 'unet'], default='resuneta')
     parser.add_argument("--multitasking", help="choose resunet-a multitasking \
                         or not", action='store_true')
     parser.add_argument("--debug", help="choose if you want to shoe debug logs",
