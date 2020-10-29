@@ -74,36 +74,40 @@ class ResUNet_d6(HybridBlock):
 
             self.psp_2ndlast = PSP_Pooling(self.nfilters, _norm_type = _norm_type)
 
-            # Segmenetation logits -- deeper for better reconstruction
-            self.logits = gluon.nn.HybridSequential()
-            self.logits.add( Conv2DNormed(channels = self.nfilters,kernel_size = (3,3),padding=(1,1)))
-            self.logits.add( gluon.nn.Activation('relu'))
-            self.logits.add( Conv2DNormed(channels = self.nfilters,kernel_size = (3,3),padding=(1,1)))
-            self.logits.add( gluon.nn.Activation('relu'))
-            self.logits.add( gluon.nn.Conv2D(self.NClasses,kernel_size=1,padding=0))
+            if self.multitasking:
 
-            # bound logits
-            self.bound_logits = gluon.nn.HybridSequential()
-            self.bound_logits.add( Conv2DNormed(channels = self.nfilters,kernel_size = (3,3),padding=(1,1)))
-            self.bound_logits.add( gluon.nn.Activation('relu'))
-            self.bound_logits.add( gluon.nn.Conv2D(self.NClasses,kernel_size=1,padding=0))
+                # Segmenetation logits -- deeper for better reconstruction
+                self.logits = gluon.nn.HybridSequential()
+                self.logits.add( Conv2DNormed(channels = self.nfilters,kernel_size = (3,3),padding=(1,1)))
+                self.logits.add( gluon.nn.Activation('relu'))
+                self.logits.add( Conv2DNormed(channels = self.nfilters,kernel_size = (3,3),padding=(1,1)))
+                self.logits.add( gluon.nn.Activation('relu'))
+                self.logits.add( gluon.nn.Conv2D(self.NClasses,kernel_size=1,padding=0))
 
-
-            # distance logits -- deeper for better reconstruction
-            self.distance_logits = gluon.nn.HybridSequential()
-            self.distance_logits.add( Conv2DNormed(channels = self.nfilters,kernel_size = (3,3),padding=(1,1)))
-            self.distance_logits.add( gluon.nn.Activation('relu'))
-            self.distance_logits.add( Conv2DNormed(channels = self.nfilters,kernel_size = (3,3),padding=(1,1)))
-            self.distance_logits.add( gluon.nn.Activation('relu'))
-            self.distance_logits.add( gluon.nn.Conv2D(self.NClasses,kernel_size=1,padding=0))
+                # bound logits
+                self.bound_logits = gluon.nn.HybridSequential()
+                self.bound_logits.add( Conv2DNormed(channels = self.nfilters,kernel_size = (3,3),padding=(1,1)))
+                self.bound_logits.add( gluon.nn.Activation('relu'))
+                self.bound_logits.add( gluon.nn.Conv2D(self.NClasses,kernel_size=1,padding=0))
 
 
-            # This layer is trying to identify the exact coloration on HSV scale (cv2 devined)
-            self.color_logits = gluon.nn.Conv2D(3,kernel_size=1,padding=0)
+                # distance logits -- deeper for better reconstruction
+                self.distance_logits = gluon.nn.HybridSequential()
+                self.distance_logits.add( Conv2DNormed(channels = self.nfilters,kernel_size = (3,3),padding=(1,1)))
+                self.distance_logits.add( gluon.nn.Activation('relu'))
+                self.distance_logits.add( Conv2DNormed(channels = self.nfilters,kernel_size = (3,3),padding=(1,1)))
+                self.distance_logits.add( gluon.nn.Activation('relu'))
+                self.distance_logits.add( gluon.nn.Conv2D(self.NClasses,kernel_size=1,padding=0))
 
 
-            # This conv will be only used for non multitasking mode
-            self.seg_pointwise = gluon.nn.Conv2D(self.NClasses, kernel_size=1, padding=0)
+                # This layer is trying to identify the exact coloration on HSV scale (cv2 devined)
+                self.color_logits = gluon.nn.Conv2D(3,kernel_size=1,padding=0)
+            else:
+                self.seg_pointwise = gluon.nn.HybridSequential()
+                self.seg_pointwise.add(gluon.nn.Conv2D(self.NClasses, kernel_size=1, padding=0))
+
+                # # This conv will be only used for non multitasking mode
+                # self.seg_pointwise = gluon.nn.Conv2D(self.NClasses, kernel_size=1, padding=0)
 
 
             # Last activation, customization for binary results
