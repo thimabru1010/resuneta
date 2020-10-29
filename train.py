@@ -325,7 +325,7 @@ if __name__ == '__main__':
     if args.model == 'resuneta':
         net = ResUNet_d6(Nfilters_init, args.num_classes, multitasking=args.multitasking)
     elif args.model == 'unet':
-        net = UNet(first_channels=Nfilters_init)
+        net = UNet(first_channels=64)
     net.initialize()
     # [TODO] Change this to receive right input size
     net.summary(mx.nd.random.uniform(shape=(args.batch_size, 3, 256, 256)))
