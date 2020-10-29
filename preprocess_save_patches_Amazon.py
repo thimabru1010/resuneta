@@ -87,8 +87,8 @@ def extract_tiles2patches(tiles, mask_amazon, input_image, image_ref, patch_size
     patches_out = []
     labels_out = []
     for num_tile in tiles:
-        print('='*60)
-        print(num_tile)
+        # print('='*60)
+        # print(num_tile)
         rows, cols = np.where(mask_amazon == num_tile)
         x1 = np.min(rows)
         y1 = np.min(cols)
@@ -100,7 +100,7 @@ def extract_tiles2patches(tiles, mask_amazon, input_image, image_ref, patch_size
         # Check deforastation percentage for each tile
         unique, counts = np.unique(tile_ref, return_counts=True)
         counts_dict = dict(zip(unique, counts))
-        print(counts_dict)
+        # print(counts_dict)
         if 0 not in counts_dict.keys():
             counts_dict[0] = 0
         if 1 not in counts_dict.keys():
@@ -108,7 +108,7 @@ def extract_tiles2patches(tiles, mask_amazon, input_image, image_ref, patch_size
         if 2 not in counts_dict.keys():
             counts_dict[2] = 0
         deforastation = counts_dict[1] / (counts_dict[0] + counts_dict[1] + counts_dict[2])
-        print(f"Deforastation of tile {num_tile}: {deforastation * 100}")
+        # print(f"Deforastation of tile {num_tile}: {deforastation * 100}")
         # Extract patches for each tile
         patches_img, patch_ref = extract_patches(tile_img, tile_ref, patch_size,
                                                  stride)

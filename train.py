@@ -1,4 +1,5 @@
 from resuneta.models.resunet_d6_causal_mtskcolor_ddist import ResUNet_d6
+from resuneta.models.Unet import UNet
 from resuneta.src.NormalizeDataset import Normalize
 from resuneta.src.ISPRSDataset import ISPRSDataset
 from resuneta.nn.loss.loss import Tanimoto_with_dual
@@ -58,10 +59,14 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
             # Diff 3: split batch and load into corresponding devices (GPU)
             data_list = gluon.utils.split_and_load(data, devices)
             seg_label_list = gluon.utils.split_and_load(label[:, 0:5, :, :], devices)
-            # if args.multitasking:
-            bound_label_list = gluon.utils.split_and_load(label[:, 5:10, :, :], devices)
-            dist_label_list = gluon.utils.split_and_load(label[:, 10:15, :, :], devices)
-            color_label_list = gluon.utils.split_and_load(label[:, 15:18, :, :], devices)
+            if args.multitasking:
+                bound_label_list = gluon.utils.split_and_load(label[:, 5:10, :, :], devices)
+                dist_label_list = gluon.utils.split_and_load(label[:, 10:15, :, :], devices)
+                color_label_list = gluon.utils.split_and_load(label[:, 15:18, :, :], devices)
+            else:
+                bound_label_list = []
+                dist_label_list = []
+                color_label_list = []
 
             # Diff 4: run forward and backward on each devices.
             # MXNet will automatically run them in parallel
@@ -77,12 +82,15 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
                     X, y_seg, y_bound, y_dist, y_color = data
                     seg_logits, bound_logits, dist_logits, color_logits = net(X)
                     seg_losses.append(loss_f(seg_logits, y_seg))
-                    bound_losses.append(args.wbound*loss_f(bound_logits, y_bound))
-                    dist_losses.append(args.wdist*loss_f(dist_logits, y_dist))
-                    color_losses.append(args.wcolor*loss_f(color_logits, y_color))
-                    total_losses.append(seg_losses[i] + bound_losses[i] + dist_losses[i] + color_losses[i])
-
                     acc_metric.update(mx.nd.argmax(seg_logits, axis=1), mx.nd.argmax(y_seg, axis=1))
+                    if args.multitasking:
+                        bound_losses.append(args.wbound*loss_f(bound_logits, y_bound))
+                        dist_losses.append(args.wdist*loss_f(dist_logits, y_dist))
+                        color_losses.append(args.wcolor*loss_f(color_logits, y_color))
+                        total_losses.append(seg_losses[i] + bound_losses[i] + dist_losses[i] + color_losses[i])
+                    else:
+                        total_losses.append(seg_losses[i])
+
             for loss in total_losses:
                 loss.backward()
             trainer.step(args.batch_size)
@@ -95,9 +103,10 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
             for l_seg, l_bound, l_dist, l_color, l_total in zip(seg_losses, bound_losses, dist_losses, color_losses, total_losses):
                 # Sums for each device batch
                 seg_loss.append(l_seg.sum().asscalar())
-                bound_loss.append(l_bound.sum().asscalar())
-                dist_loss.append(l_dist.sum().asscalar())
-                color_loss.append(l_color.sum().asscalar())
+                if args.multitasking:
+                    bound_loss.append(l_bound.sum().asscalar())
+                    dist_loss.append(l_dist.sum().asscalar())
+                    color_loss.append(l_color.sum().asscalar())
                 total_loss.append(l_total.sum().asscalar())
             # Sum loss from all inferences on the batch
             epoch_seg_loss['train'] += sum(seg_loss)
@@ -122,9 +131,10 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
         for data, label in tqdm(dataloader['val'], desc="Val"):
             data_list = gluon.utils.split_and_load(data, devices)
             seg_label_list = gluon.utils.split_and_load(label[:, 0:5, :, :], devices)
-            bound_label_list = gluon.utils.split_and_load(label[:, 5:10, :, :], devices)
-            dist_label_list = gluon.utils.split_and_load(label[:, 10:15, :, :], devices)
-            color_label_list = gluon.utils.split_and_load(label[:, 15:18, :, :], devices)
+            if args.multitasking:
+                bound_label_list = gluon.utils.split_and_load(label[:, 5:10, :, :], devices)
+                dist_label_list = gluon.utils.split_and_load(label[:, 10:15, :, :], devices)
+                color_label_list = gluon.utils.split_and_load(label[:, 15:18, :, :], devices)
 
             seg_losses = []
             bound_losses = []
@@ -136,13 +146,16 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
                 X, y_seg, y_bound, y_dist, y_color = data
                 seg_logits, bound_logits, dist_logits, color_logits = net(X)
                 seg_losses.append(loss_f(seg_logits, y_seg))
-                bound_losses.append(args.wbound*loss_f(bound_logits, y_bound))
-                dist_losses.append(args.wdist*loss_f(dist_logits, y_dist))
-                color_losses.append(args.wcolor*loss_f(color_logits, y_color))
-                total_losses.append(seg_losses[i] + bound_losses[i] + dist_losses[i] + color_losses[i])
-
                 acc_metric.update(mx.nd.argmax(seg_logits, axis=1), mx.nd.argmax(y_seg, axis=1))
                 mcc_metric.update(mx.nd.argmax(seg_logits, axis=1), mx.nd.argmax(y_seg, axis=1))
+                if args.multitasking:
+                    bound_losses.append(args.wbound*loss_f(bound_logits, y_bound))
+                    dist_losses.append(args.wdist*loss_f(dist_logits, y_dist))
+                    color_losses.append(args.wcolor*loss_f(color_logits, y_color))
+                    total_losses.append(seg_losses[i] + bound_losses[i] + dist_losses[i] + color_losses[i])
+                else:
+                    total_losses.append(seg_losses[i])
+
 
             seg_loss = []
             bound_loss = []
@@ -152,9 +165,10 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
             for l_seg, l_bound, l_dist, l_color, l_total in zip(seg_losses, bound_losses, dist_losses, color_losses, total_losses):
                 # Sums for each device batch
                 seg_loss.append(l_seg.sum().asscalar())
-                bound_loss.append(l_bound.sum().asscalar())
-                dist_loss.append(l_dist.sum().asscalar())
-                color_loss.append(l_color.sum().asscalar())
+                if args.multitasking:
+                    bound_loss.append(l_bound.sum().asscalar())
+                    dist_loss.append(l_dist.sum().asscalar())
+                    color_loss.append(l_color.sum().asscalar())
                 total_loss.append(l_total.sum().asscalar())
             # Sum loss from all inferences on the batch
             epoch_seg_loss['val'] += sum(seg_loss)
@@ -206,14 +220,15 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
                                 'Segmentation', epoch_seg_loss,
                                 acc=epoch_seg_acc, val_mcc=epoch_seg_mcc)
 
-        add_tensorboard_scalars(summary_writer, args.results_path, epoch,
-                                'Boundary', epoch_bound_loss)
+        if args.multitasking:
+            add_tensorboard_scalars(summary_writer, args.results_path, epoch,
+                                    'Boundary', epoch_bound_loss)
 
-        add_tensorboard_scalars(summary_writer, args.results_path, epoch,
-                                'Distance', epoch_dist_loss)
+            add_tensorboard_scalars(summary_writer, args.results_path, epoch,
+                                    'Distance', epoch_dist_loss)
 
-        add_tensorboard_scalars(summary_writer, args.results_path, epoch,
-                                'Color', epoch_color_loss)
+            add_tensorboard_scalars(summary_writer, args.results_path, epoch,
+                                    'Color', epoch_color_loss)
 
         add_tensorboard_scalars(summary_writer, args.results_path, epoch,
                                 'Total', epoch_total_loss)
@@ -239,8 +254,8 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    # parser.add_argument("--resunet_a", help="choose resunet-a model or not",
-    #                     type=str2bool, default=False)
+    parser.add_argument("--model", help="choose resunet-a model or not",
+                        type=str, choices=['resuneta', 'unet'] default='resuneta')
     parser.add_argument("--multitasking", help="choose resunet-a multitasking \
                         or not", action='store_true', default=True)
     parser.add_argument("--debug", help="choose if you want to shoe debug logs",
@@ -304,7 +319,10 @@ if __name__ == '__main__':
         devices.append(mx.gpu(i))
 
     Nfilters_init = 32
-    net = ResUNet_d6(Nfilters_init, args.num_classes)
+    if args.model == 'resuneta':
+        net = ResUNet_d6(Nfilters_init, args.num_classes, multitasking=args.multitasking)
+    elif args.model == 'unet':
+        net = Unet(first_channels=Nfilters_init)
     net.initialize()
     # [TODO] Change this to receive right input size
     net.summary(mx.nd.random.uniform(shape=(args.batch_size, 3, 256, 256)))
@@ -344,4 +362,5 @@ if __name__ == '__main__':
 
     log_path = os.path.join(args.results_path, 'logs')
     summary_writer = SummaryWriter(logdir=log_path, verbose=False)
+    
     train_model(args, net, dataloader, devices, summary_writer)
