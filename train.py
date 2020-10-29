@@ -80,7 +80,8 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
                 # Gather results from all devices into a single list
                 for i, data in enumerate(zip(data_list, seg_label_list, bound_label_list, dist_label_list, color_label_list)):
                     X, y_seg, y_bound, y_dist, y_color = data
-                    seg_logits, bound_logits, dist_logits, color_logits = net(X)
+                    # seg_logits, bound_logits, dist_logits, color_logits = net(X)
+                    seg_logits = net(X)
                     seg_losses.append(loss_f(seg_logits, y_seg))
                     acc_metric.update(mx.nd.argmax(seg_logits, axis=1), mx.nd.argmax(y_seg, axis=1))
                     if args.multitasking:

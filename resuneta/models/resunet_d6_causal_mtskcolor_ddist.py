@@ -174,7 +174,7 @@ class ResUNet_d6(HybridBlock):
             dist = self.ChannelAct(dist)
 
             # Then find boundaries
-            bound = F.concat(conv,dist)
+            bound = F.concat(conv, dist)
             bound = self.bound_logits(bound)
             bound  = F.sigmoid(bound) # Boundaries are not mutually exclusive the way I am creating them.
             # Color prediction (HSV --> cv2)
@@ -191,4 +191,4 @@ class ResUNet_d6(HybridBlock):
         else:
             seg_logits = self.seg_pointwise(conv)
             seg_logits = self.ChannelAct(seg_logits)
-            return seg_logits, 0, 0, 0
+            return seg_logits
