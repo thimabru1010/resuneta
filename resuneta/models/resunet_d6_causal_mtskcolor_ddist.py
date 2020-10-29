@@ -112,9 +112,9 @@ class ResUNet_d6(HybridBlock):
 
             # Last activation, customization for binary results
             if ( self.NClasses == 1):
-                self.ChannelAct = gluon.nn.HybridLambda(lambda F,x: F.sigmoid(x))
+                self.ChannelAct = gluon.nn.HybridLambda(lambda F, x: F.sigmoid(x))
             else:
-                self.ChannelAct = gluon.nn.HybridLambda(lambda F,x: F.softmax(x,axis=1))
+                self.ChannelAct = gluon.nn.HybridLambda(lambda F, x: F.softmax(x, axis=1))
 
     def hybrid_forward(self,F,_input):
 
