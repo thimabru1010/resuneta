@@ -191,4 +191,4 @@ class ResUNet_d6(HybridBlock):
         else:
             seg_logits = self.seg_pointwise(conv)
             seg_logits = self.ChannelAct(seg_logits)
-            return seg_logits
+            return seg_logits, 0, 0, 0
