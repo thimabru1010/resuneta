@@ -257,7 +257,7 @@ if __name__ == '__main__':
     parser.add_argument("--model", help="choose resunet-a model or not",
                         type=str, choices=['resuneta', 'unet'] default='resuneta')
     parser.add_argument("--multitasking", help="choose resunet-a multitasking \
-                        or not", action='store_true', default=True)
+                        or not", action='store_true')
     parser.add_argument("--debug", help="choose if you want to shoe debug logs",
                         action='store_true', default=False)
     parser.add_argument("--norm_path", help="Load a txt with normalization you want to apply.",
@@ -362,5 +362,5 @@ if __name__ == '__main__':
 
     log_path = os.path.join(args.results_path, 'logs')
     summary_writer = SummaryWriter(logdir=log_path, verbose=False)
-    
+
     train_model(args, net, dataloader, devices, summary_writer)
