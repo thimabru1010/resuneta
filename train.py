@@ -1,5 +1,5 @@
 from resuneta.models.resunet_d6_causal_mtskcolor_ddist import ResUNet_d6
-from resuneta.models.Unet2 import UNet
+from resuneta.models.Unet import UNet
 from resuneta.src.NormalizeDataset import Normalize
 from resuneta.src.ISPRSDataset import ISPRSDataset
 from resuneta.nn.loss.loss import Tanimoto_with_dual
@@ -325,8 +325,8 @@ if __name__ == '__main__':
     if args.model == 'resuneta':
         net = ResUNet_d6(Nfilters_init, args.num_classes, multitasking=args.multitasking)
     elif args.model == 'unet':
-        # net = UNet(first_channels=64)
-        net = UNet(input_channels=3, output_channels=args.num_classes)
+        net = UNet(first_channels=64)
+        # net = UNet(input_channels=3, output_channels=args.num_classes)
     net.initialize()
     # [TODO] Change this to receive right input size
     net.summary(mx.nd.random.uniform(shape=(args.batch_size, 3, 256, 256)))
