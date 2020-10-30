@@ -55,8 +55,8 @@ def extract_patches(image, reference, patch_size, stride):
     patches_ref = np.array(view_as_windows(reference,
                                            window_shape_ref, step=stride))
 
-    # print('Patches extraidos')
-    # print(patches_array.shape)
+    print('Patches extraidos')
+    print(patches_array.shape)
     num_row, num_col, p, row, col, depth = patches_array.shape
 
     # print('fazendo reshape')
@@ -175,6 +175,7 @@ def extract_tiles2patches(tiles, mask_amazon, input_image, image_ref, patch_size
         if len(patches_img) > 0:
             patches_out.append(patches_img)
             labels_out.append(patches_ref)
+
         check_memory()
         del patches_img, patches_ref
         print('Variables deleted')
@@ -437,7 +438,7 @@ if __name__ == '__main__':
     show_deforastation_per_tile(all_tiles, mask_tiles, final_mask)
 
     # Trainig tiles
-    tr_tiles = [tr1, tr2, tr3, tr4]
+    tr_tiles = [tr1, tr2, tr3, tr4, tr5, tr6, tr7, tr8, tr9]
 
     # [TODO] Create a function to show deforestaion for all the tiles
     patches_tr, patches_tr_ref = extract_tiles2patches(tr_tiles, mask_tiles, input_image,
@@ -448,7 +449,7 @@ if __name__ == '__main__':
     patches don't have the same numbers"
 
     # Validation tiles
-    val_tiles = [val1, val2]
+    val_tiles = [val1, val2, val3, val4, val5, val6]
 
     patches_val, patches_val_ref = extract_tiles2patches(val_tiles, mask_tiles, input_image,
                                                          final_mask, args.patch_size, args.stride,
