@@ -60,6 +60,9 @@ def extract_patches(image, reference, patch_size, stride):
     num_row, num_col, p, row, col, depth = patches_array.shape
 
     # print('fazendo reshape')
+    check_memory()
+    del image, reference
+    check_memory()
     patches_array = patches_array.reshape(num_row*num_col, row, col, depth)
     # print(patches_array.shape)
     patches_ref = patches_ref.reshape(num_row*num_col, row, col)
