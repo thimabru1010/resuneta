@@ -234,7 +234,7 @@ def save_patches(patches_tr, patches_tr_ref, folder_path, mode='train'):
             np.save(os.path.join(folder_path, mode, 'masks/dist', filename(i*5 + j)),
                     dist_label_h)
             # Color
-            print(f'Checking if rgb img is in uint8 before hsv: {img_aug[j].dtype}')
+            # print(f'Checking if rgb img is in uint8 before hsv: {img_aug[j].dtype}')
             # Get only BGR from Aerial Image
             hsv_patch = cv2.cvtColor(img_aug[j][:, :, 1:4],
                                      cv2.COLOR_BGR2HSV).astype(np.float32)
