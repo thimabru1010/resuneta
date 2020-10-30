@@ -38,15 +38,15 @@ def extract_patches(image, reference, patch_size, stride):
     patches_ref = np.array(view_as_windows(reference,
                                            window_shape_ref, step=stride))
 
-    print('Patches extraidos')
+    # print('Patches extraidos')
     # print(patches_array.shape)
     num_row, num_col, p, row, col, depth = patches_array.shape
 
-    print('fazendo reshape')
+    # print('fazendo reshape')
     patches_array = patches_array.reshape(num_row*num_col, row, col, depth)
-    print(patches_array.shape)
+    # print(patches_array.shape)
     patches_ref = patches_ref.reshape(num_row*num_col, row, col)
-    print(patches_ref.shape)
+    # print(patches_ref.shape)
 
     return patches_array, patches_ref
 
@@ -81,11 +81,44 @@ def mask_no_considered(image_ref, buffer, past_ref):
     final_mask[past_ref == 1] = 2
     return final_mask
 
+def filter_patches(patches_img, patches_ref, percent):
+    filt_patches_img = []
+    filt_patches_ref = []
+    for i in range(len(patches_img)):
+        unique, counts = np.unique(patches_ref[i], return_counts=True)
+        counts_dict = dict(zip(unique, counts))
+        if 0 not in counts_dict.keys():
+            counts_dict[0] = 0
+        if 1 not in counts_dict.keys():
+            counts_dict[1] = 0
+        if 2 not in counts_dict.keys():
+            counts_dict[2] = 0
+        # print(counts_dict)
+        if -1 in counts_dict.keys():
+            continue
+        deforastation = counts_dict[1] / (counts_dict[0] + counts_dict[1] + counts_dict[2])
+        if deforastation * 100 > percent:
+            filt_patches_img.append(patches_img[i])
+            filt_patches_ref.append(patches_ref[i])
+
+    print(len(filt_patches_img))
+    print(type(filt_patches_img))
+    # print(type(filt_patches_img[0]))
+    if len(filt_patches_img) > 0:
+        filt_patches_img = np.stack(filt_patches_img, axis=0)
+        print(type(filt_patches_img))
+        filt_patches_ref = np.stack(filt_patches_ref, axis=0)
+        print(filt_patches_img.shape)
+        print(filt_patches_ref.shape)
+    return filt_patches_img, filt_patches_ref
+
 
 def extract_tiles2patches(tiles, mask_amazon, input_image, image_ref, patch_size,
                           stride, percent):
     patches_out = []
     labels_out = []
+    check_memory()
+    print('Extracting tiles')
     for num_tile in tiles:
         # print('='*60)
         # print(num_tile)
@@ -107,19 +140,32 @@ def extract_tiles2patches(tiles, mask_amazon, input_image, image_ref, patch_size
             counts_dict[1] = 0
         if 2 not in counts_dict.keys():
             counts_dict[2] = 0
-        deforastation = counts_dict[1] / (counts_dict[0] + counts_dict[1] + counts_dict[2])
+        # deforastation = counts_dict[1] / (counts_dict[0] + counts_dict[1] + counts_dict[2])
         # print(f"Deforastation of tile {num_tile}: {deforastation * 100}")
         # Extract patches for each tile
-        patches_img, patch_ref = extract_patches(tile_img, tile_ref, patch_size,
+        print(tile_img.shape)
+        patches_img, patches_ref = extract_patches(tile_img, tile_ref, patch_size,
                                                  stride)
+        print(f'Patches of tile {num_tile} extracted!')
+        assert len(patches_img) == len(patches_ref), "Train: Input patches and reference \
+        patches don't have the same numbers"
+        patches_img, patches_ref = filter_patches(patches_img, patches_ref, percent)
+
         #print(type(patches_img))
         # print(patches_img.shape)
         # print(patch_ref.shape)
-        patches_out.append(patches_img)
-        labels_out.append(patch_ref)
+        print(len(patches_img))
+        if len(patches_img) > 0:
+            patches_out.append(patches_img)
+            labels_out.append(patches_ref)
+        check_memory()
+        del patches_img, patches_ref
+        print('Variables deleted')
+        check_memory()
 
-    patches_out = np.concatenate(patches_out)
-    labels_out = np.concatenate(labels_out)
+    # print(patches_out)
+    patches_out = np.concatenate(patches_out, axis=0)
+    labels_out = np.concatenate(labels_out, axis=0)
     return patches_out, labels_out
 
 
@@ -167,7 +213,7 @@ def save_patches(patches_tr, patches_tr_ref, folder_path, mode='train'):
         # Convert from B x H x W x C --> B x C x H x W
         # label_aug_h = label_aug_h.transpose((0, 3, 1, 2))
         for j in range(len(img_aug)):
-            # Input image RGB
+            # Input image 7 bands of Staelite
             # Float32 its need to train the model
             img_float = img_aug[j].astype(np.float32)
             # img_normalized = normalize_rgb(img_float, norm_type=args.norm_type)
@@ -188,9 +234,10 @@ def save_patches(patches_tr, patches_tr_ref, folder_path, mode='train'):
             np.save(os.path.join(folder_path, mode, 'masks/dist', filename(i*5 + j)),
                     dist_label_h)
             # Color
-            # print(f'Checking if rgb img is in uint8 before hsv: {img_aug[j].dtype}')
-            hsv_patch = cv2.cvtColor(img_aug[j],
-                                     cv2.COLOR_RGB2HSV).astype(np.float32)
+            print(f'Checking if rgb img is in uint8 before hsv: {img_aug[j].dtype}')
+            # Get only BGR from Aerial Image
+            hsv_patch = cv2.cvtColor(img_aug[j][:, :, 1:4],
+                                     cv2.COLOR_BGR2HSV).astype(np.float32)
             # Float32 its need to train the model
             # hsv_patch = normalize_hsv(hsv_patch, norm_type=args.norm_type)
             # np.save(os.path.join(folder_path, mode, 'masks/color', filename(i*5 + j)),
@@ -206,7 +253,6 @@ def check_memory():
     # print(process.memory_info().rss)
     print(process.memory_percent())
     # print(process.memory_info().rss)
-    print(process.memory_percent())
     gc.collect()
     print('[GC COLLECT]')
     print(process.memory_percent())
@@ -247,8 +293,8 @@ if __name__ == '__main__':
     # Load images --------------------------------------------------------------
     img_t1_path = 'clipped_raster_004_66_2018.npy'
     img_t2_path = 'clipped_raster_004_66_2019.npy'
-    img_t1 = load_npy_image(os.path.join(root_path, img_t1_path))
-    img_t2 = load_npy_image(os.path.join(root_path, img_t2_path))
+    img_t1 = load_npy_image(os.path.join(root_path, img_t1_path)).astype(np.uint8)
+    img_t2 = load_npy_image(os.path.join(root_path, img_t2_path)).astype(np.uint8)
 
     # Convert shape from C x H x W --> H x W x C
     img_t1 = img_t1.transpose((1, 2, 0))
@@ -310,7 +356,6 @@ if __name__ == '__main__':
         2 --> Past deforastation (No considered)
     '''
     final_mask = mask_no_considered(image_ref, buffer, past_ref_sum)
-    # final_mask[img_mask_ref == -99] = -1
 
     unique, counts = np.unique(final_mask, return_counts=True)
     counts_dict = dict(zip(unique, counts))
@@ -343,10 +388,10 @@ if __name__ == '__main__':
     tr2 = 8
     tr3 = 10
     tr4 = 13
-    val1 = 7
-    val2 = 10
     # tr5 = 7
     # tr6 = 10
+    val1 = 7
+    val2 = 10
 
     mask_tr_val[mask_tiles == tr1] = 1
     mask_tr_val[mask_tiles == tr2] = 1
@@ -359,6 +404,7 @@ if __name__ == '__main__':
 
     all_tiles = [i for i in range(1, 16)]
     print(f'All tiles: {all_tiles}')
+    final_mask[img_mask_ref == -99] = -1
     show_deforastation_per_tile(all_tiles, mask_tiles, final_mask,
                                 args.def_percent)
 
