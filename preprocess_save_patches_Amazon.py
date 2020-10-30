@@ -13,9 +13,26 @@ import psutil
 import cv2
 from tqdm import tqdm
 
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from skimage.morphology import disk
 import skimage
+
+
+def normalization(image, norm_type=1):
+    image_reshaped = image.reshape((image.shape[0] * image.shape[1]),
+                                   image.shape[2])
+    if(norm_type == 1):
+        scaler = StandardScaler()
+    if(norm_type == 2):
+        scaler = MinMaxScaler(feature_range=(0, 1))
+    if(norm_type == 3):
+        scaler = MinMaxScaler(feature_range=(-1, 1))
+    scaler = scaler.fit(image_reshaped)
+    # print(scaler.mean_)
+    # print(scaler.)
+    # image_normalized = scaler.fit_transform(image_reshaped)
+    # image_normalized1 = image_normalized.reshape(image.shape[0],image.shape[1],image.shape[2])
+    return scaler
 
 
 def create_folders(folder_path, mode='train'):
@@ -169,7 +186,7 @@ def extract_tiles2patches(tiles, mask_amazon, input_image, image_ref, patch_size
     return patches_out, labels_out
 
 
-def show_deforastation_per_tile(tiles, mask_amazon, image_ref, percent):
+def show_deforastation_per_tile(tiles, mask_amazon, image_ref):
     defs = []
     for num_tile in tiles:
         print('='*60)
@@ -193,9 +210,9 @@ def show_deforastation_per_tile(tiles, mask_amazon, image_ref, percent):
             counts_dict[2] = 0
         deforastation = counts_dict[1] / (counts_dict[0] + counts_dict[1] + counts_dict[2])
         print(f"Deforastation of tile {num_tile}: {deforastation * 100}%")
-        print(f"Deforastation > {percent}% ? --> {deforastation > percent/100}")
         defs.append(deforastation*100)
     print('-'*60)
+    print(f'Total deforastation per tile: {sum(defs)}')
     print(sorted(zip(defs, tiles), reverse=True))
     print('='*60)
 
@@ -203,7 +220,7 @@ def filename(i):
     return f'patch_{i}.npy'
 
 
-def save_patches(patches_tr, patches_tr_ref, folder_path, mode='train'):
+def save_patches(patches_tr, patches_tr_ref, folder_path, scaler, mode='train'):
     for i in tqdm(range(len(patches_tr))):
         # Expand dims (Squeeze) to receive data_augmentation. Depreceated ?
         img_aug, label_aug = np.expand_dims(patches_tr[i], axis=0), np.expand_dims(patches_tr_ref[i], axis=0)
@@ -216,9 +233,10 @@ def save_patches(patches_tr, patches_tr_ref, folder_path, mode='train'):
             # Input image 7 bands of Staelite
             # Float32 its need to train the model
             img_float = img_aug[j].astype(np.float32)
-            # img_normalized = normalize_rgb(img_float, norm_type=args.norm_type)
-            # np.save(os.path.join(folder_path, mode, 'imgs', filename(i*5 + j)),
-            #         img_float.transpose((2, 0, 1)))
+            img_reshaped = img_float.reshape((img_float.shape[0] * img_float.shape[1]),
+                                           img_float.shape[2])
+            img_normed = scaler.transform(img_reshaped)
+            img_float = img_normed.reshape(img_float.shape[0], img_float.shape[1], img_float.shape[2])
             np.save(os.path.join(folder_path, mode, 'imgs', filename(i*5 + j)),
                     img_float)
             # All multitasking labels are saved in one-hot
@@ -236,12 +254,10 @@ def save_patches(patches_tr, patches_tr_ref, folder_path, mode='train'):
             # Color
             # print(f'Checking if rgb img is in uint8 before hsv: {img_aug[j].dtype}')
             # Get only BGR from Aerial Image
-            hsv_patch = cv2.cvtColor(img_aug[j][:, :, 1:4],
+            hsv_patch = cv2.cvtColor(img_aug[j][:, :, 1:4].astype(np.uint8),
                                      cv2.COLOR_BGR2HSV).astype(np.float32)
+            hsv_patch = hsv_patch * np.array([1./179, 1./255, 1./255])
             # Float32 its need to train the model
-            # hsv_patch = normalize_hsv(hsv_patch, norm_type=args.norm_type)
-            # np.save(os.path.join(folder_path, mode, 'masks/color', filename(i*5 + j)),
-            #         hsv_patch.transpose((2, 0, 1)))
             np.save(os.path.join(folder_path, mode, 'masks/color', filename(i*5 + j)),
                     hsv_patch)
 
@@ -293,8 +309,8 @@ if __name__ == '__main__':
     # Load images --------------------------------------------------------------
     img_t1_path = 'clipped_raster_004_66_2018.npy'
     img_t2_path = 'clipped_raster_004_66_2019.npy'
-    img_t1 = load_npy_image(os.path.join(root_path, img_t1_path)).astype(np.uint8)
-    img_t2 = load_npy_image(os.path.join(root_path, img_t2_path)).astype(np.uint8)
+    img_t1 = load_npy_image(os.path.join(root_path, img_t1_path)).astype(np.float32)
+    img_t2 = load_npy_image(os.path.join(root_path, img_t2_path)).astype(np.float32)
 
     # Convert shape from C x H x W --> H x W x C
     img_t1 = img_t1.transpose((1, 2, 0))
@@ -309,12 +325,13 @@ if __name__ == '__main__':
     input_image = input_image[:6100, :6600]
     h_, w_, channels = input_image.shape
     print(f"Input image shape: {input_image.shape}")
+    scaler = normalization(input_image)
 
     # Load Mask area -----------------------------------------------------------
     # Mask constains exactly location of region since the satelite image
     # doesn't fill the entire resolution (Kinda rotated with 0 around)
     img_mask_ref_path = 'mask_ref.npy'
-    img_mask_ref = load_npy_image(os.path.join(root_path, img_mask_ref_path))
+    img_mask_ref = load_npy_image(os.path.join(root_path, img_mask_ref_path)).astype(np.float32)
     img_mask_ref = img_mask_ref[:6100, :6600]
     print(f"Mask area reference shape: {img_mask_ref.shape}")
 
@@ -324,7 +341,7 @@ if __name__ == '__main__':
         1 --> Deforastation
     '''
     image_ref = load_npy_image(os.path.join(root_path,
-                                            'labels/binary_clipped_2019.npy'))
+                                            'labels/binary_clipped_2019.npy')).astype(np.float32)
     # Clip to fit tiles of your specific image
     image_ref = image_ref[:6100, :6600]
     # image_ref[img_mask_ref == -99] = -1
@@ -334,9 +351,9 @@ if __name__ == '__main__':
 
     # Load past deforastation reference ----------------------------------------
     past_ref1 = load_npy_image(os.path.join(root_path,
-                                            'labels/binary_clipped_2013_2018.npy'))
+                                            'labels/binary_clipped_2013_2018.npy')).astype(np.float32)
     past_ref2 = load_npy_image(os.path.join(root_path,
-                                            'labels/binary_clipped_1988_2012.npy'))
+                                            'labels/binary_clipped_1988_2012.npy')).astype(np.float32)
     past_ref_sum = past_ref1 + past_ref2
     # Clip to fit tiles of your specific image
     past_ref_sum = past_ref_sum[:6100, :6600]
@@ -357,9 +374,12 @@ if __name__ == '__main__':
     '''
     final_mask = mask_no_considered(image_ref, buffer, past_ref_sum)
 
+    final_mask[img_mask_ref == -99] = -1
     unique, counts = np.unique(final_mask, return_counts=True)
     counts_dict = dict(zip(unique, counts))
     print(f'Class pixels of final mask: {counts_dict}')
+    deforastation = counts_dict[1] / (counts_dict[0] + counts_dict[1] + counts_dict[2])
+    print(f"Total Deforastation: {deforastation * 100}%")
 
     # Calculates weights for weighted cross entropy
     total_pixels = counts_dict[0] + counts_dict[1] + counts_dict[2]
@@ -386,12 +406,21 @@ if __name__ == '__main__':
     mask_tr_val = np.zeros((mask_tiles.shape))
     tr1 = 5
     tr2 = 8
-    tr3 = 10
-    tr4 = 13
-    # tr5 = 7
-    # tr6 = 10
-    val1 = 7
+    tr3 = 13
+    tr4 = 7
+    tr5 = 11
+    tr6 = 1
+    tr7 = 14
+    tr8 = 3
+    tr9 = 9
+
+    val1 = 2
     val2 = 10
+    val3 = 4
+    val4 = 6
+    # Putting 15 and 12 to validation but don't have expressive deforastation %
+    val5 = 15
+    val6 = 12
 
     mask_tr_val[mask_tiles == tr1] = 1
     mask_tr_val[mask_tiles == tr2] = 1
@@ -404,9 +433,8 @@ if __name__ == '__main__':
 
     all_tiles = [i for i in range(1, 16)]
     print(f'All tiles: {all_tiles}')
-    final_mask[img_mask_ref == -99] = -1
-    show_deforastation_per_tile(all_tiles, mask_tiles, final_mask,
-                                args.def_percent)
+    # final_mask[img_mask_ref == -99] = -1
+    show_deforastation_per_tile(all_tiles, mask_tiles, final_mask)
 
     # Trainig tiles
     tr_tiles = [tr1, tr2, tr3, tr4]
@@ -441,5 +469,5 @@ if __name__ == '__main__':
     print(f'Number of train patches: {len(patches_tr)}')
     print(f'Number of val patches: {len(patches_val)}')
 
-    save_patches(patches_tr, patches_tr_ref, folder_path, mode='train')
-    save_patches(patches_val, patches_val_ref, folder_path, mode='val')
+    save_patches(patches_tr, patches_tr_ref, folder_path, scaler, mode='train')
+    save_patches(patches_val, patches_val_ref, folder_path, scaler, mode='val')
