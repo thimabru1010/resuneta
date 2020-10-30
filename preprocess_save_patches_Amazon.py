@@ -136,7 +136,6 @@ def filter_patches(patches_img, patches_ref, percent):
 
 def extract_patches2(img, img_ref, patch_size, stride, percent):
     # Extract patches manually
-    stride = patch_size
 
     height, width, channel = img.shape
     #print(height, width)
@@ -145,16 +144,20 @@ def extract_patches2(img, img_ref, patch_size, stride, percent):
     num_patches_w = width // stride
     #print(num_patches_h, num_patches_w)
 
-    new_shape = (num_patches_h*num_patches_w, patch_size, patch_size, channel)
-    new_shape_ref = (num_patches_h*num_patches_w, patch_size, patch_size)
-    patches_img = np.zeros(new_shape)
-    patches_ref = np.zeros(new_shape_ref)
+    # new_shape = (num_patches_h*num_patches_w, patch_size, patch_size, channel)
+    # new_shape_ref = (num_patches_h*num_patches_w, patch_size, patch_size)
+    # patches_img = np.zeros(new_shape)
+    # patches_ref = np.zeros(new_shape_ref)
+    patches_img = []
+    patches_ref = []
     n_patch = 0
     # rows
     for h in range(num_patches_h):
         # columns
         for w in range(num_patches_w):
-            unique, counts = np.unique(patches_ref[n_patch], return_counts=True)
+            patch_img = img[h*stride:(h+1)*stride, w*stride:(w+1)*stride, :]
+            patch_ref = img_ref[h*stride:(h+1)*stride, w*stride:(w+1)*stride]
+            unique, counts = np.unique(patch_ref, return_counts=True)
             counts_dict = dict(zip(unique, counts))
             if 0 not in counts_dict.keys():
                 counts_dict[0] = 0
@@ -167,11 +170,22 @@ def extract_patches2(img, img_ref, patch_size, stride, percent):
                 continue
             deforastation = counts_dict[1] / (counts_dict[0] + counts_dict[1] + counts_dict[2])
             if deforastation * 100 > percent:
-                patches_img[n_patch] = img[h*stride:(h+1)*stride, w*stride:(w+1)*stride, :]
-                patches_ref[n_patch] = img_ref[h*stride:(h+1)*stride, w*stride:(w+1)*stride]
+                # patches_img[n_patch] = img[h*stride:(h+1)*stride, w*stride:(w+1)*stride, :]
+                # patches_ref[n_patch] = img_ref[h*stride:(h+1)*stride, w*stride:(w+1)*stride]
+                patches_img.append(patch_img)
+                patches_ref.append(patch_ref)
 
             n_patch += 1
 
+    print(len(patches_img))
+    print(type(patches_img))
+    # print(type(filt_patches_img[0]))
+    if len(patches_img) > 0:
+        filt_patches_img = np.stack(patches_img, axis=0)
+        print(type(filt_patches_img))
+        filt_patches_ref = np.stack(patches_ref, axis=0)
+        print(filt_patches_img.shape)
+        print(filt_patches_ref.shape)
     return patches_img, patches_ref
 
 def extract_tiles2patches(tiles, mask_amazon, input_image, image_ref, patch_size,
@@ -495,7 +509,7 @@ if __name__ == '__main__':
     mask_tr_val[mask_tiles == val5] = 2
     mask_tr_val[mask_tiles == val6] = 2
 
-    all_tiles = [i for i in range(1, 26)]
+    all_tiles = [i for i in range(1, 16)]
     print(f'All tiles: {all_tiles}')
     # final_mask[img_mask_ref == -99] = -1
     show_deforastation_per_tile(all_tiles, mask_tiles, final_mask)
