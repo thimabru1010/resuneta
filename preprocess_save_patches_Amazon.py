@@ -427,10 +427,17 @@ if __name__ == '__main__':
     mask_tr_val[mask_tiles == tr2] = 1
     mask_tr_val[mask_tiles == tr3] = 1
     mask_tr_val[mask_tiles == tr4] = 1
+    mask_tr_val[mask_tiles == tr5] = 1
+    mask_tr_val[mask_tiles == tr6] = 1
+    mask_tr_val[mask_tiles == tr7] = 1
+    mask_tr_val[mask_tiles == tr8] = 1
+    mask_tr_val[mask_tiles == tr8] = 1
     mask_tr_val[mask_tiles == val1] = 2
     mask_tr_val[mask_tiles == val2] = 2
-    # mask_tr_val[mask_tiles == tr5] = 1
-    # mask_tr_val[mask_tiles == tr6] = 1
+    mask_tr_val[mask_tiles == val3] = 2
+    mask_tr_val[mask_tiles == val4] = 2
+    mask_tr_val[mask_tiles == val5] = 2
+    mask_tr_val[mask_tiles == val6] = 2
 
     all_tiles = [i for i in range(1, 16)]
     print(f'All tiles: {all_tiles}')
