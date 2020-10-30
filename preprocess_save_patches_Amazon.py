@@ -101,6 +101,7 @@ def mask_no_considered(image_ref, buffer, past_ref):
     final_mask[past_ref == 1] = 2
     return final_mask
 
+
 def filter_patches(patches_img, patches_ref, percent):
     filt_patches_img = []
     filt_patches_ref = []
@@ -133,6 +134,46 @@ def filter_patches(patches_img, patches_ref, percent):
     return filt_patches_img, filt_patches_ref
 
 
+def extract_patches2(img, img_ref, patch_size, stride, percent):
+    # Extract patches manually
+    stride = patch_size
+
+    height, width, channel = img.shape
+    #print(height, width)
+
+    num_patches_h = height // stride
+    num_patches_w = width // stride
+    #print(num_patches_h, num_patches_w)
+
+    new_shape = (num_patches_h*num_patches_w, patch_size, patch_size, channel)
+    new_shape_ref = (num_patches_h*num_patches_w, patch_size, patch_size)
+    patches_img = np.zeros(new_shape)
+    patches_ref = np.zeros(new_shape_ref)
+    n_patch = 0
+    # rows
+    for h in range(num_patches_h):
+        # columns
+        for w in range(num_patches_w):
+            unique, counts = np.unique(patches_ref[n_patch], return_counts=True)
+            counts_dict = dict(zip(unique, counts))
+            if 0 not in counts_dict.keys():
+                counts_dict[0] = 0
+            if 1 not in counts_dict.keys():
+                counts_dict[1] = 0
+            if 2 not in counts_dict.keys():
+                counts_dict[2] = 0
+            # print(counts_dict)
+            if -1 in counts_dict.keys():
+                continue
+            deforastation = counts_dict[1] / (counts_dict[0] + counts_dict[1] + counts_dict[2])
+            if deforastation * 100 > percent:
+                patches_img[n_patch] = img[h*stride:(h+1)*stride, w*stride:(w+1)*stride, :]
+                patches_ref[n_patch] = img_ref[h*stride:(h+1)*stride, w*stride:(w+1)*stride]
+
+            n_patch += 1
+
+    return patches_img, patches_ref
+
 def extract_tiles2patches(tiles, mask_amazon, input_image, image_ref, patch_size,
                           stride, percent):
     patches_out = []
@@ -164,12 +205,14 @@ def extract_tiles2patches(tiles, mask_amazon, input_image, image_ref, patch_size
         # print(f"Deforastation of tile {num_tile}: {deforastation * 100}")
         # Extract patches for each tile
         print(tile_img.shape)
-        patches_img, patches_ref = extract_patches(tile_img, tile_ref, patch_size,
-                                                 stride)
+        # patches_img, patches_ref = extract_patches(tile_img, tile_ref, patch_size,
+        #                                             stride)
+        patches_img, patches_ref = extract_patches2(tile_img, tile_ref, patch_size,
+                                                   stride, percent)
         print(f'Patches of tile {num_tile} extracted!')
         assert len(patches_img) == len(patches_ref), "Train: Input patches and reference \
         patches don't have the same numbers"
-        patches_img, patches_ref = filter_patches(patches_img, patches_ref, percent)
+        # patches_img, patches_ref = filter_patches(patches_img, patches_ref, percent)
 
         #print(type(patches_img))
         # print(patches_img.shape)
