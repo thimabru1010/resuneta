@@ -19,7 +19,7 @@ import skimage
 
 
 def normalization(image, norm_type=1):
-    image_reshaped = image.reshape((image.shape[0] * image.shape[1]),
+    image = image.reshape((image.shape[0] * image.shape[1]),
                                    image.shape[2])
     if(norm_type == 1):
         scaler = StandardScaler()
@@ -27,7 +27,7 @@ def normalization(image, norm_type=1):
         scaler = MinMaxScaler(feature_range=(0, 1))
     if(norm_type == 3):
         scaler = MinMaxScaler(feature_range=(-1, 1))
-    scaler = scaler.fit(image_reshaped)
+    scaler = scaler.fit(image)
     # print(scaler.mean_)
     # print(scaler.)
     # image_normalized = scaler.fit_transform(image_reshaped)
@@ -326,7 +326,9 @@ if __name__ == '__main__':
     input_image = input_image[:6100, :6600]
     h_, w_, channels = input_image.shape
     print(f"Input image shape: {input_image.shape}")
+    check_memory()
     scaler = normalization(input_image)
+    check_memory()
 
     # Load Mask area -----------------------------------------------------------
     # Mask constains exactly location of region since the satelite image
@@ -396,12 +398,14 @@ if __name__ == '__main__':
     # Mask with tiles
     # Divide tiles in 5 rows and 3 columns. Total = 15 tiles
     # tile.shape --> (6100/5, 6600/3) = (1220, 2200)
-    tile_number = np.ones((1220, 2200))
-    mask_c_1 = np.concatenate((tile_number, 2*tile_number, 3*tile_number), axis=1)
-    mask_c_2 = np.concatenate((4*tile_number, 5*tile_number, 6*tile_number), axis=1)
-    mask_c_3 = np.concatenate((7*tile_number, 8*tile_number, 9*tile_number), axis=1)
-    mask_c_4 = np.concatenate((10*tile_number, 11*tile_number, 12*tile_number), axis=1)
-    mask_c_5 = np.concatenate((13*tile_number, 14*tile_number, 15*tile_number), axis=1)
+    # [NEW] Divide tiles in 5 rows and 5 columns. Total = 25 tiles
+    # [NEW] tile.shape --> (6100/5, 6600/5) = (1220, 1320)
+    tile_number = np.ones((1220, 1320))
+    mask_c_1 = np.concatenate((tile_number, 2*tile_number, 3*tile_number, 16*tile_number, 17*tile_number), axis=1)
+    mask_c_2 = np.concatenate((4*tile_number, 5*tile_number, 6*tile_number, 18*tile_number, 19*tile_number), axis=1)
+    mask_c_3 = np.concatenate((7*tile_number, 8*tile_number, 9*tile_number, 20*tile_number, 21*tile_number), axis=1)
+    mask_c_4 = np.concatenate((10*tile_number, 11*tile_number, 12*tile_number, 22*tile_number, 23*tile_number), axis=1)
+    mask_c_5 = np.concatenate((13*tile_number, 14*tile_number, 15*tile_number, 24*tile_number, 25*tile_number), axis=1)
     mask_tiles = np.concatenate((mask_c_1, mask_c_2, mask_c_3, mask_c_4, mask_c_5), axis=0)
 
     mask_tr_val = np.zeros((mask_tiles.shape))
@@ -439,7 +443,7 @@ if __name__ == '__main__':
     mask_tr_val[mask_tiles == val5] = 2
     mask_tr_val[mask_tiles == val6] = 2
 
-    all_tiles = [i for i in range(1, 16)]
+    all_tiles = [i for i in range(1, 26)]
     print(f'All tiles: {all_tiles}')
     # final_mask[img_mask_ref == -99] = -1
     show_deforastation_per_tile(all_tiles, mask_tiles, final_mask)
