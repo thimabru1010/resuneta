@@ -183,7 +183,11 @@ def extract_patches2(img, img_ref, patch_size, stride, percent):
         filt_patches_ref = np.stack(patches_ref, axis=0)
         # print(filt_patches_img.shape)
         # print(filt_patches_ref.shape)
-    return filt_patches_img, filt_patches_ref
+        return filt_patches_img, filt_patches_ref
+    else:
+        print("Error: Couldn't extract patches. \
+              Maybe there wasn't deforastation")
+        return None, None
 
 def extract_tiles2patches(tiles, mask_amazon, input_image, image_ref, patch_size,
                           stride, percent):
@@ -233,10 +237,10 @@ def extract_tiles2patches(tiles, mask_amazon, input_image, image_ref, patch_size
             patches_out.append(patches_img)
             labels_out.append(patches_ref)
 
-        check_memory()
-        del patches_img, patches_ref
-        print('Variables deleted')
-        check_memory()
+        # check_memory()
+        # del patches_img, patches_ref
+        # print('Variables deleted')
+        # check_memory()
 
     # print(patches_out)
     patches_out = np.concatenate(patches_out, axis=0)
