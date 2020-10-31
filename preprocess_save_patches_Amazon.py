@@ -140,8 +140,10 @@ def extract_patches2(img, img_ref, patch_size, stride, percent):
     height, width, channel = img.shape
     #print(height, width)
 
-    num_patches_h = height // stride
-    num_patches_w = width // stride
+    # num_patches_h = height // stride
+    # num_patches_w = width // stride
+    num_patches_h = height // patch_size
+    num_patches_w = width // patch_size
     #print(num_patches_h, num_patches_w)
 
     # new_shape = (num_patches_h*num_patches_w, patch_size, patch_size, channel)
@@ -155,10 +157,10 @@ def extract_patches2(img, img_ref, patch_size, stride, percent):
     for h in range(num_patches_h):
         # columns
         for w in range(num_patches_w):
-            # patch_img = img[h*stride:(h+1)*stride, w*stride:(w+1)*stride, :]
-            # patch_ref = img_ref[h*stride:(h+1)*stride, w*stride:(w+1)*stride]
-            patch_img = img[h*patch_size:(h+1)*patch_size, w*patch_size:(w+1)*patch_size, :]
-            patch_ref = img_ref[h*patch_size:(h+1)*patch_size, w*patch_size:(w+1)*patch_size]
+            patch_img = img[h*stride:(h+1)*stride, w*stride:(w+1)*stride, :]
+            patch_ref = img_ref[h*stride:(h+1)*stride, w*stride:(w+1)*stride]
+            # patch_img = img[h*patch_size:(h+1)*patch_size, w*patch_size:(w+1)*patch_size, :]
+            # patch_ref = img_ref[h*patch_size:(h+1)*patch_size, w*patch_size:(w+1)*patch_size]
             # print(patch_img.shape)
             # print(patch_ref.shape)
             patch_shape = patch_img.shape
@@ -232,14 +234,14 @@ def extract_tiles2patches(tiles, mask_amazon, input_image, image_ref, patch_size
         # print(f"Deforastation of tile {num_tile}: {deforastation * 100}")
         # Extract patches for each tile
         print(tile_img.shape)
-        # patches_img, patches_ref = extract_patches(tile_img, tile_ref, patch_size,
-        #                                             stride)
-        patches_img, patches_ref = extract_patches2(tile_img, tile_ref, patch_size,
-                                                   stride, percent)
+        patches_img, patches_ref = extract_patches(tile_img, tile_ref, patch_size,
+                                                    stride)
+        # patches_img, patches_ref = extract_patches2(tile_img, tile_ref, patch_size,
+        #                                            stride, percent)
         print(f'Patches of tile {num_tile} extracted!')
         assert len(patches_img) == len(patches_ref), "Train: Input patches and reference \
         patches don't have the same numbers"
-        # patches_img, patches_ref = filter_patches(patches_img, patches_ref, percent)
+        patches_img, patches_ref = filter_patches(patches_img, patches_ref, percent)
 
         #print(type(patches_img))
         # print(patches_img.shape)
