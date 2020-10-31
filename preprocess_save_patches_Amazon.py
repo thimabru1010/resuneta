@@ -185,9 +185,11 @@ def extract_patches2(img, img_ref, patch_size, stride, percent):
         # print(filt_patches_ref.shape)
         return filt_patches_img, filt_patches_ref
     else:
-        print("Error: Couldn't extract patches. \
-              Maybe there wasn't deforastation")
-        return None, None
+        print("Error: Couldn't extract patches." +
+              "Maybe there wasn't enough deforastation or " +
+              "it was out of right region (with -1)")
+        return [], []
+
 
 def extract_tiles2patches(tiles, mask_amazon, input_image, image_ref, patch_size,
                           stride, percent):
