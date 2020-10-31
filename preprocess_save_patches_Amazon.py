@@ -177,16 +177,13 @@ def extract_patches2(img, img_ref, patch_size, stride, percent):
 
             n_patch += 1
 
-    print(len(patches_img))
-    print(type(patches_img))
-    # print(type(filt_patches_img[0]))
     if len(patches_img) > 0:
         filt_patches_img = np.stack(patches_img, axis=0)
-        print(type(filt_patches_img))
+        # print(type(filt_patches_img))
         filt_patches_ref = np.stack(patches_ref, axis=0)
-        print(filt_patches_img.shape)
-        print(filt_patches_ref.shape)
-    return patches_img, patches_ref
+        # print(filt_patches_img.shape)
+        # print(filt_patches_ref.shape)
+    return filt_patches_img, filt_patches_ref
 
 def extract_tiles2patches(tiles, mask_amazon, input_image, image_ref, patch_size,
                           stride, percent):
