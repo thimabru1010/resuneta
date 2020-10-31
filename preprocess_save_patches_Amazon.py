@@ -161,25 +161,27 @@ def extract_patches2(img, img_ref, patch_size, stride, percent):
             patch_ref = img_ref[h*patch_size:(h+1)*patch_size, w*patch_size:(w+1)*patch_size]
             print(patch_img.shape)
             print(patch_ref.shape)
-            unique, counts = np.unique(patch_ref, return_counts=True)
-            counts_dict = dict(zip(unique, counts))
-            if 0 not in counts_dict.keys():
-                counts_dict[0] = 0
-            if 1 not in counts_dict.keys():
-                counts_dict[1] = 0
-            if 2 not in counts_dict.keys():
-                counts_dict[2] = 0
-            # print(counts_dict)
-            if -1 in counts_dict.keys():
-                continue
-            deforastation = counts_dict[1] / (counts_dict[0] + counts_dict[1] + counts_dict[2])
-            if deforastation * 100 > percent:
-                # patches_img[n_patch] = img[h*stride:(h+1)*stride, w*stride:(w+1)*stride, :]
-                # patches_ref[n_patch] = img_ref[h*stride:(h+1)*stride, w*stride:(w+1)*stride]
-                patches_img.append(patch_img)
-                patches_ref.append(patch_ref)
+            patch_shape = patch_img.shape
+            if (patch_shape[0], patch_shape[0]) == (patch_size, patch_size):
+                unique, counts = np.unique(patch_ref, return_counts=True)
+                counts_dict = dict(zip(unique, counts))
+                if 0 not in counts_dict.keys():
+                    counts_dict[0] = 0
+                if 1 not in counts_dict.keys():
+                    counts_dict[1] = 0
+                if 2 not in counts_dict.keys():
+                    counts_dict[2] = 0
+                # print(counts_dict)
+                if -1 in counts_dict.keys():
+                    continue
+                deforastation = counts_dict[1] / (counts_dict[0] + counts_dict[1] + counts_dict[2])
+                if deforastation * 100 > percent:
+                    # patches_img[n_patch] = img[h*stride:(h+1)*stride, w*stride:(w+1)*stride, :]
+                    # patches_ref[n_patch] = img_ref[h*stride:(h+1)*stride, w*stride:(w+1)*stride]
+                    patches_img.append(patch_img)
+                    patches_ref.append(patch_ref)
 
-            n_patch += 1
+            # n_patch += 1
 
     if len(patches_img) > 0:
         filt_patches_img = np.stack(patches_img, axis=0)
