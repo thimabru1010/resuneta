@@ -177,6 +177,7 @@ def extract_patches2(img, img_ref, patch_size, stride, percent):
                 if -1 in counts_dict.keys():
                     continue
                 deforastation = counts_dict[1] / (counts_dict[0] + counts_dict[1] + counts_dict[2])
+                print(deforastation * 100)
                 if deforastation * 100 > percent:
                     # patches_img[n_patch] = img[h*stride:(h+1)*stride, w*stride:(w+1)*stride, :]
                     # patches_ref[n_patch] = img_ref[h*stride:(h+1)*stride, w*stride:(w+1)*stride]
@@ -185,6 +186,7 @@ def extract_patches2(img, img_ref, patch_size, stride, percent):
 
             # n_patch += 1
 
+    print(len(patches_img))
     if len(patches_img) > 0:
         filt_patches_img = np.stack(patches_img, axis=0)
         # print(type(filt_patches_img))
