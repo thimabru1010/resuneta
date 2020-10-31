@@ -155,8 +155,10 @@ def extract_patches2(img, img_ref, patch_size, stride, percent):
     for h in range(num_patches_h):
         # columns
         for w in range(num_patches_w):
-            patch_img = img[h*stride:(h+1)*stride, w*stride:(w+1)*stride, :]
-            patch_ref = img_ref[h*stride:(h+1)*stride, w*stride:(w+1)*stride]
+            # patch_img = img[h*stride:(h+1)*stride, w*stride:(w+1)*stride, :]
+            # patch_ref = img_ref[h*stride:(h+1)*stride, w*stride:(w+1)*stride]
+            patch_img = img[h*patch_size:(h+1)*patch_size, w*patch_size:(w+1)*patch_size, :]
+            patch_ref = img_ref[h*patch_size:(h+1)*patch_size, w*patch_size:(w+1)*patch_size]
             print(patch_img.shape)
             print(patch_ref.shape)
             unique, counts = np.unique(patch_ref, return_counts=True)
