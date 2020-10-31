@@ -162,7 +162,7 @@ def extract_patches2(img, img_ref, patch_size, stride, percent):
             # print(patch_img.shape)
             # print(patch_ref.shape)
             patch_shape = patch_img.shape
-            if (patch_shape[0], patch_shape[0]) == (patch_size, patch_size):
+            if (patch_shape[0], patch_shape[1]) == (patch_size, patch_size):
                 print(patch_img.shape)
                 print(patch_ref.shape)
                 unique, counts = np.unique(patch_ref, return_counts=True)
