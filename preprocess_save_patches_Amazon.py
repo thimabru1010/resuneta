@@ -157,6 +157,8 @@ def extract_patches2(img, img_ref, patch_size, stride, percent):
         for w in range(num_patches_w):
             patch_img = img[h*stride:(h+1)*stride, w*stride:(w+1)*stride, :]
             patch_ref = img_ref[h*stride:(h+1)*stride, w*stride:(w+1)*stride]
+            print(patch_img.shape)
+            print(patch_ref.shape)
             unique, counts = np.unique(patch_ref, return_counts=True)
             counts_dict = dict(zip(unique, counts))
             if 0 not in counts_dict.keys():
