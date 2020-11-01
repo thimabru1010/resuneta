@@ -7,7 +7,7 @@ class PSP_Pooling(gluon.HybridBlock):
     This is the PSPPooling layer, defined recursively so as to avoid calling ndarray.shape. This form is hybridizable.
     """
 
-    def __init__(self, nfilters, depth=3, _norm_type = 'BatchNorm',**kwards):
+    def __init__(self, nfilters, depth=4, _norm_type = 'BatchNorm',**kwards):
         gluon.HybridBlock.__init__(self,**kwards)
 
 

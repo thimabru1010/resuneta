@@ -72,7 +72,7 @@ class ResUNet_d6(HybridBlock):
             self.UpConv5 = ResNet_atrous_unit(nfilters)
 
 
-            self.psp_2ndlast = PSP_Pooling(self.nfilters, _norm_type = _norm_type)
+            self.psp_2ndlast = PSP_Pooling(self.nfilters, _norm_type=_norm_type)
 
             if self.multitasking:
 

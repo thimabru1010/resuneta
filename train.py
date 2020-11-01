@@ -329,13 +329,14 @@ if __name__ == '__main__':
 
     Nfilters_init = 32
     if args.model == 'resuneta':
-        net = ResUNet_d6(Nfilters_init, args.num_classes, multitasking=args.multitasking)
+        net = ResUNet_d6(Nfilters_init, args.num_classes, verbose=args.debug, multitasking=args.multitasking)
     elif args.model == 'unet':
         net = UNet(first_channels=64)
         # net = UNet(input_channels=3, output_channels=args.num_classes)
     net.initialize()
     # [TODO] Change this to receive right input size
-    net.summary(mx.nd.random.uniform(shape=(args.batch_size, 3, 256, 256)))
+    # net.summary(mx.nd.random.uniform(shape=(args.batch_size, 3, 256, 256)))
+    net.summary(mx.nd.random.uniform(shape=(args.batch_size, 14, 256, 256)))
 
     if args.checkpoint_path is None:
         net.collect_params().initialize(force_reinit=True, ctx=devices)
