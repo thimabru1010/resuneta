@@ -349,6 +349,7 @@ if __name__ == '__main__':
         tnorm = Normalize(mean=mean, std=std)
     else:
         tnorm = Normalize()
+        tnorm = None
 
     train_dataset = ISPRSDataset(root=args.dataset_path,
                                  mode='train', color=True, mtsk=True, norm=tnorm)
