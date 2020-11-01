@@ -23,7 +23,7 @@ class ResUNet_d6(HybridBlock):
 
         self.model_name = "ResUNet_d6"
 
-        self.depth = 6
+        self.depth = 5
 
         self.nfilters = _nfilters_init # Initial number of filters
         self.NClasses = _NClasses
