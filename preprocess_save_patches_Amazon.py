@@ -302,8 +302,8 @@ def save_patches(patches_tr, patches_tr_ref, folder_path, scaler, data_aug, mode
             img_aug, label_aug = data_augmentation(patches_tr[i], patches_tr_ref[i])
         else:
             img_aug, label_aug = np.expand_dims(patches_tr[i], axis=0), np.expand_dims(patches_tr_ref[i], axis=0)
-        # img_aug, label_aug = np.expand_dims(patches_tr[i], axis=0), np.expand_dims(patches_tr_ref[i], axis=0)
-        # label_aug_h = label_binarizer.transform(label_aug)
+        print(img_aug.shape)
+        print(label_aug.shape)
         # Performs the one hot encoding
         label_aug_h = tf.keras.utils.to_categorical(label_aug, args.num_classes)
         # Convert from B x H x W x C --> B x C x H x W
