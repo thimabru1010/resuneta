@@ -1,8 +1,7 @@
-from utils import load_npy_image
 import tensorflow as tf
 import numpy as np
 
-from utils import get_boundary_label, get_distance_label
+from utils import load_npy_image, get_boundary_label, get_distance_label, data_augmentation
 import argparse
 import os
 
@@ -296,10 +295,14 @@ def filename(i):
     return f'patch_{i}.npy'
 
 
-def save_patches(patches_tr, patches_tr_ref, folder_path, scaler, mode='train'):
+def save_patches(patches_tr, patches_tr_ref, folder_path, scaler, data_aug, mode='train'):
     for i in tqdm(range(len(patches_tr))):
         # Expand dims (Squeeze) to receive data_augmentation. Depreceated ?
-        img_aug, label_aug = np.expand_dims(patches_tr[i], axis=0), np.expand_dims(patches_tr_ref[i], axis=0)
+        if data_aug:
+            img_aug, label_aug = data_augmentation(patches_tr[i], patches_tr_ref[i])
+        else:
+            img_aug, label_aug = np.expand_dims(patches_tr[i], axis=0), np.expand_dims(patches_tr_ref[i], axis=0)
+        # img_aug, label_aug = np.expand_dims(patches_tr[i], axis=0), np.expand_dims(patches_tr_ref[i], axis=0)
         # label_aug_h = label_binarizer.transform(label_aug)
         # Performs the one hot encoding
         label_aug_h = tf.keras.utils.to_categorical(label_aug, args.num_classes)
@@ -562,5 +565,5 @@ if __name__ == '__main__':
     print(f'Number of train patches: {len(patches_tr)}')
     print(f'Number of val patches: {len(patches_val)}')
 
-    save_patches(patches_tr, patches_tr_ref, folder_path, scaler, mode='train')
-    save_patches(patches_val, patches_val_ref, folder_path, scaler, mode='val')
+    save_patches(patches_tr, patches_tr_ref, folder_path, scaler, args.data_aug, mode='train')
+    save_patches(patches_val, patches_val_ref, folder_path, scaler, args.data_aug, mode='val')
