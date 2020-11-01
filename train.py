@@ -60,11 +60,15 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
             print(data.shape)
             print(label.shape)
             data_list = gluon.utils.split_and_load(data, devices)
-            seg_label_list = gluon.utils.split_and_load(label[:, 0:5, :, :], devices)
+            # seg_label_list = gluon.utils.split_and_load(label[:, 0:5, :, :], devices)
+            seg_label_list = gluon.utils.split_and_load(label[:, 0:3, :, :], devices)
             if args.multitasking:
-                bound_label_list = gluon.utils.split_and_load(label[:, 5:10, :, :], devices)
-                dist_label_list = gluon.utils.split_and_load(label[:, 10:15, :, :], devices)
-                color_label_list = gluon.utils.split_and_load(label[:, 15:18, :, :], devices)
+                # bound_label_list = gluon.utils.split_and_load(label[:, 5:10, :, :], devices)
+                # dist_label_list = gluon.utils.split_and_load(label[:, 10:15, :, :], devices)
+                # color_label_list = gluon.utils.split_and_load(label[:, 15:18, :, :], devices)
+                bound_label_list = gluon.utils.split_and_load(label[:, 3:6, :, :], devices)
+                dist_label_list = gluon.utils.split_and_load(label[:, 6:9, :, :], devices)
+                color_label_list = gluon.utils.split_and_load(label[:, 9:12, :, :], devices)
             else:
                 bound_label_list = []
                 dist_label_list = []
