@@ -42,7 +42,7 @@ class ResUNet_d6(HybridBlock):
         with self.name_scope():
 
 
-            self.encoder = ResUNet_d6_encoder(self.nfilters, self.NClasses,_patch_size=patch_size, norm_type=_norm_type, verbose=verbose)
+            self.encoder = ResUNet_d6_encoder(self.nfilters, self.NClasses, patch_size=patch_size, norm_type=_norm_type, verbose=verbose)
 
 
             nfilters  = self.nfilters * 2 ** (self.depth - 1 -1)
