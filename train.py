@@ -57,6 +57,8 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
         # Train loop -----------------------------------------------------------
         for data, label in tqdm(dataloader['train'], desc="Train"):
             # Diff 3: split batch and load into corresponding devices (GPU)
+            print(data.shape)
+            print(label.shape)
             data_list = gluon.utils.split_and_load(data, devices)
             seg_label_list = gluon.utils.split_and_load(label[:, 0:5, :, :], devices)
             if args.multitasking:
