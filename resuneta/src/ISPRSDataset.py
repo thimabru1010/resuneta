@@ -98,6 +98,9 @@ class ISPRSDataset(dataset.Dataset):
             mask_bound = np.load(mask_bound_filepath).astype(np.float32)
             mask_dist = np.load(mask_dist_filepath).astype(np.float32)
             mask_color = np.load(mask_color_filepath).astype(np.float32)
+            print(mask_bound.shape)
+            print(mask_dist.shape)
+            print(mask_color.shape)
             # Maybe mask_color will fucked up
             # H x W x 18
             masks = np.concatenate([mask_seg, mask_bound, mask_dist, mask_color], axis=-1)
