@@ -520,9 +520,10 @@ if __name__ == '__main__':
     mask_tr_val[mask_tiles == tr6] = 1
     mask_tr_val[mask_tiles == tr7] = 1
     mask_tr_val[mask_tiles == tr8] = 1
-    mask_tr_val[mask_tiles == tr8] = 1
+    mask_tr_val[mask_tiles == tr9] = 1
+    mask_tr_val[mask_tiles == tr10] = 1
     mask_tr_val[mask_tiles == val1] = 2
-    mask_tr_val[mask_tiles == val2] = 2
+    # mask_tr_val[mask_tiles == val2] = 2
     mask_tr_val[mask_tiles == val3] = 2
     mask_tr_val[mask_tiles == val4] = 2
     mask_tr_val[mask_tiles == val5] = 2
