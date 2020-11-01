@@ -55,7 +55,7 @@ def extract_patches(image, reference, patch_size, stride):
                                            window_shape_ref, step=stride))
 
     print('Patches extraidos')
-    print(patches_array.shape)
+    # print(patches_array.shape)
     num_row, num_col, p, row, col, depth = patches_array.shape
 
     # print('fazendo reshape')
@@ -121,15 +121,14 @@ def filter_patches(patches_img, patches_ref, percent):
             filt_patches_img.append(patches_img[i])
             filt_patches_ref.append(patches_ref[i])
 
-    print(len(filt_patches_img))
-    print(type(filt_patches_img))
+    # print(type(filt_patches_img))
     # print(type(filt_patches_img[0]))
     if len(filt_patches_img) > 0:
         filt_patches_img = np.stack(filt_patches_img, axis=0)
-        print(type(filt_patches_img))
+        # print(type(filt_patches_img))
         filt_patches_ref = np.stack(filt_patches_ref, axis=0)
-        print(filt_patches_img.shape)
-        print(filt_patches_ref.shape)
+        # print(filt_patches_img.shape)
+        # print(filt_patches_ref.shape)
     return filt_patches_img, filt_patches_ref
 
 
@@ -241,6 +240,7 @@ def extract_tiles2patches(tiles, mask_amazon, input_image, image_ref, patch_size
         assert len(patches_img) == len(patches_ref), "Train: Input patches and reference \
         patches don't have the same numbers"
         patches_img, patches_ref = filter_patches(patches_img, patches_ref, percent)
+        print(f'Filtered patches: {len(patches_img)}')
 
         #print(type(patches_img))
         # print(patches_img.shape)
@@ -502,9 +502,10 @@ if __name__ == '__main__':
     tr7 = 14
     tr8 = 3
     tr9 = 9
+    tr10 = 10
 
     val1 = 2
-    val2 = 10
+    # val2 = 10
     val3 = 4
     val4 = 6
     # Putting 15 and 12 to validation but don't have expressive deforastation %
@@ -533,7 +534,7 @@ if __name__ == '__main__':
     show_deforastation_per_tile(all_tiles, mask_tiles, final_mask)
 
     # Trainig tiles
-    tr_tiles = [tr1, tr2, tr3, tr4, tr5, tr6, tr7, tr8, tr9]
+    tr_tiles = [tr1, tr2, tr3, tr4, tr5, tr6, tr7, tr8, tr9, tr10]
 
     # [TODO] Create a function to show deforestaion for all the tiles
     patches_tr, patches_tr_ref = extract_tiles2patches(tr_tiles, mask_tiles, input_image,
@@ -544,7 +545,7 @@ if __name__ == '__main__':
     patches don't have the same numbers"
 
     # Validation tiles
-    val_tiles = [val1, val2, val3, val4, val5, val6]
+    val_tiles = [val1, val3, val4, val5, val6]
 
     patches_val, patches_val_ref = extract_tiles2patches(val_tiles, mask_tiles, input_image,
                                                          final_mask, args.patch_size, args.stride,
