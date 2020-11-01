@@ -18,7 +18,7 @@ class ResUNet_d6(HybridBlock):
     This will be used for 256x256 image input, so the atrous convolutions should be determined by the depth
     """
 
-    def __init__(self, _nfilters_init,  _NClasses,  verbose=True, _norm_type='BatchNorm', multitasking=True,  **kwards):
+    def __init__(self, _nfilters_init,  _NClasses, patch_size=256  verbose=True, _norm_type='BatchNorm', multitasking=True,  **kwards):
         HybridBlock.__init__(self,**kwards)
 
         self.model_name = "ResUNet_d6"
@@ -33,11 +33,16 @@ class ResUNet_d6(HybridBlock):
         #self.NormLayer = gluon.nn.BatchNorm
         self.multitasking = multitasking
 
+        if patch_size == 256:
+            self.psp_depth = 4
+        elif patch_size == 128:
+            self.psp_depth = 3
+
 
         with self.name_scope():
 
 
-            self.encoder = ResUNet_d6_encoder(self.nfilters, self.NClasses,_norm_type=_norm_type, verbose=verbose)
+            self.encoder = ResUNet_d6_encoder(self.nfilters, self.NClasses,_patch_size=patch_size, norm_type=_norm_type, verbose=verbose)
 
 
             nfilters  = self.nfilters * 2 ** (self.depth - 1 -1)
@@ -72,7 +77,7 @@ class ResUNet_d6(HybridBlock):
             self.UpConv5 = ResNet_atrous_unit(nfilters)
 
 
-            self.psp_2ndlast = PSP_Pooling(self.nfilters, _norm_type=_norm_type)
+            self.psp_2ndlast = PSP_Pooling(self.nfilters, _norm_type=_norm_type, depth=self.psp_depth)
 
             if self.multitasking:
 
