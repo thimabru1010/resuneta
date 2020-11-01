@@ -160,6 +160,8 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
                 seg_logits, bound_logits, dist_logits, color_logits = net(X)
                 seg_losses.append(loss_f(seg_logits, y_seg))
                 acc_metric.update(mx.nd.argmax(seg_logits, axis=1), mx.nd.argmax(y_seg, axis=1))
+                print(seg_logits.shape)
+                print(y_seg.shape)
                 mcc_metric.update(mx.nd.argmax(seg_logits, axis=1), mx.nd.argmax(y_seg, axis=1))
                 if args.multitasking:
                     bound_losses.append(args.wbound*loss_f(bound_logits, y_bound))
