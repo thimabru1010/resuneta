@@ -350,6 +350,7 @@ if __name__ == '__main__':
 
     Nfilters_init = 32
     if args.model == 'resuneta':
+        args.multitasking = True
         net = ResUNet_d6(Nfilters_init, args.num_classes, patch_size=args.patch_size, verbose=args.debug, multitasking=args.multitasking)
     elif args.model == 'unet':
         net = UNet(args.num_classes, nfilter=64)
