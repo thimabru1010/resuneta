@@ -19,7 +19,10 @@ class UNet(nn.HybridBlock):
 
             self.conv_middle = nn.Conv2D(16*first_nfilter, kernel_size=3, padding=1)
             self.pool = nn.MaxPool2D()
-            self.conv_pred = nn.Conv2D(num_classes, kernel_size=1, padding=1)
+            # self.conv_pred = nn.Conv2D(num_classes, kernel_size=1)
+            self.conv_pred = nn.HybridSequential()
+            self.conv_pred.add(nn.Conv2D(num_classes, kernel_size=1))
+
 
     def hybrid_forward(self, F, x):
         # Encoder
