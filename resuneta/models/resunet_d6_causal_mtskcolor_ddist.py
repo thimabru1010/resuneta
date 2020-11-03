@@ -109,7 +109,7 @@ class ResUNet_d6(HybridBlock):
 
 
                 # This layer is trying to identify the exact coloration on HSV scale (cv2 devined)
-                self.color_logits = gluon.nn.Conv2D(3,kernel_size=1,padding=0)
+                self.color_logits = gluon.nn.Conv2D(3, kernel_size=1, padding=0)
             else:
                 self.seg_pointwise = gluon.nn.HybridSequential()
                 self.seg_pointwise.add(gluon.nn.Conv2D(self.NClasses, kernel_size=1, padding=0))

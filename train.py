@@ -40,6 +40,7 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
     trainer = gluon.Trainer(net.collect_params(), 'adam', {'learning_rate': 1e-4})
     min_loss = float('inf')
     early_cont = 0
+    nclasses = args.num_classes
 
     for epoch in range(args.epochs):
         epoch_seg_loss = {'train': 0.0, 'val': 0.0}
@@ -63,14 +64,14 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
             logger.debug(data.shape)
             data_list = gluon.utils.split_and_load(data, devices)
             # seg_label_list = gluon.utils.split_and_load(label[:, 0:5, :, :], devices)
-            seg_label_list = gluon.utils.split_and_load(label[:, 0:3, :, :], devices)
+            seg_label_list = gluon.utils.split_and_load(label[:, 0:nclasses, :, :], devices)
             if args.multitasking:
                 # bound_label_list = gluon.utils.split_and_load(label[:, 5:10, :, :], devices)
                 # dist_label_list = gluon.utils.split_and_load(label[:, 10:15, :, :], devices)
                 # color_label_list = gluon.utils.split_and_load(label[:, 15:18, :, :], devices)
-                bound_label_list = gluon.utils.split_and_load(label[:, 3:6, :, :], devices)
-                dist_label_list = gluon.utils.split_and_load(label[:, 6:9, :, :], devices)
-                color_label_list = gluon.utils.split_and_load(label[:, 9:12, :, :], devices)
+                bound_label_list = gluon.utils.split_and_load(label[:, nclasses:2*nclasses, :, :], devices)
+                dist_label_list = gluon.utils.split_and_load(label[:, 2*nclasses:3*nclasses, :, :], devices)
+                color_label_list = gluon.utils.split_and_load(label[:, 3*nclasses:(3*nclasses+3), :, :], devices)
             else:
                 bound_label_list = []
                 dist_label_list = []
@@ -146,14 +147,17 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
         for data, label in tqdm(dataloader['val'], desc="Val"):
             data_list = gluon.utils.split_and_load(data, devices)
             # seg_label_list = gluon.utils.split_and_load(label[:, 0:5, :, :], devices)
-            seg_label_list = gluon.utils.split_and_load(label[:, 0:3, :, :], devices)
+            seg_label_list = gluon.utils.split_and_load(label[:, 0:nclasses, :, :], devices)
             if args.multitasking:
                 # bound_label_list = gluon.utils.split_and_load(label[:, 5:10, :, :], devices)
                 # dist_label_list = gluon.utils.split_and_load(label[:, 10:15, :, :], devices)
                 # color_label_list = gluon.utils.split_and_load(label[:, 15:18, :, :], devices)
-                bound_label_list = gluon.utils.split_and_load(label[:, 3:6, :, :], devices)
-                dist_label_list = gluon.utils.split_and_load(label[:, 6:9, :, :], devices)
-                color_label_list = gluon.utils.split_and_load(label[:, 9:12, :, :], devices)
+                # bound_label_list = gluon.utils.split_and_load(label[:, 3:6, :, :], devices)
+                # dist_label_list = gluon.utils.split_and_load(label[:, 6:9, :, :], devices)
+                # color_label_list = gluon.utils.split_and_load(label[:, 9:12, :, :], devices)
+                bound_label_list = gluon.utils.split_and_load(label[:, nclasses:2*nclasses, :, :], devices)
+                dist_label_list = gluon.utils.split_and_load(label[:, 2*nclasses:3*nclasses, :, :], devices)
+                color_label_list = gluon.utils.split_and_load(label[:, 3*nclasses:(3*nclasses+3), :, :], devices)
 
             seg_losses = []
             bound_losses = []

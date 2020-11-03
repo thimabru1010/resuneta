@@ -17,7 +17,7 @@ class ResUNet_d6_encoder(HybridBlock):
     This will be used for 256x256 image input, so the atrous convolutions should be determined by the depth
     """
 
-    def __init__(self,_nfilters_init,  _NClasses,  patch_size=256, verbose=True,
+    def __init__(self, _nfilters_init,  _NClasses,  patch_size=256, verbose=True,
                  _norm_type='BatchNorm', **kwards):
         HybridBlock.__init__(self,**kwards)
 
