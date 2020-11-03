@@ -95,7 +95,7 @@ class UNet(nn.HybridBlock):
         up6 = F.UpSampling(conv_middle, scale=2, sample_type='nearest')
         up6 = self.upconv6(up6)
         # Concatenate along channel's dimension
-        merge6 = F.concatenate(up6, conv4_2, dim=1)
+        merge6 = F.concat(up6, conv4_2, dim=1)
         conv6_1 = self.conv6_1(merge6)
         conv6_1 = F.relu(conv6_1)
         conv6_2 = self.conv6_2(conv6_1)
@@ -104,7 +104,7 @@ class UNet(nn.HybridBlock):
         up7 = F.UpSampling(conv6_2, scale=2, sample_type='nearest')
         up7 = self.upconv7(up7)
         # Concatenate along channel's dimension
-        merge7 = F.concatenate(up7, conv3_2, axis=1)
+        merge7 = F.concat(up7, conv3_2, dim=1)
         conv7_1 = self.conv7_1(merge7)
         conv7_1 = F.relu(conv7_1)
         conv7_2 = self.conv7_2(conv7_1)
@@ -113,7 +113,7 @@ class UNet(nn.HybridBlock):
         up8 = F.UpSampling(conv7_2, scale=2, sample_type='nearest')
         up8 = self.upconv8(up8)
         # Concatenate along channel's dimension
-        merge8 = F.concatenate(up8, conv2_2, axis=1)
+        merge8 = F.concat(up8, conv2_2, dim=1)
         conv8_1 = self.conv8_1(merge8)
         conv8_1 = F.relu(conv8_1)
         conv8_2 = self.conv8_2(conv8_1)
@@ -122,7 +122,7 @@ class UNet(nn.HybridBlock):
         up9 = F.UpSampling(conv8_2, scale=2, sample_type='nearest')
         up9 = self.upconv9(up9)
         # Concatenate along channel's dimension
-        merge9 = F.concatenate(up9, conv1_2, axis=1)
+        merge9 = F.concat(up9, conv1_2, dim=1)
         conv9_1 = self.conv9_1(merge9)
         conv9_1 = F.relu(conv9_1)
         conv9_2 = self.conv9_2(conv9_1)
