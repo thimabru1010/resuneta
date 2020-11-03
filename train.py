@@ -344,7 +344,7 @@ if __name__ == '__main__':
     net.initialize()
     # [TODO] Change this to receive right input size
     # net.summary(mx.nd.random.uniform(shape=(args.batch_size, 3, 256, 256)))
-    net.summary(mx.nd.random.uniform(shape=(args.batch_size, 14, args.patch_size, args.patch_size)))
+    # net.summary(mx.nd.random.uniform(shape=(args.batch_size, 14, args.patch_size, args.patch_size)))
 
     if args.checkpoint_path is None:
         net.collect_params().initialize(force_reinit=True, ctx=devices)
