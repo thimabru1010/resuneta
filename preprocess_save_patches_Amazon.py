@@ -560,7 +560,7 @@ if __name__ == '__main__':
     print('patches extracted!')
 
     print('saving images...')
-    folder_path = f'./DATASETS/patch_size={args.patch_size}_' + \
+    folder_path = f'./DATASETS/Amazon_patch_size={args.patch_size}_' + \
                 f'stride={args.stride}_norm_type={args.norm_type}_data_aug={args.data_aug}'
 
     create_folders(folder_path, mode='train')
