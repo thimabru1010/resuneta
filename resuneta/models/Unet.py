@@ -53,13 +53,13 @@ class up_block(nn.HybridBlock):
 
 class UNet(nn.HybridBlock):
     # [TODO] Maybe first channel should be changed to 32
-    def __init__(self, first_channels=64, **kwargs):
+    def __init__(self, num_classes=3, first_channels=64, **kwargs):
         super(UNet, self).__init__(**kwargs)
         with self.name_scope():
             self.d0 = down_block(first_channels)
 
             self.d1 = nn.HybridSequential()
-            self.d1.add(nn.MaxPool2D(2,2,ceil_mode=True), down_block(first_channels*2))
+            self.d1.add(nn.MaxPool2D(2,2, ceil_mode=True), down_block(first_channels*2))
 
             self.d2 = nn.HybridSequential()
             self.d2.add(nn.MaxPool2D(2,2,ceil_mode=True), down_block(first_channels*2**2))
@@ -75,7 +75,7 @@ class UNet(nn.HybridBlock):
             self.u1 = up_block(first_channels*2, shrink=True)
             self.u0 = up_block(first_channels, shrink=False)
 
-            self.conv = nn.Conv2D(2,1)
+            self.conv = nn.Conv2D(num_classes, 1)
     def hybrid_forward(self, F, x):
         x0 = self.d0(x)
         x1 = self.d1(x0)
