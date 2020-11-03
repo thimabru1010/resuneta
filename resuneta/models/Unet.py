@@ -28,19 +28,19 @@ class UNet(nn.HybridBlock):
             self.conv5_middle = nn.Conv2D(nfilter, kernel_size=3, padding=1)
 
             # Decoder
-            nfilter /= 2 #  512
+            nfilter //= 2 #  512
             self.upconv6 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
             self.conv6_1 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
             self.conv6_2 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
-            nfilter /= 2 #  256
+            nfilter //= 2 #  256
             self.upconv7 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
             self.conv7_1 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
             self.conv7_2 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
-            nfilter /= 2 #  128
+            nfilter //= 2 #  128
             self.upconv8 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
             self.conv8_1 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
             self.conv8_2 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
-            nfilter /= 2 #  64
+            nfilter //= 2 #  64
             self.upconv9 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
             self.conv9_1 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
             self.conv9_2 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
