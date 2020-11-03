@@ -1,9 +1,8 @@
 import mxnet as mx
 import mxnet.gluon.nn as nn
 
-class UNet(nn.HybridBlock):
-    def down_block(nfilter):
 
+class UNet(nn.HybridBlock):
     def __init__(self, num_classes, first_nfilter=64, **kwargs):
         super(UNet, self).__init__(**kwargs)
         with self.name_scope():
@@ -12,9 +11,9 @@ class UNet(nn.HybridBlock):
             # o = (width - k + 2p)/s + 1 --> p = (k - 1)/2
             # Check this: https://www.quora.com/How-can-I-calculate-the-size-of-output-of-convolutional-layer
             self.conv1 = nn.Conv2D(first_nfilter, kernel_size=3, padding=1)
-            self.conv2 = nn.Conv2D(2*first_nfilter, kernel_size=3, padding=1)
-            self.conv3 = nn.Conv2D(4*first_nfilter, kernel_size=3, padding=1)
-            self.conv4 = nn.Conv2D(8*first_nfilter, kernel_size=3, padding=1)
+            self.conv2 = nn.Conv2D(2 * first_nfilter, kernel_size=3, padding=1)
+            self.conv3 = nn.Conv2D(4 * first_nfilter, kernel_size=3, padding=1)
+            self.conv4 = nn.Conv2D(8 * first_nfilter, kernel_size=3, padding=1)
 
             self.conv_middle = nn.Conv2D(16*first_nfilter, kernel_size=3, padding=1)
             self.pool = nn.MaxPool2D()
