@@ -1,83 +1,97 @@
 import mxnet as mx
-from mxnet import gluon
+import mxnet.gluon.nn as nn
 
+class UNet(nn.HybridBlock):
+    def down_block(nfilter):
 
-class UNet(gluon.nn.HybridBlock):
-    def convoluting_part(self,input_channels,output_channels,kernel_size=3):
-        shrink_net = gluon.nn.HybridSequential()
-        with shrink_net.name_scope():
-            shrink_net.add(gluon.nn.Conv2D(in_channels=input_channels,channels=output_channels,kernel_size=kernel_size,activation='relu'))
-            shrink_net.add(gluon.nn.BatchNorm(in_channels=output_channels))
-            shrink_net.add(gluon.nn.Conv2D(in_channels=output_channels,channels=output_channels,kernel_size=kernel_size,activation='relu'))
-            shrink_net.add(gluon.nn.BatchNorm(in_channels=output_channels))
-            shrink_net.add(gluon.nn.MaxPool2D(pool_size=(2,2)))
-        return shrink_net
-
-    def deconvoluting_part(self,input_channels,hidden_channel,output_channels,kernel_size=3):
-        expand_net = gluon.nn.HybridSequential()
-        with expand_net.name_scope():
-            expand_net.add(gluon.nn.Conv2D(channels=hidden_channel,kernel_size=kernel_size,activation='relu'))
-            expand_net.add(gluon.nn.BatchNorm())
-            expand_net.add(gluon.nn.Conv2D(channels=hidden_channel,kernel_size=kernel_size,activation='relu'))
-            expand_net.add(gluon.nn.BatchNorm())
-            expand_net.add(gluon.nn.Conv2DTranspose(channels = output_channels,kernel_size=kernel_size,strides=(2,2),padding=(1,1),output_padding=(1,1)))
-        return expand_net
-
-    def plateau_block(self,input_channels,output_channels):
-        plateau_net = gluon.nn.HybridSequential()
-        with plateau_net.name_scope():
-            plateau_net.add(gluon.nn.Conv2D(channels=512,kernel_size=3,activation='relu'))
-            plateau_net.add(gluon.nn.BatchNorm())
-            plateau_net.add(gluon.nn.Conv2D(channels=512,kernel_size=3,activation='relu'))
-            plateau_net.add(gluon.nn.BatchNorm())
-            plateau_net.add(gluon.nn.Conv2DTranspose(channels=256,kernel_size=3,strides=(2,2),padding=(1,1),output_padding=(1,1)))
-        return plateau_net
-
-    def output_block(self,input_channels,hidden_channel,output_channels,kernel_size=3):
-        x = gluon.nn.HybridSequential()
-        with x.name_scope():
-            x.add(gluon.nn.Conv2D(in_channels=input_channels,channels=hidden_channel,kernel_size=kernel_size,activation='relu'))
-            x.add(gluon.nn.BatchNorm(in_channels=hidden_channel))
-            x.add(gluon.nn.Conv2D(in_channels=hidden_channel,channels=hidden_channel,kernel_size=kernel_size,activation='relu'))
-            x.add(gluon.nn.BatchNorm(in_channels=hidden_channel))
-            x.add(gluon.nn.Conv2D(in_channels=hidden_channel,channels=output_channels,kernel_size=kernel_size,padding=(1,1),activation='relu'))
-            x.add(gluon.nn.BatchNorm(in_channels=output_channels))
-        return x
-
-    def concatenate(self,upsampling_block,conv_block):
-        padding = upsampling_block.shape[2]-conv_block.shape[2]
-        mid_padding = padding//2
-        padded_conv_block = mx.nd.pad(conv_block,mode="edge",pad_width=(0,0,0,0,mid_padding,mid_padding,mid_padding,mid_padding))
-        return mx.nd.concat(upsampling_block,padded_conv_block,dim=1)
-
-
-    def __init__(self, input_channels, output_channels, **kwargs):
+    def __init__(self, num_classes, first_nfilter=64, **kwargs):
         super(UNet, self).__init__(**kwargs)
-        # convolving
-        self.conv_depth0 = self.convoluting_part(input_channels,output_channels=64)
-        self.conv_depth1 = self.convoluting_part(64,128)
-        self.conv_depth2 = self.convoluting_part(128,256)
+        with self.name_scope():
+            # Applying padding=1 to have 'same' padding
+            # Remeber formula to know output of a convolution:
+            # o = (width - k + 2p)/s + 1 --> p = (k - 1)/2
+            # Check this: https://www.quora.com/How-can-I-calculate-the-size-of-output-of-convolutional-layer
+            self.conv1 = nn.Conv2D(first_nfilter, kernel_size=3, padding=1)
+            self.conv2 = nn.Conv2D(2*first_nfilter, kernel_size=3, padding=1)
+            self.conv3 = nn.Conv2D(4*first_nfilter, kernel_size=3, padding=1)
+            self.conv4 = nn.Conv2D(8*first_nfilter, kernel_size=3, padding=1)
 
-        # plateau
-        self.plateau = self.plateau_block(256,512)
+            self.conv_middle = nn.Conv2D(16*first_nfilter, kernel_size=3, padding=1)
+            self.pool = nn.MaxPool2D()
+            self.conv_pred = nn.Conv2D(num_classes, kernel_size=1, padding=1)
 
-        # deconvolving
-        self.deconv_depth2 = self.deconvoluting_part(512,256,128)
-        self.deconv_depth1 = self.deconvoluting_part(256,128,64)
-        self.output_layer = self.output_block(128, 64, output_channels)
+    def hybrid_forward(self, F, x):
+        # Encoder
+        # conv block 1
+        conv1_1 = self.conv1(x)
+        conv1_1 = F.relu(conv1_1)
+        conv1_2 = self.conv1(conv1_1)
+        conv1_2 = F.relu(conv1_2)
+        pool1 = self.pool(conv1_2)
+        # conv block 2
+        conv2_1 = self.con2(pool1)
+        conv2_1 = F.relu(conv2_1)
+        conv2_2 = self.conv2(conv2_1)
+        conv2_2 = F.relu(conv2_2)
+        pool2 = self.pool(conv2_2)
+        # conv block 3
+        conv3_1 = self.conv3(pool2)
+        conv3_1 = F.relu(conv3_1)
+        conv3_2 = self.conv3(conv3_1)
+        conv3_2 = F.relu(conv3_2)
+        pool3 = self.pool(conv3_2)
+        # conv block 4
+        conv4_1 = self.conv4(pool3)
+        conv4_1 = F.relu(conv4_1)
+        conv4_2 = self.conv4(conv4_1)
+        conv4_2 = F.relu(conv4_2)
+        pool4 = self.pool(conv4_2)
 
-    def hybrid_forward(self,F,X):
-        conv_block_0 = self.conv_depth0(X)
-        conv_block_1 = self.conv_depth1(conv_block_0)
-        conv_block_2 = self.conv_depth2(conv_block_1)
-        plateau_block_0 = self.plateau(conv_block_2)
+        # Middle
+        # conv block 5 n_f=1024
+        conv_middle = self.conv_middle(pool4)
+        conv_middle = F.relu(conv_middle)
+        conv_middle = self.conv_middle(conv_middle)
+        conv_middle = F.relu(conv_middle)
 
-        deconv_block_2 = self.concatenate(plateau_block_0,conv_block_2)
-        concat_block_2 = self.deconv_depth2(deconv_block_2)
+        # Decoder
+        # Upsampling conv block 1 --  n_f=512
+        up1 = F.UpSampling(conv_middle, scale=2, sample_type='nearest')
+        up1 = self.conv4(up1)
+        # Concatenate along channel's dimension
+        merge1 = F.concatenate(up1, conv4_2, axis=1)
+        conv6_1 = self.conv4(merge1)
+        conv6_1 = F.relu(conv6_1)
+        conv6_2 = self.conv4(conv6_1)
+        conv6_2 = F.relu(conv6_2)
+        # Upsampling conv block 2 --  n_f=256
+        up2 = F.UpSampling(conv6_2, scale=2, sample_type='nearest')
+        up2 = self.conv3(up2)
+        # Concatenate along channel's dimension
+        merge2 = F.concatenate(up2, conv3_2, axis=1)
+        conv7_1 = self.conv3(merge2)
+        conv7_1 = F.relu(conv7_1)
+        conv7_2 = self.conv3(conv7_1)
+        conv7_2 = F.relu(conv7_2)
+        # Upsampling conv block 3 --  n_f=128
+        up3 = F.UpSampling(conv7_2, scale=2, sample_type='nearest')
+        up3 = self.conv3(up3)
+        # Concatenate along channel's dimension
+        merge3 = F.concatenate(up3, conv2_2, axis=1)
+        conv8_1 = self.conv2(merge3)
+        conv8_1 = F.relu(conv8_1)
+        conv8_2 = self.conv3(conv8_1)
+        conv8_2 = F.relu(conv8_2)
+        # Upsampling conv block 4 --  n_f=64
+        up4 = F.UpSampling(conv8_2, scale=2, sample_type='nearest')
+        up4 = self.conv1(up4)
+        # Concatenate along channel's dimension
+        merge4 = F.concatenate(up4, conv1_2, axis=1)
+        conv9_1 = self.conv1(merge4)
+        conv9_1 = F.relu(conv9_1)
+        conv9_2 = self.conv1(conv9_1)
+        conv9_2 = F.relu(conv9_2)
 
-        deconv_block_1 = self.concatenate(concat_block_2,conv_block_1)
-        concat_block_1 = self.deconv_depth1(deconv_block_1)
+        out = self.conv_pred(conv9_2)
 
-        deconv_block_0 = self.concatenate(concat_block_1,conv_block_0)
-        output_layer = self.output_layer(deconv_block_0)
-        return output_layer
+        return out
