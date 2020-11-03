@@ -95,7 +95,7 @@ class UNet(nn.HybridBlock):
         up6 = F.UpSampling(conv_middle, scale=2, sample_type='nearest')
         up6 = self.upconv6(up6)
         # Concatenate along channel's dimension
-        merge6 = F.concatenate(up6, conv4_2, axis=1)
+        merge6 = F.concatenate(up6, conv4_2, dim=1)
         conv6_1 = self.conv6_1(merge6)
         conv6_1 = F.relu(conv6_1)
         conv6_2 = self.conv6_2(conv6_1)
