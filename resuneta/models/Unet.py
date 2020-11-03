@@ -32,8 +32,10 @@ class UNet(nn.HybridBlock):
         conv1_2 = F.relu(conv1_2)
         pool1 = self.pool(conv1_2)
         # conv block 2
+        print(pool1.shape)
         conv2_1 = self.conv2(pool1)
         conv2_1 = F.relu(conv2_1)
+        print(conv2_1.shape)
         conv2_2 = self.conv2(conv2_1)
         conv2_2 = F.relu(conv2_2)
         pool2 = self.pool(conv2_2)
