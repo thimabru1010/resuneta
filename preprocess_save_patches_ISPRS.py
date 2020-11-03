@@ -156,8 +156,8 @@ create_folders(folder_path, mode='val')
 
 
 def filename(i):
-    return f'patch_{i}.npy'
-    # return str(i).zfill(6) + '.npy'
+    # return f'patch_{i}.npy'
+    return str(i).zfill(6) + '.npy'
 
 
 print(f'Number of train patches: {len(patches_tr)}')
