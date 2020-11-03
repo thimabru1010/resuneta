@@ -25,7 +25,8 @@ class UNet(nn.HybridBlock):
             self.conv4_2 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
 
             nfilter *= 2 #  1024
-            self.conv5_middle = nn.Conv2D(nfilter, kernel_size=3, padding=1)
+            self.conv5_1 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
+            self.conv5_2 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
 
             # Decoder
             nfilter //= 2 #  512
@@ -84,9 +85,9 @@ class UNet(nn.HybridBlock):
 
         # Middle
         # conv block 5 n_f=1024
-        conv_middle = self.conv5_middle(pool4)
+        conv_middle = self.conv5_1(pool4)
         conv_middle = F.relu(conv_middle)
-        conv_middle = self.conv5_middle(conv_middle)
+        conv_middle = self.conv5_2(conv_middle)
         conv_middle = F.relu(conv_middle)
 
         # Decoder
