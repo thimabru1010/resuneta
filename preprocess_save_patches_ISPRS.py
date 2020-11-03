@@ -145,6 +145,8 @@ def create_folders(folder_path, mode='train'):
         os.makedirs(os.path.join(folder_path, mode, 'masks/color'))
 
 
+print(f'Total number of patches: {len(patches_tr)}')
+
 patches_tr, patches_val, patches_tr_lb, patches_val_lb = train_test_split(patches_tr, patches_tr_ref, test_size=0.2, random_state=42)
 
 print('saving images...')
@@ -156,8 +158,8 @@ create_folders(folder_path, mode='val')
 
 
 def filename(i):
-    # return f'patch_{i}.npy'
-    return str(i).zfill(6) + '.npy'
+    return f'patch_{i}.npy'
+    # return str(i).zfill(6) + '.npy'
 
 
 print(f'Number of train patches: {len(patches_tr)}')

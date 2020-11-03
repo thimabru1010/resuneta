@@ -61,7 +61,7 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
 
             # print(data.shape)
             # print(label.shape)
-            logger.debug(data.shape)
+            logger.debug(f'Train data shape: {data.shape}')
             data_list = gluon.utils.split_and_load(data, devices)
             # seg_label_list = gluon.utils.split_and_load(label[:, 0:5, :, :], devices)
             seg_label_list = gluon.utils.split_and_load(label[:, 0:nclasses, :, :], devices)
@@ -145,6 +145,7 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
 
         # Validation loop ------------------------------------------------------
         for data, label in tqdm(dataloader['val'], desc="Val"):
+            logger.debug(f'Val data shape: {data.shape}')
             data_list = gluon.utils.split_and_load(data, devices)
             # seg_label_list = gluon.utils.split_and_load(label[:, 0:5, :, :], devices)
             seg_label_list = gluon.utils.split_and_load(label[:, 0:nclasses, :, :], devices)
