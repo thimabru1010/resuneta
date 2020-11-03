@@ -105,7 +105,8 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
             for loss in total_losses:
                 loss.backward()
             if args.model == 'unet':
-                trainer.step(args.batch_size, ignore_stale_grad=True)
+                # trainer.step(args.batch_size, ignore_stale_grad=True)
+                trainer.step(args.batch_size)
             else:
                 trainer.step(args.batch_size)
             # Diff 5: sum losses over all devices
