@@ -12,7 +12,7 @@ class UNet(nn.HybridBlock):
             # o = (width - k + 2p)/s + 1 --> p = (k - 1)/2
             # Check this: https://www.quora.com/How-can-I-calculate-the-size-of-output-of-convolutional-layer
             # Encoder
-            self.conv1_1 = nn.Conv2D(nfilter, kernel_size=3, padding=1, use_bias=False)
+            self.conv1_1 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
             self.conv1_2 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
             nfilter *= 2 #  128
             self.conv2_1 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
