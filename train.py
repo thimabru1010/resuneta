@@ -285,6 +285,8 @@ if __name__ == '__main__':
                         type=str, choices=['resuneta', 'unet'], default='resuneta')
     parser.add_argument("--multitasking", help="choose resunet-a multitasking \
                         or not", action='store_true')
+    parser.add_argument("--dataset_type", help="choose which dataset to use",
+                        type=str, choices=['amazon', 'ISPRS'], default='ISPRS')
     parser.add_argument("--debug", help="choose if you want to shoe debug logs",
                         action='store_true', default=False)
     parser.add_argument("--norm_path", help="Load a txt with normalization you want to apply.",
@@ -353,8 +355,10 @@ if __name__ == '__main__':
         # net = UNet(input_channels=14, output_channels=args.num_classes)
     net.initialize()
     # [TODO] Change this to receive right input size
-    net.summary(mx.nd.random.uniform(shape=(args.batch_size, 3, args.patch_size, args.patch_size)))
-    # net.summary(mx.nd.random.uniform(shape=(args.batch_size, 14, args.patch_size, args.patch_size)))
+    if args.dataset_type == 'ISPRS':
+        net.summary(mx.nd.random.uniform(shape=(args.batch_size, 3, args.patch_size, args.patch_size)))
+    else:
+        net.summary(mx.nd.random.uniform(shape=(args.batch_size, 14, args.patch_size, args.patch_size)))
 
     if args.checkpoint_path is None:
         net.collect_params().initialize(force_reinit=True, ctx=devices)
@@ -374,6 +378,10 @@ if __name__ == '__main__':
         tnorm = Normalize(mean=mean, std=std)
     else:
         tnorm = Normalize()
+
+    if args.dataset_type == 'ISPRS':
+        tnorm = Normalize()
+    else:
         tnorm = None
 
     train_dataset = ISPRSDataset(root=args.dataset_path,
