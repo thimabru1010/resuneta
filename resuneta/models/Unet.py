@@ -4,8 +4,8 @@ import mxnet.gluon.nn as nn
 
 class UNet(nn.HybridBlock):
     def __init__(self, num_classes, first_nfilter=64, **kwargs):
-        nn.HybridBlock.__init__(self, **kwargs)
-        # super(UNet, self).__init__(**kwargs)
+        # nn.HybridBlock.__init__(self, **kwargs)
+        super(UNet, self).__init__(**kwargs)
         with self.name_scope():
             # Applying padding=1 to have 'same' padding
             # Remeber formula to know output of a convolution:
