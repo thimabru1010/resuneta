@@ -352,6 +352,7 @@ if __name__ == '__main__':
         net = ResUNet_d6(Nfilters_init, args.num_classes, patch_size=args.patch_size, verbose=args.debug, multitasking=args.multitasking)
     elif args.model == 'unet':
         net = UNet(args.num_classes, nfilter=64)
+        args.multitasking = False
         # net = UNet(input_channels=14, output_channels=args.num_classes)
     net.initialize()
     # [TODO] Change this to receive right input size
@@ -385,9 +386,9 @@ if __name__ == '__main__':
         tnorm = None
 
     train_dataset = ISPRSDataset(root=args.dataset_path,
-                                 mode='train', color=True, mtsk=True, norm=tnorm)
+                                 mode='train', color=True, mtsk=args.multitasking, norm=tnorm)
     val_dataset = ISPRSDataset(root=args.dataset_path,
-                               mode='val', color=True, mtsk=True, norm=tnorm)
+                               mode='val', color=True, mtsk=args.multitasking, norm=tnorm)
 
     dataloader = {}
     dataloader['train'] = gluon.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
