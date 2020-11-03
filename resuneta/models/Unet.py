@@ -11,7 +11,7 @@ class UNet(nn.HybridBlock):
             # Remeber formula to know output of a convolution:
             # o = (width - k + 2p)/s + 1 --> p = (k - 1)/2
             # Check this: https://www.quora.com/How-can-I-calculate-the-size-of-output-of-convolutional-layer
-            self.first_conv = nn.Conv2D(first_nfilter, in_channels=14, kernel_size=3, padding=1)
+            self.first_conv = nn.Conv2D(first_nfilter, kernel_size=3, padding=1)
             self.conv1 = nn.Conv2D(first_nfilter, kernel_size=3, padding=1)
             self.conv2 = nn.Conv2D(2 * first_nfilter, kernel_size=3, padding=1)
             self.conv3 = nn.Conv2D(4 * first_nfilter, kernel_size=3, padding=1)
@@ -24,7 +24,9 @@ class UNet(nn.HybridBlock):
     def hybrid_forward(self, F, x):
         # Encoder
         # conv block 1
+        print(x.shape)
         conv1_1 = self.first_conv(x)
+        print(conv1_1.shape)
         conv1_1 = F.relu(conv1_1)
         conv1_2 = self.conv1(conv1_1)
         conv1_2 = F.relu(conv1_2)
