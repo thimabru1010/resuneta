@@ -1,93 +1,83 @@
 import mxnet as mx
-import mxnet.gluon.nn as nn
-
-"""
-    Unet implementation took from: https://github.com/chinakook/U-Net/blob/master/model_unet.py
-"""
-def ConvBlock(channels, kernel_size):
-    out = nn.HybridSequential()
-    #with out.name_scope():
-    out.add(
-        nn.Conv2D(channels, kernel_size, padding=kernel_size // 2, use_bias=False),
-        nn.BatchNorm(),
-        nn.Activation('relu')
-    )
-    return out
-
-def down_block(channels):
-    out = nn.HybridSequential()
-    #with out.name_scope():
-    out.add(
-        ConvBlock(channels, 3),
-        ConvBlock(channels, 3)
-    )
-    return out
+from mxnet import gluon
 
 
-class up_block(nn.HybridBlock):
-    def __init__(self, channels, shrink=True, **kwargs):
-        super(up_block, self).__init__(**kwargs)
-        #with self.name_scope():
-        self.upsampler = nn.Conv2DTranspose(channels=channels, kernel_size=4, strides=2,
-                                            padding=1, use_bias=False, groups=channels, weight_initializer=mx.init.Bilinear())
-        self.upsampler.collect_params().setattr('gred_req', 'null')
+class UNet(gluon.nn.HybridBlock):
+    def convoluting_part(self,input_channels,output_channels,kernel_size=3):
+        shrink_net = gluon.nn.HybridSequential()
+        with shrink_net.name_scope():
+            shrink_net.add(gluon.nn.Conv2D(in_channels=input_channels,channels=output_channels,kernel_size=kernel_size,activation='relu'))
+            shrink_net.add(gluon.nn.BatchNorm(in_channels=output_channels))
+            shrink_net.add(gluon.nn.Conv2D(in_channels=output_channels,channels=output_channels,kernel_size=kernel_size,activation='relu'))
+            shrink_net.add(gluon.nn.BatchNorm(in_channels=output_channels))
+            shrink_net.add(gluon.nn.MaxPool2D(pool_size=(2,2)))
+        return shrink_net
 
-        self.conv1 = ConvBlock(channels, 1)
-        self.conv3_0 = ConvBlock(channels, 3)
-        if shrink:
-            self.conv3_1 = ConvBlock(channels // 2, 3)
-        else:
-            self.conv3_1 = ConvBlock(channels, 3)
-    def hybrid_forward(self, F, x, s):
-        x = self.upsampler(x)
-        x = self.conv1(x)
-        x = F.relu(x)
+    def deconvoluting_part(self,input_channels,hidden_channel,output_channels,kernel_size=3):
+        expand_net = gluon.nn.HybridSequential()
+        with expand_net.name_scope():
+            expand_net.add(gluon.nn.Conv2D(channels=hidden_channel,kernel_size=kernel_size,activation='relu'))
+            expand_net.add(gluon.nn.BatchNorm())
+            expand_net.add(gluon.nn.Conv2D(channels=hidden_channel,kernel_size=kernel_size,activation='relu'))
+            expand_net.add(gluon.nn.BatchNorm())
+            expand_net.add(gluon.nn.Conv2DTranspose(channels = output_channels,kernel_size=kernel_size,strides=(2,2),padding=(1,1),output_padding=(1,1)))
+        return expand_net
 
-        x = F.Crop(*[x,s], center_crop=True)
-        x = F.concat(s,x, dim=1)
-        #x = s + x
-        x = self.conv3_0(x)
-        x = self.conv3_1(x)
+    def plateau_block(self,input_channels,output_channels):
+        plateau_net = gluon.nn.HybridSequential()
+        with plateau_net.name_scope():
+            plateau_net.add(gluon.nn.Conv2D(channels=512,kernel_size=3,activation='relu'))
+            plateau_net.add(gluon.nn.BatchNorm())
+            plateau_net.add(gluon.nn.Conv2D(channels=512,kernel_size=3,activation='relu'))
+            plateau_net.add(gluon.nn.BatchNorm())
+            plateau_net.add(gluon.nn.Conv2DTranspose(channels=256,kernel_size=3,strides=(2,2),padding=(1,1),output_padding=(1,1)))
+        return plateau_net
+
+    def output_block(self,input_channels,hidden_channel,output_channels,kernel_size=3):
+        x = gluon.nn.HybridSequential()
+        with x.name_scope():
+            x.add(gluon.nn.Conv2D(in_channels=input_channels,channels=hidden_channel,kernel_size=kernel_size,activation='relu'))
+            x.add(gluon.nn.BatchNorm(in_channels=hidden_channel))
+            x.add(gluon.nn.Conv2D(in_channels=hidden_channel,channels=hidden_channel,kernel_size=kernel_size,activation='relu'))
+            x.add(gluon.nn.BatchNorm(in_channels=hidden_channel))
+            x.add(gluon.nn.Conv2D(in_channels=hidden_channel,channels=output_channels,kernel_size=kernel_size,padding=(1,1),activation='relu'))
+            x.add(gluon.nn.BatchNorm(in_channels=output_channels))
         return x
 
+    def concatenate(self,upsampling_block,conv_block):
+        padding = upsampling_block.shape[2]-conv_block.shape[2]
+        mid_padding = padding//2
+        padded_conv_block = mx.nd.pad(conv_block,mode="edge",pad_width=(0,0,0,0,mid_padding,mid_padding,mid_padding,mid_padding))
+        return mx.nd.concat(upsampling_block,padded_conv_block,dim=1)
 
-class UNet(nn.HybridBlock):
-    # [TODO] Maybe first channel should be changed to 32
-    def __init__(self, num_classes=3, first_channels=64, **kwargs):
+
+    def __init__(self, input_channels, output_channels, **kwargs):
         super(UNet, self).__init__(**kwargs)
-        with self.name_scope():
-            self.d0 = down_block(first_channels)
+        # convolving
+        self.conv_depth0 = self.convoluting_part(input_channels,output_channels=64)
+        self.conv_depth1 = self.convoluting_part(64,128)
+        self.conv_depth2 = self.convoluting_part(128,256)
 
-            self.d1 = nn.HybridSequential()
-            self.d1.add(nn.MaxPool2D(2,2, ceil_mode=True), down_block(first_channels*2))
+        # plateau
+        self.plateau = self.plateau_block(256,512)
 
-            self.d2 = nn.HybridSequential()
-            self.d2.add(nn.MaxPool2D(2,2,ceil_mode=True), down_block(first_channels*2**2))
+        # deconvolving
+        self.deconv_depth2 = self.deconvoluting_part(512,256,128)
+        self.deconv_depth1 = self.deconvoluting_part(256,128,64)
+        self.output_layer = self.output_block(128, 64, output_channels)
 
-            self.d3 = nn.HybridSequential()
-            self.d3.add(nn.MaxPool2D(2,2,ceil_mode=True), down_block(first_channels*2**3))
+    def hybrid_forward(self,F,X):
+        conv_block_0 = self.conv_depth0(X)
+        conv_block_1 = self.conv_depth1(conv_block_0)
+        conv_block_2 = self.conv_depth2(conv_block_1)
+        plateau_block_0 = self.plateau(conv_block_2)
 
-            self.d4 = nn.HybridSequential()
-            self.d4.add(nn.MaxPool2D(2,2,ceil_mode=True), down_block(first_channels*2**4))
+        deconv_block_2 = self.concatenate(plateau_block_0,conv_block_2)
+        concat_block_2 = self.deconv_depth2(deconv_block_2)
 
-            self.u3 = up_block(first_channels*2**3, shrink=True)
-            self.u2 = up_block(first_channels*2**2, shrink=True)
-            self.u1 = up_block(first_channels*2, shrink=True)
-            self.u0 = up_block(first_channels, shrink=False)
+        deconv_block_1 = self.concatenate(concat_block_2,conv_block_1)
+        concat_block_1 = self.deconv_depth1(deconv_block_1)
 
-            self.conv = nn.Conv2D(num_classes, 1)
-    def hybrid_forward(self, F, x):
-        x0 = self.d0(x)
-        x1 = self.d1(x0)
-        x2 = self.d2(x1)
-        x3 = self.d3(x2)
-        x4 = self.d4(x3)
-
-        y3 = self.u3(x4,x3)
-        y2 = self.u2(y3,x2)
-        y1 = self.u1(y2,x1)
-        y0 = self.u0(y1,x0)
-
-        out = self.conv(y0)
-
-        return out
+        deconv_block_0 = self.concatenate(concat_block_1,conv_block_0)
+        output_layer = self.output_layer(deconv_block_0)
+        return output_layer

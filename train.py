@@ -339,8 +339,8 @@ if __name__ == '__main__':
     if args.model == 'resuneta':
         net = ResUNet_d6(Nfilters_init, args.num_classes, patch_size=args.patch_size, verbose=args.debug, multitasking=args.multitasking)
     elif args.model == 'unet':
-        net = UNet(args.num_classes, first_channels=64)
-        # net = UNet(input_channels=3, output_channels=args.num_classes)
+        # net = UNet(args.num_classes, first_channels=64)
+        net = UNet(input_channels=64, output_channels=args.num_classes)
     net.initialize()
     # [TODO] Change this to receive right input size
     # net.summary(mx.nd.random.uniform(shape=(args.batch_size, 3, 256, 256)))
