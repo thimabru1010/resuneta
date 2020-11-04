@@ -296,12 +296,23 @@ def filename(i):
 
 
 def save_patches(patches_tr, patches_tr_ref, folder_path, scaler, data_aug, mode='train'):
+    classes_dict = {-1: 0, 0: 0, 1: 0, 2: 0}
     for i in tqdm(range(len(patches_tr))):
         # Expand dims (Squeeze) to receive data_augmentation. Depreceated ?
         if data_aug:
             img_aug, label_aug = data_augmentation(patches_tr[i], patches_tr_ref[i])
+            unique, counts = np.unique(label_aug, return_counts=True)
+            for clss in unique:
+                classes_dict[clss] += counts[clss]
+            counts_dict = dict(zip(unique, counts))
+            print(f'Class pixels of final mask: {counts_dict}')
         else:
             img_aug, label_aug = np.expand_dims(patches_tr[i], axis=0), np.expand_dims(patches_tr_ref[i], axis=0)
+            unique, counts = np.unique(label_aug[0], return_counts=True)
+            for clss in unique:
+                classes_dict[clss] += counts[clss]
+            counts_dict = dict(zip(unique, counts))
+            print(f'Class pixels of final mask: {counts_dict}')
         # Performs the one hot encoding
         label_aug_h = tf.keras.utils.to_categorical(label_aug, args.num_classes)
         # Convert from B x H x W x C --> B x C x H x W
@@ -339,6 +350,7 @@ def save_patches(patches_tr, patches_tr_ref, folder_path, scaler, data_aug, mode
             # Float32 its need to train the model
             np.save(os.path.join(folder_path, mode, 'masks/color', filename(i*5 + j)),
                     hsv_patch)
+        print(classes_dict)
 
 
 def check_memory():
