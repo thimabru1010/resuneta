@@ -31,8 +31,11 @@ class up_block(nn.HybridBlock):
         # self.upsampler = nn.Conv2DTranspose(channels=channels, kernel_size=4, strides=2,
         #                                     padding=1, use_bias=False, groups=channels, weight_initializer=mx.init.Bilinear())
         # self.upsampler.collect_params().setattr('gred_req', 'null')
-        self.upconv = ConvBlock(channels, 1)
+        # self.upconv = ConvBlock(channels, 1)
+        # self.upconv = nn.HybridSequential()
+        # self.upconv.addmx.nd.UpSampling(x, scale=2, sample_type='bilinear', num_filter=channels)
 
+        self.channels = channels
         self.conv1 = ConvBlock(channels, 1)
         self.conv3_0 = ConvBlock(channels, 3)
         if shrink:
@@ -41,7 +44,7 @@ class up_block(nn.HybridBlock):
             self.conv3_1 = ConvBlock(channels, 3)
     def hybrid_forward(self, F, x, s):
         # x = self.upsampler(x)
-        x = F.UpSampling(x, scale=2, sample_type='bilinear')
+        x = F.UpSampling(x, scale=2, sample_type='bilinear', num_filter=self.channels)
         x = self.upconv(x)
         x = self.conv1(x)
         x = F.relu(x)
