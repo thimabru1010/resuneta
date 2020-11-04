@@ -32,9 +32,13 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
     # [TODO] substitute args parsers for variables
     # softmax_cross_entropy = gluon.loss.SoftmaxCrossEntropyLoss()
     if args.loss == 'tanimoto':
-        loss_f = Tanimoto_with_dual()
+        loss_clss = Tanimoto_with_dual()
+        loss_dist = Tanimoto_with_dual()
     elif args.loss == 'cross_entropy':
-        loss_f = gluon.loss.SoftmaxCrossEntropyLoss(axis=1, sparse_label=False)
+        loss_clss = gluon.loss.SoftmaxCrossEntropyLoss(axis=1, from_logits=True)
+        # L2Loss --> MSE
+        loss_dist = gluon.loss.L2Loss() #  TODO: Maybe should put weights for distance
+        loss_color = gluon.loss.L2Loss()
     acc_metric = mx.metric.Accuracy()
     mcc_metric = mx.metric.PCC()
     trainer = gluon.Trainer(net.collect_params(), 'adam', {'learning_rate': 1e-4})
@@ -93,12 +97,12 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
                     seg_logits, bound_logits, dist_logits, color_logits = net(X)
                     # else:
                     #     seg_logits = net(X)
-                    seg_losses.append(loss_f(seg_logits, y_seg))
+                    seg_losses.append(loss_clss(seg_logits, y_seg))
                     acc_metric.update(mx.nd.argmax(seg_logits, axis=1), mx.nd.argmax(y_seg, axis=1))
                     if args.multitasking:
-                        bound_losses.append(args.wbound*loss_f(bound_logits, y_bound))
-                        dist_losses.append(args.wdist*loss_f(dist_logits, y_dist))
-                        color_losses.append(args.wcolor*loss_f(color_logits, y_color))
+                        bound_losses.append(args.wbound*loss_clss(bound_logits, y_bound))
+                        dist_losses.append(args.wdist*loss_dist(dist_logits, y_dist))
+                        color_losses.append(args.wcolor*loss_color(color_logits, y_color))
                         total_losses.append(seg_losses[i] + bound_losses[i] + dist_losses[i] + color_losses[i])
                     else:
                         total_losses.append(seg_losses[i])
@@ -169,7 +173,7 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
             for i, data in enumerate(zip(data_list, seg_label_list, bound_label_list, dist_label_list, color_label_list)):
                 X, y_seg, y_bound, y_dist, y_color = data
                 seg_logits, bound_logits, dist_logits, color_logits = net(X)
-                seg_losses.append(loss_f(seg_logits, y_seg))
+                seg_losses.append(loss_clss(seg_logits, y_seg))
                 acc_metric.update(mx.nd.argmax(seg_logits, axis=1), mx.nd.argmax(y_seg, axis=1))
                 # print(seg_logits.shape)
                 # print(mx.nd.argmax(seg_logits, axis=1).shape)
@@ -177,9 +181,9 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
                 # print(mx.nd.argmax(y_seg, axis=1).shape)
                 mcc_metric.update(mx.nd.argmax(seg_logits, axis=1), mx.nd.argmax(y_seg, axis=1))
                 if args.multitasking:
-                    bound_losses.append(args.wbound*loss_f(bound_logits, y_bound))
-                    dist_losses.append(args.wdist*loss_f(dist_logits, y_dist))
-                    color_losses.append(args.wcolor*loss_f(color_logits, y_color))
+                    bound_losses.append(args.wbound*loss_clss(bound_logits, y_bound))
+                    dist_losses.append(args.wdist*loss_dist(dist_logits, y_dist))
+                    color_losses.append(args.wcolor*loss_color(color_logits, y_color))
                     total_losses.append(seg_losses[i] + bound_losses[i] + dist_losses[i] + color_losses[i])
                 else:
                     total_losses.append(seg_losses[i])
