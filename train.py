@@ -175,7 +175,7 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
                 # print(mx.nd.argmax(seg_logits, axis=1).shape)
                 # print(y_seg.shape)
                 # print(mx.nd.argmax(y_seg, axis=1).shape)
-                # mcc_metric.update(mx.nd.argmax(seg_logits, axis=1), mx.nd.argmax(y_seg, axis=1))
+                mcc_metric.update(mx.nd.argmax(seg_logits, axis=1), mx.nd.argmax(y_seg, axis=1))
                 if args.multitasking:
                     bound_losses.append(args.wbound*loss_f(bound_logits, y_bound))
                     dist_losses.append(args.wdist*loss_f(dist_logits, y_dist))
