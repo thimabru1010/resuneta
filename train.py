@@ -96,6 +96,7 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
                     X, y_seg, y_bound, y_dist, y_color = data
                     # if args.multitasking:
                     seg_logits, bound_logits, dist_logits, color_logits = net(X)
+                    logger.debug(f'Seg logits: {seg_logits}')
                     # else:
                     #     seg_logits = net(X)
                     seg_losses.append(loss_clss(seg_logits, y_seg))

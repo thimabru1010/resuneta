@@ -11,9 +11,6 @@ from resuneta.nn.layers.combine import *
 
 
 from resuneta.models.resunet_d6_encoder import *
-import logging
-
-logger = logging.getLogger('ResUneta-Class')
 
 class ResUNet_d6(HybridBlock):
     """
@@ -203,7 +200,6 @@ class ResUNet_d6(HybridBlock):
             logits = self.logits(logits)
             #logits = F.softmax(logits,axis=1)
             logits = self.ChannelAct(logits)
-            logger.debug(logits)
             return logits, bound, dist, convc
         else:
             seg_logits = self.seg_pointwise(conv)
