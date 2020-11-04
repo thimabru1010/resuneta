@@ -354,11 +354,14 @@ def save_patches(patches_tr, patches_tr_ref, folder_path, scaler, data_aug, mode
                     hsv_patch)
     print(classes_dict)
     class0 = classes_dict[0] / (classes_dict[0] + classes_dict[1] + classes_dict[2])
+    class0 = round(class0, 2)
     print(f'class 0 %: {class0*100}')
     class1 = classes_dict[1] / (classes_dict[0] + classes_dict[1] + classes_dict[2])
-    print(f'class 0 %: {class1*100}')
+    class1 = round(class1, 2)
+    print(f'class 1 %: {class1*100}')
     class2 = classes_dict[2] / (classes_dict[0] + classes_dict[1] + classes_dict[2])
-    print(f'class 0 %: {class2*100}')
+    class2 = round(class2, 2)
+    print(f'class 2 %: {class2*100}')
 
 
 def check_memory():
