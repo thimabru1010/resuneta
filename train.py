@@ -69,6 +69,7 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
             logger.debug(f'Train data shape: {data.shape}')
             data_list = gluon.utils.split_and_load(data, devices)
             # seg_label_list = gluon.utils.split_and_load(label[:, 0:5, :, :], devices)
+            logger.debug(f'Seg data shape: {label[:, 0:nclasses, :, :].shape}')
             seg_label_list = gluon.utils.split_and_load(label[:, 0:nclasses, :, :], devices)
             if args.multitasking:
                 # bound_label_list = gluon.utils.split_and_load(label[:, 5:10, :, :], devices)
