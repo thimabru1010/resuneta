@@ -352,7 +352,7 @@ def save_patches(patches_tr, patches_tr_ref, folder_path, scaler, data_aug, mode
             # Float32 its need to train the model
             np.save(os.path.join(folder_path, mode, 'masks/color', filename(i*5 + j)),
                     hsv_patch)
-        print(classes_dict)
+    print(classes_dict)
 
 
 def check_memory():
