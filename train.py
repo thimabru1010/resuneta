@@ -36,7 +36,7 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
         loss_dist = Tanimoto_with_dual()
         loss_color = Tanimoto_with_dual()
     elif args.loss == 'cross_entropy':
-        loss_clss = gluon.loss.SoftmaxCrossEntropyLoss(axis=1, from_logits=True,
+        loss_clss = gluon.loss.SoftmaxCrossEntropyLoss(axis=1, from_logits=False,
                                                        sparse_label=False)
         # L2Loss --> MSE
         loss_dist = gluon.loss.L2Loss() #  TODO: Maybe should put weights for distance
