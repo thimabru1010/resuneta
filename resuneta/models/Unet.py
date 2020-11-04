@@ -41,7 +41,7 @@ class up_block(nn.HybridBlock):
             self.conv3_1 = ConvBlock(channels, 3)
     def hybrid_forward(self, F, x, s):
         # x = self.upsampler(x)
-        x = F.UpSampling(x, scale=2, sample_type='nearest')
+        x = F.UpSampling(x, scale=2, sample_type='bilinear')
         x = self.upconv(x)
         x = self.conv1(x)
         x = F.relu(x)
