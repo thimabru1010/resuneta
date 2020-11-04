@@ -186,7 +186,9 @@ class ResUNet_d6(HybridBlock):
             # 1st find distance map, skeleton like, topology info
             dist = self.distance_logits(convl) # Modification here, do not use max pooling for distance
             #dist   = F.softmax(dist,axis=1)
-            dist = self.ChannelAct(dist)
+            if self.loss == 'tanimoto':
+                # TODO: Maybe the output not squeezed by softmax can affect other tasks
+                dist = self.ChannelAct(dist)
 
             # Then find boundaries
             bound = F.concat(conv, dist)
