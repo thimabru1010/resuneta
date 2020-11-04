@@ -17,7 +17,7 @@ class ResUNet_d6(HybridBlock):
     This will be used for 256x256 image input, so the atrous convolutions should be determined by the depth
     """
 
-    def __init__(self, _nfilters_init,  _NClasses, patch_size=256, verbose=True,
+    def __init__(self, loss, _nfilters_init,  _NClasses, patch_size=256, verbose=True,
                  _norm_type='BatchNorm', multitasking=True,  **kwards):
         HybridBlock.__init__(self,**kwards)
 
@@ -37,6 +37,8 @@ class ResUNet_d6(HybridBlock):
             self.psp_depth = 4
         elif patch_size == 128:
             self.psp_depth = 3
+
+        self.loss = loss
 
 
         with self.name_scope():
@@ -122,12 +124,12 @@ class ResUNet_d6(HybridBlock):
                 # # This conv will be only used for non multitasking mode
                 # self.seg_pointwise = gluon.nn.Conv2D(self.NClasses, kernel_size=1, padding=0)
 
-
-            # Last activation, customization for binary results
-            if ( self.NClasses == 1):
-                self.ChannelAct = gluon.nn.HybridLambda(lambda F, x: F.sigmoid(x))
-            else:
-                self.ChannelAct = gluon.nn.HybridLambda(lambda F, x: F.softmax(x, axis=1))
+            if self.loss == 'tanimoto':
+                # Last activation, customization for binary results
+                if ( self.NClasses == 1):
+                    self.ChannelAct = gluon.nn.HybridLambda(lambda F, x: F.sigmoid(x))
+                else:
+                    self.ChannelAct = gluon.nn.HybridLambda(lambda F, x: F.softmax(x, axis=1))
 
     def hybrid_forward(self,F,_input):
 
@@ -201,10 +203,15 @@ class ResUNet_d6(HybridBlock):
             #logits = F.softmax(logits,axis=1)
             print('-'*40)
             print(logits)
-            logits = self.ChannelAct(logits)
-            print(logits)
-            print('-'*40)
-            return logits, bound, dist, convc
+            if self.loss == 'tanimoto':
+                logits = self.ChannelAct(logits)
+                print(logits)
+                print('-'*40)
+                return logits, bound, dist, convc
+            else:
+                print(logits)
+                print('-'*40)
+                return logits, bound, dist, convc
         else:
             seg_logits = self.seg_pointwise(conv)
             seg_logits = self.ChannelAct(seg_logits)
