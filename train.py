@@ -69,7 +69,7 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
             logger.debug(f'Train data shape: {data.shape}')
             data_list = gluon.utils.split_and_load(data, devices)
             # seg_label_list = gluon.utils.split_and_load(label[:, 0:5, :, :], devices)
-            logger.debug(f'Seg data shape: {label[:, 0:nclasses, :, :].shape}')
+            logger.debug(f'Seg label shape: {label[:, 0:nclasses, :, :].shape}')
             seg_label_list = gluon.utils.split_and_load(label[:, 0:nclasses, :, :], devices)
             if args.multitasking:
                 # bound_label_list = gluon.utils.split_and_load(label[:, 5:10, :, :], devices)
@@ -97,10 +97,11 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
                     X, y_seg, y_bound, y_dist, y_color = data
                     # if args.multitasking:
                     seg_logits, bound_logits, dist_logits, color_logits = net(X)
-                    logger.debug(f'Seg logits: {seg_logits}')
+                    # logger.debug(f'Seg logits: {seg_logits}')
                     # else:
                     #     seg_logits = net(X)
                     seg_losses.append(loss_clss(seg_logits, y_seg))
+                    logger.debug(f'Seg CE value: {seg_losses[i]}')
                     acc_metric.update(mx.nd.argmax(seg_logits, axis=1), mx.nd.argmax(y_seg, axis=1))
                     if args.multitasking:
                         bound_losses.append(args.wbound*loss_clss(bound_logits, y_bound))
