@@ -303,6 +303,7 @@ def save_patches(patches_tr, patches_tr_ref, folder_path, scaler, data_aug, mode
             img_aug, label_aug = data_augmentation(patches_tr[i], patches_tr_ref[i])
             unique, counts = np.unique(label_aug, return_counts=True)
             for clss in unique:
+                clss = int(clss)
                 classes_dict[clss] += counts[clss]
             counts_dict = dict(zip(unique, counts))
             print(f'Class pixels of final mask: {counts_dict}')
@@ -310,6 +311,7 @@ def save_patches(patches_tr, patches_tr_ref, folder_path, scaler, data_aug, mode
             img_aug, label_aug = np.expand_dims(patches_tr[i], axis=0), np.expand_dims(patches_tr_ref[i], axis=0)
             unique, counts = np.unique(label_aug[0], return_counts=True)
             for clss in unique:
+                clss = int(clss)
                 classes_dict[clss] += counts[clss]
             counts_dict = dict(zip(unique, counts))
             print(f'Class pixels of final mask: {counts_dict}')
