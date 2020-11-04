@@ -36,7 +36,7 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
     elif args.loss == 'cross_entropy':
         loss_f = gluon.loss.SoftmaxCrossEntropyLoss(axis=1, sparse_label=False)
     acc_metric = mx.metric.Accuracy()
-    mcc_metric = mx.metric.MCC()
+    mcc_metric = mx.metric.PCC()
     trainer = gluon.Trainer(net.collect_params(), 'adam', {'learning_rate': 1e-4})
     min_loss = float('inf')
     early_cont = 0
