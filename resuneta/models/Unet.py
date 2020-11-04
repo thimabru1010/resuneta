@@ -47,7 +47,11 @@ class UNet(nn.HybridBlock):
             self.conv9_1 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
             self.conv9_2 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
 
-            self.pool = nn.MaxPool2D()
+            # self.pool = nn.MaxPool2D()
+            self.pool1 = nn.MaxPool2D()
+            self.pool2 = nn.MaxPool2D()
+            self.pool3 = nn.MaxPool2D()
+            self.pool4 = nn.MaxPool2D()
             self.conv_pred = nn.Conv2D(num_classes, kernel_size=1)
             # Using Hybrid Sequential avoids this error:
             # UserWarning: Gradient of Parameter `unet0_conv0_bias` on context gpu(0) has not been updated by backward since last `step`.
@@ -65,7 +69,7 @@ class UNet(nn.HybridBlock):
         conv1_1 = F.relu(conv1_1)
         conv1_2 = self.conv1_2(conv1_1)
         conv1_2 = F.relu(conv1_2)
-        pool1 = self.pool(conv1_2)
+        pool1 = self.pool1(conv1_2)
         # conv block 2
         print(pool1.shape)
         conv2_1 = self.conv2_1(pool1)
@@ -73,19 +77,19 @@ class UNet(nn.HybridBlock):
         print(conv2_1.shape)
         conv2_2 = self.conv2_2(conv2_1)
         conv2_2 = F.relu(conv2_2)
-        pool2 = self.pool(conv2_2)
+        pool2 = self.pool2(conv2_2)
         # conv block 3
         conv3_1 = self.conv3_1(pool2)
         conv3_1 = F.relu(conv3_1)
         conv3_2 = self.conv3_2(conv3_1)
         conv3_2 = F.relu(conv3_2)
-        pool3 = self.pool(conv3_2)
+        pool3 = self.pool3(conv3_2)
         # conv block 4
         conv4_1 = self.conv4_1(pool3)
         conv4_1 = F.relu(conv4_1)
         conv4_2 = self.conv4_2(conv4_1)
         conv4_2 = F.relu(conv4_2)
-        pool4 = self.pool(conv4_2)
+        pool4 = self.pool4(conv4_2)
 
         # Middle
         # conv block 5 n_f=1024
