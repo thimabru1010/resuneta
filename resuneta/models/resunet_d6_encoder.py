@@ -50,14 +50,18 @@ class ResUNet_d6_encoder(HybridBlock):
             nfilters = self.nfilters * 2**(0)
             if verbose:
                 print ("depth:= {0}, nfilters: {1}".format(0,nfilters))
-            self.Dn1 = ResNet_atrous_unit(nfilters, _norm_type = _norm_type)
+            # Change this to lower parameters
+            # self.Dn1 = ResNet_atrous_unit(nfilters, _norm_type = _norm_type)
+            self.Dn1 = ResNet_atrous_2_unit(nfilters, _norm_type = _norm_type)
             self.pool1 = DownSample(nfilters, _norm_type = _norm_type)
 
             # Usually 64
             nfilters = self.nfilters * 2**(1)
             if verbose:
                 print ("depth:= {0}, nfilters: {1}".format(1,nfilters))
-            self.Dn2 = ResNet_atrous_unit(nfilters, _norm_type = _norm_type)
+            # Change this to lower parameters
+            # self.Dn2 = ResNet_atrous_unit(nfilters, _norm_type = _norm_type)
+            self.Dn2 = ResNet_atrous_2_unit(nfilters, _norm_type = _norm_type)
             self.pool2 = DownSample(nfilters, _norm_type = _norm_type)
 
             # Usually 128

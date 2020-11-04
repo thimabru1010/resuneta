@@ -64,20 +64,26 @@ class ResUNet_d6(HybridBlock):
             if verbose:
                 print ("depth:= {0}, nfilters: {1}".format(8,nfilters))
             self.UpComb3 = combine_layers(nfilters)
-            self.UpConv3 = ResNet_atrous_unit(nfilters)
+            # Change this to lower parameters
+            # self.UpConv3 = ResNet_atrous_unit(nfilters)
+            self.UpConv3 = ResNet_atrous_2_unit(nfilters)
 
             nfilters  = self.nfilters * 2 ** (self.depth - 1 -4)
             if verbose:
                 print ("depth:= {0}, nfilters: {1}".format(9,nfilters))
             self.UpComb4 = combine_layers(nfilters)
-            self.UpConv4 = ResNet_atrous_unit(nfilters)
+            # Change this to lower parameters
+            # self.UpConv4 = ResNet_atrous_unit(nfilters)
+            self.UpConv4 = ResNet_atrous_2_unit(nfilters)
 
 
             nfilters  = self.nfilters * 2 ** (self.depth - 1 -5)
             if verbose:
                 print ("depth:= {0}, nfilters: {1}".format(10,nfilters))
             self.UpComb5 = combine_layers(nfilters)
-            self.UpConv5 = ResNet_atrous_unit(nfilters)
+            # Change this to lower parameters
+            # self.UpConv5 = ResNet_atrous_unit(nfilters)
+            self.UpConv5 = ResNet_atrous_2_unit(nfilters)
 
 
             self.psp_2ndlast = PSP_Pooling(self.nfilters, _norm_type=_norm_type, depth=self.psp_depth)

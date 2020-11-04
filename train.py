@@ -357,7 +357,7 @@ if __name__ == '__main__':
         args.multitasking = False
         # net = UNet(input_channels=14, output_channels=args.num_classes)
     net.initialize()
-    # [TODO] Change this to receive right input size
+
     if args.dataset_type == 'ISPRS':
         net.summary(mx.nd.random.uniform(shape=(args.batch_size, 3, args.patch_size, args.patch_size)))
     else:
