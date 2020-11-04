@@ -34,6 +34,7 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
     if args.loss == 'tanimoto':
         loss_clss = Tanimoto_with_dual()
         loss_dist = Tanimoto_with_dual()
+        loss_color = Tanimoto_with_dual()
     elif args.loss == 'cross_entropy':
         loss_clss = gluon.loss.SoftmaxCrossEntropyLoss(axis=1, from_logits=True,
                                                        sparse_label=False)
