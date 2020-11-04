@@ -495,8 +495,8 @@ if __name__ == '__main__':
     mask_tr_val = np.zeros((mask_tiles.shape))
     tr1 = 5
     tr2 = 8
-    # tr3 = 13
-    tr3 = 2
+    tr3 = 13
+    # tr3 = 2
     tr4 = 7
     tr5 = 11
     tr6 = 1
@@ -505,8 +505,8 @@ if __name__ == '__main__':
     tr9 = 9
     tr10 = 10
 
-    # val1 = 2
-    val1 = 13
+    val1 = 2
+    # val1 = 13
     # val2 = 10
     val3 = 4
     val4 = 6
@@ -539,7 +539,6 @@ if __name__ == '__main__':
     # Trainig tiles
     tr_tiles = [tr1, tr2, tr3, tr4, tr5, tr6, tr7, tr8, tr9, tr10]
 
-    # [TODO] Create a function to show deforestaion for all the tiles
     patches_tr, patches_tr_ref = extract_tiles2patches(tr_tiles, mask_tiles, input_image,
                                                        final_mask, args.patch_size,
                                                        args.stride, args.def_percent)
