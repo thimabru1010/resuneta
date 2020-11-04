@@ -306,7 +306,7 @@ def save_patches(patches_tr, patches_tr_ref, folder_path, scaler, data_aug, mode
                 clss = int(clss)
                 classes_dict[clss] += counts[clss]
             counts_dict = dict(zip(unique, counts))
-            print(f'Class pixels of final mask: {counts_dict}')
+            # print(f'Class pixels of final mask: {counts_dict}')
         else:
             img_aug, label_aug = np.expand_dims(patches_tr[i], axis=0), np.expand_dims(patches_tr_ref[i], axis=0)
             unique, counts = np.unique(label_aug[0], return_counts=True)
@@ -314,7 +314,7 @@ def save_patches(patches_tr, patches_tr_ref, folder_path, scaler, data_aug, mode
                 clss = int(clss)
                 classes_dict[clss] += counts[clss]
             counts_dict = dict(zip(unique, counts))
-            print(f'Class pixels of final mask: {counts_dict}')
+            # print(f'Class pixels of final mask: {counts_dict}')
         # Performs the one hot encoding
         label_aug_h = tf.keras.utils.to_categorical(label_aug, args.num_classes)
         # Convert from B x H x W x C --> B x C x H x W
@@ -353,6 +353,12 @@ def save_patches(patches_tr, patches_tr_ref, folder_path, scaler, data_aug, mode
             np.save(os.path.join(folder_path, mode, 'masks/color', filename(i*5 + j)),
                     hsv_patch)
     print(classes_dict)
+    class0 = classes_dict[0] / (classes_dict[0] + classes_dict[1] + classes_dict[2])
+    print(f'class 0 %: {class0*100}')
+    class1 = classes_dict[1] / (classes_dict[0] + classes_dict[1] + classes_dict[2])
+    print(f'class 0 %: {class1*100}')
+    class2 = classes_dict[2] / (classes_dict[0] + classes_dict[1] + classes_dict[2])
+    print(f'class 0 %: {class2*100}')
 
 
 def check_memory():
