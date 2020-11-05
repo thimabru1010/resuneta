@@ -22,12 +22,11 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 class Normalize(object):
     def __init__(self, mean=None, std=None):
 
-        if (mean == None or std == None):
+        if(mean is None or std is None):
             self._mean = np.array([ 127.5, 127.5, 127.5])
             self._std = np.array ([127.5, 127.5, 127.5])
 
-
-        else :
+        else:
             self._mean = mean
             self._std = std
 
