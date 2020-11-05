@@ -4,10 +4,11 @@ from mxnet.gluon.loss import Loss
 
 class Tanimoto(Loss):
     def __init__(self, _smooth=1.0e-5, _axis=[2,3], _weight = None, _batch_axis= 0, **kwards):
-        Loss.__init__(self,weight=_weight, batch_axis = _batch_axis, **kwards)
+        Loss.__init__(self, weight=_weight, batch_axis = _batch_axis, **kwards)
 
         self.axis = _axis
         self.smooth = _smooth
+        self.weight = _weight
 
     def hybrid_forward(self,F,_preds, _label):
 

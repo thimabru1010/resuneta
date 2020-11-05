@@ -11,6 +11,7 @@ import os
 from prettytable import PrettyTable
 from tqdm import tqdm
 from mxboard import SummaryWriter
+import numpy as np
 
 
 def add_tensorboard_scalars(summary_writer, result_path, epoch, task, loss, acc=None, val_mcc=None):
@@ -36,6 +37,7 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
         loss_dist = Tanimoto_with_dual()
         loss_color = Tanimoto_with_dual()
     elif args.loss == 'cross_entropy':
+        weights = mx.nd.array(np.array([1.1494, 33.3333, 0]), ctx=devices)
         loss_clss = gluon.loss.SoftmaxCrossEntropyLoss(axis=1, from_logits=False,
                                                        sparse_label=False)
         # L2Loss --> MSE
@@ -101,7 +103,7 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
                     # logger.debug(f'Seg logits: {seg_logits}')
                     else:
                         seg_logits = net(X)
-                    seg_losses.append(loss_clss(seg_logits, y_seg))
+                    seg_losses.append(loss_clss(seg_logits, y_seg, weights))
                     logger.debug(f'Seg CE value: {seg_losses[i]}')
                     acc_metric.update(mx.nd.argmax(seg_logits, axis=1), mx.nd.argmax(y_seg, axis=1))
                     if args.multitasking:
@@ -404,7 +406,13 @@ if __name__ == '__main__':
     if args.dataset_type == 'ISPRS':
         tnorm = Normalize()
     else:
-        tnorm = None
+        mean = np.array([6884.0415,  6188.7725,  5670.7944,  4999.9517,
+                         11815.252, 7389.2964, 5174.3335, 6844.906, 6138.854,
+                         5629.7964,  4927.634,  12209.005, 7420.211, 5139.2495])
+        std = np.array([4014.3228, 3610.9395, 3317.272,  2939.187,  7004.3374,
+                        4432.908,  3082.9048, 3990.8325, 3581.0767, 3293.6165,
+                        2893.691, 7257.484, 4430.521, 3046.775])
+        tnorm = Normalize(mean=mean, std=std)
 
     train_dataset = ISPRSDataset(root=args.dataset_path,
                                  mode='train', color=True, mtsk=args.multitasking, norm=tnorm)

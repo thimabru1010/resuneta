@@ -323,10 +323,10 @@ def save_patches(patches_tr, patches_tr_ref, folder_path, scaler, data_aug, mode
             # Input image 7 bands of Staelite
             # Float32 its need to train the model
             img_float = img_aug[j].astype(np.float32)
-            img_reshaped = img_float.reshape((img_float.shape[0] * img_float.shape[1]),
-                                           img_float.shape[2])
-            img_normed = scaler.transform(img_reshaped)
-            img_float = img_normed.reshape(img_float.shape[0], img_float.shape[1], img_float.shape[2])
+            # img_reshaped = img_float.reshape((img_float.shape[0] * img_float.shape[1]),
+            #                                img_float.shape[2])
+            # img_normed = scaler.transform(img_reshaped)
+            # img_float = img_normed.reshape(img_float.shape[0], img_float.shape[1], img_float.shape[2])
             np.save(os.path.join(folder_path, mode, 'imgs', filename(i*5 + j)),
                     img_float)
             # All multitasking labels are saved in one-hot
@@ -354,13 +354,13 @@ def save_patches(patches_tr, patches_tr_ref, folder_path, scaler, data_aug, mode
                     hsv_patch)
     print(classes_dict)
     class0 = classes_dict[0] / (classes_dict[0] + classes_dict[1] + classes_dict[2])
-    class0 = round(class0, 2)
+    class0 = round(class0, 5)
     print(f'class 0 %: {class0*100}')
     class1 = classes_dict[1] / (classes_dict[0] + classes_dict[1] + classes_dict[2])
-    class1 = round(class1, 2)
+    class1 = round(class1, 5)
     print(f'class 1 %: {class1*100}')
     class2 = classes_dict[2] / (classes_dict[0] + classes_dict[1] + classes_dict[2])
-    class2 = round(class2, 2)
+    class2 = round(class2, 5)
     print(f'class 2 %: {class2*100}')
 
 
