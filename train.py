@@ -37,7 +37,7 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
         loss_dist = Tanimoto_with_dual()
         loss_color = Tanimoto_with_dual()
     elif args.loss == 'cross_entropy':
-        weights = mx.nd.array(np.array([1.1494, 33.3333, 0]), ctx=devices)
+        # weights = mx.nd.array(np.array([1.1494, 33.3333, 0]), ctx=devices)
         loss_clss = gluon.loss.SoftmaxCrossEntropyLoss(axis=1, from_logits=False,
                                                        sparse_label=False)
         # L2Loss --> MSE
@@ -103,7 +103,7 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
                     # logger.debug(f'Seg logits: {seg_logits}')
                     else:
                         seg_logits = net(X)
-                    seg_losses.append(loss_clss(seg_logits, y_seg, weights))
+                    seg_losses.append(loss_clss(seg_logits, y_seg))
                     logger.debug(f'Seg CE value: {seg_losses[i]}')
                     acc_metric.update(mx.nd.argmax(seg_logits, axis=1), mx.nd.argmax(y_seg, axis=1))
                     if args.multitasking:
