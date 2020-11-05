@@ -294,6 +294,7 @@ def show_deforastation_per_tile(tiles, mask_amazon, image_ref):
 def filename(i):
     return f'patch_{i}.npy'
 
+import matplotlib.pyplot as plt
 
 def save_patches(patches_tr, patches_tr_ref, folder_path, scaler, data_aug, mode='train'):
     classes_dict = {-1: 0, 0: 0, 1: 0, 2: 0}
@@ -319,6 +320,23 @@ def save_patches(patches_tr, patches_tr_ref, folder_path, scaler, data_aug, mode
         label_aug_h = tf.keras.utils.to_categorical(label_aug, args.num_classes)
         # Convert from B x H x W x C --> B x C x H x W
         # label_aug_h = label_aug_h.transpose((0, 3, 1, 2))
+        img_t1 = patches_tr[i][:, :, 0:7]
+        img_t2 = patches_tr[i][:, :, 7:]
+        img_t1_bgr = img_t1[:, :, 0]# .astype(np.uint8)
+        #img_t1_rgb = img_t1_bgr[:, :, ::-1]
+        img_t2_bgr = img_t2[:, :, 0]# .astype(np.uint8)
+        #img_t2_rgb = img_t2_bgr[:, :, ::-1]
+
+        fig2, (ax1, ax2, ax3) = plt.subplots(nrows=1, ncols=3, figsize=(10, 5))
+        ax1.set_title('Img T1 (2018)')
+        ax1.imshow(img_t1_bgr)
+        ax2.set_title('Img T2 (2019)')
+        ax2.imshow(img_t2_bgr)
+        ax3.set_title('Label')
+        ax3.imshow(patches_tr_ref[i])
+
+        plt.show()
+        plt.close()
         for j in range(len(img_aug)):
             # Input image 7 bands of Staelite
             # Float32 its need to train the model
@@ -427,9 +445,9 @@ if __name__ == '__main__':
     input_image = input_image[:6100, :6600]
     h_, w_, channels = input_image.shape
     print(f"Input image shape: {input_image.shape}")
-    check_memory()
-    scaler = normalization(input_image)
-    check_memory()
+    # check_memory()
+    # scaler = normalization(input_image)
+    # check_memory()
 
     # Load Mask area -----------------------------------------------------------
     # Mask constains exactly location of region since the satelite image
@@ -489,6 +507,9 @@ if __name__ == '__main__':
     total_pixels = counts_dict[0] + counts_dict[1] + counts_dict[2]
     weight0 = total_pixels / counts_dict[0]
     weight1 = total_pixels / counts_dict[1]
+    print('weights')
+    print(weight0)
+    print(weight1)
 
     check_memory()
     del img_t1, img_t2, image_ref, past_ref1, past_ref2
@@ -582,7 +603,7 @@ if __name__ == '__main__':
     print('patches extracted!')
 
     print('saving images...')
-    folder_path = f'./DATASETS/Amazon_patch_size={args.patch_size}_' + \
+    folder_path = f'./DATASETS/Amazon_test_patch_size={args.patch_size}_' + \
                 f'stride={args.stride}_norm_type={args.norm_type}_data_aug={args.data_aug}_def_percent={args.def_percent}'
 
     create_folders(folder_path, mode='train')
@@ -591,5 +612,6 @@ if __name__ == '__main__':
     print(f'Number of train patches: {len(patches_tr)}')
     print(f'Number of val patches: {len(patches_val)}')
 
+    scaler = None
     save_patches(patches_tr, patches_tr_ref, folder_path, scaler, args.data_aug, mode='train')
     save_patches(patches_val, patches_val_ref, folder_path, scaler, args.data_aug, mode='val')

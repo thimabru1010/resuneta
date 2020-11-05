@@ -29,19 +29,20 @@ print(scaler.mean_)
 for data, label in dataloader['train']:
     image = mx.nd.squeeze(data).asnumpy().transpose((1, 2, 0))
     print(image.shape)
-    image_reshaped = image.reshape((image.shape[0] * image.shape[1]),
-                               image.shape[2])
-    print(image)
-    img = scaler.inverse_transform(image_reshaped)
+    # image_reshaped = image.reshape((image.shape[0] * image.shape[1]),
+    #                            image.shape[2])
+    # print(image)
+    # img = scaler.inverse_transform(image_reshaped)
     # print(img)
-    print(image.shape)
-    img = img.reshape(image.shape[0], image.shape[1], image.shape[2])
+    # print(image.shape)
+    # img = img.reshape(image.shape[0], image.shape[1], image.shape[2])
+    img = image
     img_t1 = img[:, :, 0:7]
-    img_t2 = img[:, :, 7:14]
+    img_t2 = img[:, :, 7:]
     img_t1_bgr = img_t1[:, :, 1:4]
-    img_t1_rgb = img_t1_bgr[:, :, ::-1]# .astype(np.uint8)
+    img_t1_rgb = img_t1_bgr[:, :, ::-1].astype(np.uint8)
     img_t2_bgr = img_t2[:, :, 1:4]
-    img_t2_rgb = img_t2_bgr[:, :, ::-1]# .astype(np.uint8)
+    img_t2_rgb = img_t2_bgr[:, :, ::-1].astype(np.uint8)
 
     print('images shape')
     print(img_t1_rgb.shape)

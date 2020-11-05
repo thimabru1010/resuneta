@@ -21,6 +21,7 @@ from mxnet.gluon.data.vision import transforms
 
 # from resuneta.models.resunet_d7_causal_mtskcolor_ddist import *
 from resuneta.models.resunet_d6_causal_mtskcolor_ddist import ResUNet_d6
+from resuneta.models.Unet import UNet
 from utils import load_npy_image, get_boundary_label, get_distance_label
 from tqdm import tqdm
 import matplotlib.pyplot as plt
@@ -195,6 +196,8 @@ parser.add_argument("--num_classes",
 parser.add_argument("--output_path",
                     help="Path to where save predictions",
                     type=str, default='results/preds_run')
+parser.add_argument("--model", help="Path to where save predictions",
+                    type=str, default='resuneta', choices=['resuneta', 'unet'])
 args = parser.parse_args()
 
 # Test model
@@ -233,9 +236,14 @@ assert len(input_patches) == len(ref_patches), "Input patches and Reference patc
 # Load model
 ctx = mx.gpu(0)
 # ctx = mx.cpu()
-nfilters_init = 32
-Nbatch = 8
-net = ResUNet_d6(nfilters_init, args.num_classes)
+if args.model == 'resuneta':
+    nfilters_init = 32
+    Nbatch = 8
+    net = ResUNet_d6(nfilters_init, args.num_classes)
+else:
+    net = UNet(args.num_classes, nfilter=64)
+    args.use_multitasking = False
+
 net.initialize()
 net.collect_params().initialize(force_reinit=True, ctx=ctx)
 net.load_parameters(args.model_path, ctx=ctx)
@@ -266,12 +274,18 @@ for i in range(len(input_patches)):
     # plt.show()
     img_normed = mx.nd.expand_dims(img_normed, axis=0)
 
-    preds1, preds2, preds3, preds4 = net(img_normed.copyto(ctx))
+    if args.use_multitasking:
+        preds1, preds2, preds3, preds4 = net(img_normed.copyto(ctx))
 
-    seg_preds.append(preds1.asnumpy())
-    bound_preds.append(preds2.asnumpy())
-    dist_preds.append(preds3.asnumpy())
-    color_preds.append(preds4.asnumpy())
+        seg_preds.append(preds1.asnumpy())
+        bound_preds.append(preds2.asnumpy())
+        dist_preds.append(preds3.asnumpy())
+        color_preds.append(preds4.asnumpy())
+    else:
+        preds1 = net(img_normed.copyto(ctx))
+        print(preds1)
+        seg_preds.append(preds1.asnumpy())
+
 
 print('='*40)
 print('[TEST]')
@@ -283,7 +297,10 @@ if args.use_multitasking:
     print(f'seg shape argmax: {seg_pred.shape}')
     patches_pred = [seg_preds, gather_preds(bound_preds), gather_preds(dist_preds), gather_preds(color_preds)]
 else:
-    seg_pred = patches_pred
+    seg_preds = gather_preds(seg_preds)
+    print(f'seg shape: {seg_preds.shape}')
+    seg_pred = np.argmax(seg_preds, axis=-1)
+    print(f'seg shape argmax: {seg_pred.shape}')
 
 # Metrics
 print(ref_patches.shape)
