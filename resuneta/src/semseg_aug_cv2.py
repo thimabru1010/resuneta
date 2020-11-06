@@ -38,11 +38,13 @@ class SemSegAugmentor_CV(object):
         """
         OpenCV random scale+rotation
         """
-        imgT = _img.transpose([1,2,0])
-        if (self.one_hot):
-            maskT = _mask.transpose([1,2,0])
-        else:
-            maskT = _mask
+        # imgT = _img.transpose([1,2,0])
+        # if (self.one_hot):
+        #     maskT = _mask.transpose([1,2,0])
+        # else:
+        #     maskT = _mask
+        imgT = _img
+        maskT = _mask
 
         cols, rows = imgT.shape[:-1]
 
