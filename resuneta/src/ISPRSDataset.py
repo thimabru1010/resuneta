@@ -123,6 +123,7 @@ class ISPRSDataset(dataset.Dataset):
             base, masks = self._transform(base, masks)
             print('aqui')
             print(base.dtype)
+            print(type(base))
             if self._norm is not None:
                 base = self._norm(base.astype(np.float32))
                 if self.mtsk:
@@ -139,6 +140,7 @@ class ISPRSDataset(dataset.Dataset):
         if self.mtsk:
             # Don't need to cast to Mxnet tensor. Dataset does this alone
             # Beware of casting with transforms. Zero the image. Leads to an error.
+            print('Retornando')
             return base.astype(np.float32).transpose((2, 0, 1)), masks.astype(np.float32).transpose((2, 0, 1))
         else:
             return base.astype(np.float32).transpose((2, 0, 1)), mask_seg.astype(np.float32).transpose((2, 0, 1))
