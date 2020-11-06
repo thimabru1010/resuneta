@@ -29,54 +29,52 @@ def load_tiff_image(patch):
 
 
 # Dataset TCC
-root_path = 'DATASETS/Amazon'
-output_path = 'DATASETS/Amazon_npy'
-if not os.path.exists(output_path):
-    os.makedirs(output_path)
-    os.makedirs(os.path.join(output_path, 'labels'))
-img_t1_path = 'clipped_raster_004_66_2018.tif'
-img_t2_path = 'clipped_raster_004_66_2019.tif'
+# root_path = 'DATASETS/Amazon'
+# output_path = 'DATASETS/Amazon_npy'
+# if not os.path.exists(output_path):
+#     os.makedirs(output_path)
+#     os.makedirs(os.path.join(output_path, 'labels'))
+# img_t1_path = 'clipped_raster_004_66_2018.tif'
+# img_t2_path = 'clipped_raster_004_66_2019.tif'
+#
+# # Load images
+# img_t1 = load_tiff_image(os.path.join(root_path, img_t1_path))
+# print(img_t1.dtype)
+# np.save(os.path.join(output_path, 'clipped_raster_004_66_2018.npy'), img_t1)
+# del img_t1
+#
+# img_t2 = load_tiff_image(os.path.join(root_path, img_t2_path))
+# print(img_t2.dtype)
+# np.save(os.path.join(output_path, 'clipped_raster_004_66_2019.npy'), img_t2)
+# del img_t2
+#
+# img_mask_ref_path = 'mask_ref.tif'
+# img_mask_ref = load_tiff_image(os.path.join(root_path, img_mask_ref_path))
+# print(img_mask_ref.dtype)
+# np.save(os.path.join(output_path, 'mask_ref.npy'), img_mask_ref)
+# del img_mask_ref
+#
+# # Load deforastation reference
+# image_ref = load_tiff_image(os.path.join(root_path, 'labels/binary_clipped_2019.tif'))
+# print(image_ref.dtype)
+# np.save(os.path.join(output_path, 'labels/binary_clipped_2019.npy'), image_ref)
+# del image_ref
+#
+# # Load past deforastation reference
+# past_ref1 = load_tiff_image(os.path.join(root_path, 'labels/binary_clipped_2013_2018.tif'))
+# print(past_ref1.dtype)
+# np.save(os.path.join(output_path, 'labels/binary_clipped_2013_2018.npy'), past_ref1)
+# del past_ref1
+#
+# past_ref2 = load_tiff_image(os.path.join(root_path, 'labels/binary_clipped_1988_2012.tif'))
+# print(past_ref2.dtype)
+# np.save(os.path.join(output_path, 'labels/binary_clipped_1988_2012.npy'), past_ref2)
+# del past_ref2
 
-# Load images
-img_t1 = load_tiff_image(os.path.join(root_path, img_t1_path))
-print(img_t1.dtype)
-np.save(os.path.join(output_path, 'clipped_raster_004_66_2018.npy'), img_t1)
-del img_t1
-
-img_t2 = load_tiff_image(os.path.join(root_path, img_t2_path))
-print(img_t2.dtype)
-np.save(os.path.join(output_path, 'clipped_raster_004_66_2019.npy'), img_t2)
-del img_t2
-
-img_mask_ref_path = 'mask_ref.tif'
-img_mask_ref = load_tiff_image(os.path.join(root_path, img_mask_ref_path))
-print(img_mask_ref.dtype)
-np.save(os.path.join(output_path, 'mask_ref.npy'), img_mask_ref)
-del img_mask_ref
-
-# Load deforastation reference
-image_ref = load_tiff_image(os.path.join(root_path, 'labels/binary_clipped_2019.tif'))
-print(image_ref.dtype)
-np.save(os.path.join(output_path, 'labels/binary_clipped_2019.npy'), image_ref)
-del image_ref
-
-# Load past deforastation reference
-past_ref1 = load_tiff_image(os.path.join(root_path, 'labels/binary_clipped_2013_2018.tif'))
-print(past_ref1.dtype)
-np.save(os.path.join(output_path, 'labels/binary_clipped_2013_2018.npy'), past_ref1)
-del past_ref1
-
-past_ref2 = load_tiff_image(os.path.join(root_path, 'labels/binary_clipped_1988_2012.tif'))
-print(past_ref2.dtype)
-np.save(os.path.join(output_path, 'labels/binary_clipped_1988_2012.npy'), past_ref2)
-del past_ref2
-
-# Homework 3
+# ISPRS
 # img_train = load_tiff_image('DATASETS/homework3/Image_Train.tif')
 # print(img_train.shape)
 # # img_train = resize(img_train, (4500, 4000))
-# # img_train = cv2.imencode(".jpeg", img_train)
-# # cv2.imwrite('img_train.jpeg', img_train)
 # np.save('DATASETS/ISPRS_npy/Image_Train.npy', img_train)
 # print('img train saved')
 # del img_train
@@ -84,8 +82,6 @@ del past_ref2
 # ref_train = load_tiff_image('DATASETS/homework3/Reference_Train.tif')
 # print(ref_train.shape)
 # # ref_train = resize(ref_train, (4500, 4000))
-# # ref_train = cv2.imencode(".jpeg", ref_train)
-# # cv2.imwrite('img_ref.jpeg', ref_train)
 # np.save('DATASETS/ISPRS_npy/Reference_Train.npy', ref_train)
 # print('ref train saved')
 # del ref_train
@@ -98,3 +94,51 @@ del past_ref2
 # ref_test = load_tiff_image('DATASETS/homework3/Reference_Test.tif')
 # np.save('DATASETS/ISPRS_npy/Reference_Test.npy', ref_test)
 # print('ref test saved')
+
+
+# Dataset TCC corrigido
+
+root_path = '/media/thimabru/ssd/TCC/imagens_satelite_dataset/cut_img_66'
+output_path = 'DATASETS/Amazon_npy_corrigido'
+if not os.path.exists(output_path):
+    os.makedirs(output_path)
+    os.makedirs(os.path.join(output_path, 'labels'))
+img_t1_path = 'cut_raster_2018_ok.tif'
+img_t2_path = 'cut_raster_2019_ok.tif'
+
+# Load images
+img_t1 = load_tiff_image(os.path.join(root_path, img_t1_path))
+print(img_t1.dtype)
+np.save(os.path.join(output_path, img_t1_path[:-4] + '.npy'), img_t1)
+del img_t1
+
+img_t2 = load_tiff_image(os.path.join(root_path, img_t2_path))
+print(img_t2.dtype)
+np.save(os.path.join(output_path, img_t2_path[:-4] + '.npy'), img_t2)
+del img_t2
+
+# img_mask_ref_path = 'mask_ref.tif'
+# img_mask_ref = load_tiff_image(os.path.join(root_path, img_mask_ref_path))
+# print(img_mask_ref.dtype)
+# np.save(os.path.join(output_path, 'mask_ref.npy'), img_mask_ref)
+# del img_mask_ref
+
+# Load deforastation reference
+img_ref_path = 'ref_2019_ok.tif'
+image_ref = load_tiff_image(os.path.join(root_path, img_ref_path))
+print(image_ref.dtype)
+np.save(os.path.join(output_path, 'labels', img_ref_path[:-4] + '.npy'), image_ref)
+del image_ref
+
+# Load past deforastation reference
+past_ref1_path = 'ref_2007_ok.tif'
+past_ref1 = load_tiff_image(os.path.join(root_path, past_ref1_path))
+print(past_ref1.dtype)
+np.save(os.path.join(output_path, 'labels', past_ref1_path[:-4] + '.npy'), past_ref1)
+del past_ref1
+
+past_ref2_path = 'ref_2008_2018_ok.tif'
+past_ref2 = load_tiff_image(os.path.join(root_path, past_ref2_path))
+print(past_ref2.dtype)
+np.save(os.path.join(output_path, 'labels', past_ref2_path[:-4] + '.npy'), past_ref2)
+del past_ref2

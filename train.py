@@ -412,7 +412,8 @@ if __name__ == '__main__':
         std = np.array([4014.3228, 3610.9395, 3317.272,  2939.187,  7004.3374,
                         4432.908,  3082.9048, 3990.8325, 3581.0767, 3293.6165,
                         2893.691, 7257.484, 4430.521, 3046.775])
-        tnorm = Normalize(mean=mean, std=std)
+        # tnorm = Normalize(mean=mean, std=std)
+        tnorm = None
 
     train_dataset = ISPRSDataset(root=args.dataset_path,
                                  mode='train', color=True, mtsk=args.multitasking, norm=tnorm)

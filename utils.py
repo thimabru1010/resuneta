@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 # from skimage.morphology import disk
 # import skimage
-# from osgeo import ogr, gdal
+from osgeo import gdal
 
 # Functions
 

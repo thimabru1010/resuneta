@@ -27,8 +27,8 @@ def normalization(image, norm_type=1):
     if(norm_type == 3):
         scaler = MinMaxScaler(feature_range=(-1, 1))
     scaler = scaler.fit(image)
+    print(scaler.get_params())
     # print(scaler.mean_)
-    # print(scaler.)
     # image_normalized = scaler.fit_transform(image_reshaped)
     # image_normalized1 = image_normalized.reshape(image.shape[0],image.shape[1],image.shape[2])
     return scaler
@@ -75,7 +75,8 @@ def count_deforastation(image_ref, image_mask_ref):
     total_def = 0
 
     # Make this to count the deforastation area
-    image_ref[img_mask_ref == -99] = -1
+    if image_mask_ref is not None:
+        image_ref[img_mask_ref == -99] = -1
 
     total_no_def += len(image_ref[image_ref == 0])
     total_def += len(image_ref[image_ref == 1])
@@ -84,7 +85,8 @@ def count_deforastation(image_ref, image_mask_ref):
     print('Total deforestaion class is {}'.format(len(image_ref[image_ref == 1])))
     print('Percentage of deforestaion class is {:.2f}'.format((len(image_ref[image_ref == 1])*100)/len(image_ref[image_ref == 0])))
 
-    image_ref[img_mask_ref == -99] = 0
+    if image_mask_ref is not None:
+        image_ref[img_mask_ref == -99] = 0
 
 
 def mask_no_considered(image_ref, buffer, past_ref):
@@ -132,75 +134,6 @@ def filter_patches(patches_img, patches_ref, percent):
     return filt_patches_img, filt_patches_ref
 
 
-def extract_patches2(img, img_ref, patch_size, stride, percent):
-    # Extract patches manually
-
-    height, width, channel = img.shape
-    #print(height, width)
-
-    # num_patches_h = height // stride
-    # num_patches_w = width // stride
-    num_patches_h = height // patch_size
-    num_patches_w = width // patch_size
-    #print(num_patches_h, num_patches_w)
-
-    # new_shape = (num_patches_h*num_patches_w, patch_size, patch_size, channel)
-    # new_shape_ref = (num_patches_h*num_patches_w, patch_size, patch_size)
-    # patches_img = np.zeros(new_shape)
-    # patches_ref = np.zeros(new_shape_ref)
-    patches_img = []
-    patches_ref = []
-    n_patch = 0
-    # rows
-    for h in range(num_patches_h):
-        # columns
-        for w in range(num_patches_w):
-            patch_img = img[h*stride:(h+1)*stride, w*stride:(w+1)*stride, :]
-            patch_ref = img_ref[h*stride:(h+1)*stride, w*stride:(w+1)*stride]
-            # patch_img = img[h*patch_size:(h+1)*patch_size, w*patch_size:(w+1)*patch_size, :]
-            # patch_ref = img_ref[h*patch_size:(h+1)*patch_size, w*patch_size:(w+1)*patch_size]
-            # print(patch_img.shape)
-            # print(patch_ref.shape)
-            patch_shape = patch_img.shape
-            if (patch_shape[0], patch_shape[1]) == (patch_size, patch_size):
-                # print(patch_img.shape)
-                # print(patch_ref.shape)
-                unique, counts = np.unique(patch_ref, return_counts=True)
-                counts_dict = dict(zip(unique, counts))
-                if 0 not in counts_dict.keys():
-                    counts_dict[0] = 0
-                if 1 not in counts_dict.keys():
-                    counts_dict[1] = 0
-                if 2 not in counts_dict.keys():
-                    counts_dict[2] = 0
-                # print(counts_dict)
-                if -1 in counts_dict.keys():
-                    continue
-                deforastation = counts_dict[1] / (counts_dict[0] + counts_dict[1] + counts_dict[2])
-                print(deforastation * 100)
-                if deforastation * 100 > percent:
-                    # patches_img[n_patch] = img[h*stride:(h+1)*stride, w*stride:(w+1)*stride, :]
-                    # patches_ref[n_patch] = img_ref[h*stride:(h+1)*stride, w*stride:(w+1)*stride]
-                    patches_img.append(patch_img)
-                    patches_ref.append(patch_ref)
-
-            # n_patch += 1
-
-    print(len(patches_img))
-    if len(patches_img) > 0:
-        filt_patches_img = np.stack(patches_img, axis=0)
-        # print(type(filt_patches_img))
-        filt_patches_ref = np.stack(patches_ref, axis=0)
-        # print(filt_patches_img.shape)
-        # print(filt_patches_ref.shape)
-        return filt_patches_img, filt_patches_ref
-    else:
-        print("Error: Couldn't extract patches." +
-              "Maybe there wasn't enough deforastation or " +
-              "it was out of right region (with -1)")
-        return [], []
-
-
 def extract_tiles2patches(tiles, mask_amazon, input_image, image_ref, patch_size,
                           stride, percent):
     patches_out = []
@@ -216,26 +149,14 @@ def extract_tiles2patches(tiles, mask_amazon, input_image, image_ref, patch_size
         x2 = np.max(rows)
         y2 = np.max(cols)
 
-        tile_img = input_image[x1:x2+1,y1:y2+1,:]
-        tile_ref = image_ref[x1:x2+1,y1:y2+1]
-        # Check deforastation percentage for each tile
-        unique, counts = np.unique(tile_ref, return_counts=True)
-        counts_dict = dict(zip(unique, counts))
-        # print(counts_dict)
-        if 0 not in counts_dict.keys():
-            counts_dict[0] = 0
-        if 1 not in counts_dict.keys():
-            counts_dict[1] = 0
-        if 2 not in counts_dict.keys():
-            counts_dict[2] = 0
-        # deforastation = counts_dict[1] / (counts_dict[0] + counts_dict[1] + counts_dict[2])
-        # print(f"Deforastation of tile {num_tile}: {deforastation * 100}")
+        tile_img = input_image[x1:x2+1, y1:y2+1, :]
+        tile_ref = image_ref[x1:x2+1, y1:y2+1]
+
         # Extract patches for each tile
         print(tile_img.shape)
-        patches_img, patches_ref = extract_patches(tile_img, tile_ref, patch_size,
-                                                    stride)
-        # patches_img, patches_ref = extract_patches2(tile_img, tile_ref, patch_size,
-        #                                            stride, percent)
+        patches_img, patches_ref = extract_patches(tile_img, tile_ref,
+                                                   patch_size, stride)
+
         print(f'Patches of tile {num_tile} extracted!')
         assert len(patches_img) == len(patches_ref), "Train: Input patches and reference \
         patches don't have the same numbers"
@@ -320,31 +241,31 @@ def save_patches(patches_tr, patches_tr_ref, folder_path, scaler, data_aug, mode
         label_aug_h = tf.keras.utils.to_categorical(label_aug, args.num_classes)
         # Convert from B x H x W x C --> B x C x H x W
         # label_aug_h = label_aug_h.transpose((0, 3, 1, 2))
-        img_t1 = patches_tr[i][:, :, 0:7]
-        img_t2 = patches_tr[i][:, :, 7:]
-        img_t1_bgr = img_t1[:, :, 0]# .astype(np.uint8)
-        #img_t1_rgb = img_t1_bgr[:, :, ::-1]
-        img_t2_bgr = img_t2[:, :, 0]# .astype(np.uint8)
-        #img_t2_rgb = img_t2_bgr[:, :, ::-1]
-
-        fig2, (ax1, ax2, ax3) = plt.subplots(nrows=1, ncols=3, figsize=(10, 5))
-        ax1.set_title('Img T1 (2018)')
-        ax1.imshow(img_t1_bgr)
-        ax2.set_title('Img T2 (2019)')
-        ax2.imshow(img_t2_bgr)
-        ax3.set_title('Label')
-        ax3.imshow(patches_tr_ref[i])
-
-        plt.show()
-        plt.close()
+        # img_t1 = patches_tr[i][:, :, 0:7]
+        # img_t2 = patches_tr[i][:, :, 7:]
+        # img_t1_bgr = img_t1[:, :, 1:4].astype(np.uint8)
+        # img_t1_rgb = img_t1_bgr[:, :, ::-1]
+        # img_t2_bgr = img_t2[:, :, 1:4].astype(np.uint8)
+        # img_t2_rgb = img_t2_bgr[:, :, ::-1]
+        #
+        # fig2, (ax1, ax2, ax3) = plt.subplots(nrows=1, ncols=3, figsize=(10, 5))
+        # ax1.set_title('Img T1 (2018)')
+        # ax1.imshow(img_t1_rgb)
+        # ax2.set_title('Img T2 (2019)')
+        # ax2.imshow(img_t2_rgb)
+        # ax3.set_title('Label')
+        # ax3.imshow(patches_tr_ref[i])
+        #
+        # plt.show()
+        # plt.close()
         for j in range(len(img_aug)):
             # Input image 7 bands of Staelite
             # Float32 its need to train the model
             img_float = img_aug[j].astype(np.float32)
-            # img_reshaped = img_float.reshape((img_float.shape[0] * img_float.shape[1]),
-            #                                img_float.shape[2])
-            # img_normed = scaler.transform(img_reshaped)
-            # img_float = img_normed.reshape(img_float.shape[0], img_float.shape[1], img_float.shape[2])
+            img_reshaped = img_float.reshape((img_float.shape[0] * img_float.shape[1]),
+                                           img_float.shape[2])
+            img_normed = scaler.transform(img_reshaped)
+            img_float = img_normed.reshape(img_float.shape[0], img_float.shape[1], img_float.shape[2])
             np.save(os.path.join(folder_path, mode, 'imgs', filename(i*5 + j)),
                     img_float)
             # All multitasking labels are saved in one-hot
@@ -362,10 +283,10 @@ def save_patches(patches_tr, patches_tr_ref, folder_path, scaler, data_aug, mode
             # Color
             # print(f'Checking if rgb img is in uint8 before hsv: {img_aug[j].dtype}')
             # Get only BGR from Aerial Image
-            bgr_patch = img_aug[j][:, :, 1:4].astype(np.uint8)
+            bgr_patch = img_aug[j][:, :, 1:4].astype(np.uint8)*255
             hsv_patch = cv2.cvtColor(bgr_patch,
                                      cv2.COLOR_BGR2HSV).astype(np.float32)
-            # hsv_patch = hsv_patch * np.array([1./179, 1./255, 1./255])
+            hsv_patch = hsv_patch * np.array([1./179, 1./255, 1./255])
             # print(hsv_patch.shape)
             # Float32 its need to train the model
             np.save(os.path.join(folder_path, mode, 'masks/color', filename(i*5 + j)),
@@ -425,10 +346,12 @@ if __name__ == '__main__':
     print(f'Using data augmentation? {args.data_aug}')
     print('='*50)
 
-    root_path = './DATASETS/Amazon_npy'
+    root_path = './DATASETS/Amazon_npy_corrigido'
     # Load images --------------------------------------------------------------
-    img_t1_path = 'clipped_raster_004_66_2018.npy'
-    img_t2_path = 'clipped_raster_004_66_2019.npy'
+    # img_t1_path = 'clipped_raster_004_66_2018.npy'
+    # img_t2_path = 'clipped_raster_004_66_2019.npy'
+    img_t1_path = 'cut_raster_2018_ok.tif'
+    img_t2_path = 'cut_raster_2019_ok.tif'
     img_t1 = load_npy_image(os.path.join(root_path, img_t1_path)).astype(np.float32)
     img_t2 = load_npy_image(os.path.join(root_path, img_t2_path)).astype(np.float32)
 
@@ -442,43 +365,52 @@ if __name__ == '__main__':
 
     # Concatenation of images
     input_image = np.concatenate((img_t1, img_t2), axis=-1)
-    input_image = input_image[:6100, :6600]
+    # input_image = input_image[:6100, :6600]
+    input_image = input_image[:5100, :5100]
     h_, w_, channels = input_image.shape
     print(f"Input image shape: {input_image.shape}")
-    # check_memory()
-    # scaler = normalization(input_image)
-    # check_memory()
+    check_memory()
+    scaler = normalization(input_image, norm_type=args.norm_type)
+    check_memory()
 
     # Load Mask area -----------------------------------------------------------
     # Mask constains exactly location of region since the satelite image
     # doesn't fill the entire resolution (Kinda rotated with 0 around)
-    img_mask_ref_path = 'mask_ref.npy'
-    img_mask_ref = load_npy_image(os.path.join(root_path, img_mask_ref_path)).astype(np.float32)
-    img_mask_ref = img_mask_ref[:6100, :6600]
-    print(f"Mask area reference shape: {img_mask_ref.shape}")
+    # img_mask_ref_path = 'mask_ref.npy'
+    # img_mask_ref = load_npy_image(os.path.join(root_path, img_mask_ref_path)).astype(np.float32)
+    # img_mask_ref = img_mask_ref[:6100, :6600]
+    # print(f"Mask area reference shape: {img_mask_ref.shape}")
+    img_mask_ref = None
 
     # Load deforastation reference ---------------------------------------------
     '''
         0 --> No deforastation
         1 --> Deforastation
     '''
+    img_ref_path = 'ref_2019_ok.tif'
     image_ref = load_npy_image(os.path.join(root_path,
-                                            'labels/binary_clipped_2019.npy')).astype(np.float32)
+                                            'labels', img_ref_path)).astype(np.float32)
     # Clip to fit tiles of your specific image
-    image_ref = image_ref[:6100, :6600]
+    # image_ref = image_ref[:6100, :6600]
+    image_ref = image_ref[:5100, :5100]
     # image_ref[img_mask_ref == -99] = -1
     print(f"Image reference shape: {image_ref.shape}")
 
     count_deforastation(image_ref, img_mask_ref)
 
     # Load past deforastation reference ----------------------------------------
+    # past_ref1_path = 'binary_clipped_2013_2018.npy'
+    past_ref1_path = 'ref_2007_ok.tif'
     past_ref1 = load_npy_image(os.path.join(root_path,
-                                            'labels/binary_clipped_2013_2018.npy')).astype(np.float32)
+                                            'labels', past_ref1_path)).astype(np.float32)
+    # past_ref2_path = 'binary_clipped_1988_2012.npy'
+    past_ref2_path = 'ref_2008_2018_ok.tif'
     past_ref2 = load_npy_image(os.path.join(root_path,
-                                            'labels/binary_clipped_1988_2012.npy')).astype(np.float32)
+                                            'labels', past_ref2_path)).astype(np.float32)
     past_ref_sum = past_ref1 + past_ref2
     # Clip to fit tiles of your specific image
-    past_ref_sum = past_ref_sum[:6100, :6600]
+    # past_ref_sum = past_ref_sum[:6100, :6600]
+    past_ref_sum = past_ref_sum[:5100, :5100]
     # past_ref_sum[img_mask_ref==-99] = -1
     # Doing the sum, there are some pixels with value 2 (Case when both were deforastation).
     # past_ref_sum[past_ref_sum == 2] = 1
@@ -496,7 +428,7 @@ if __name__ == '__main__':
     '''
     final_mask = mask_no_considered(image_ref, buffer, past_ref_sum)
 
-    final_mask[img_mask_ref == -99] = -1
+    # final_mask[img_mask_ref == -99] = -1
     unique, counts = np.unique(final_mask, return_counts=True)
     counts_dict = dict(zip(unique, counts))
     print(f'Class pixels of final mask: {counts_dict}')
@@ -504,12 +436,12 @@ if __name__ == '__main__':
     print(f"Total Deforastation: {deforastation * 100}%")
 
     # Calculates weights for weighted cross entropy
-    total_pixels = counts_dict[0] + counts_dict[1] + counts_dict[2]
-    weight0 = total_pixels / counts_dict[0]
-    weight1 = total_pixels / counts_dict[1]
-    print('weights')
-    print(weight0)
-    print(weight1)
+    # total_pixels = counts_dict[0] + counts_dict[1] + counts_dict[2]
+    # weight0 = total_pixels / counts_dict[0]
+    # weight1 = total_pixels / counts_dict[1]
+    # print('weights')
+    # print(weight0)
+    # print(weight1)
 
     check_memory()
     del img_t1, img_t2, image_ref, past_ref1, past_ref2
@@ -528,7 +460,7 @@ if __name__ == '__main__':
     # mask_c_3 = np.concatenate((7*tile_number, 8*tile_number, 9*tile_number, 20*tile_number, 21*tile_number), axis=1)
     # mask_c_4 = np.concatenate((10*tile_number, 11*tile_number, 12*tile_number, 22*tile_number, 23*tile_number), axis=1)
     # mask_c_5 = np.concatenate((13*tile_number, 14*tile_number, 15*tile_number, 24*tile_number, 25*tile_number), axis=1)
-    tile_number = np.ones((1220, 2200))
+    tile_number = np.ones((1020, 1700))
     mask_c_1 = np.concatenate((tile_number, 2*tile_number, 3*tile_number), axis=1)
     mask_c_2 = np.concatenate((4*tile_number, 5*tile_number, 6*tile_number), axis=1)
     mask_c_3 = np.concatenate((7*tile_number, 8*tile_number, 9*tile_number), axis=1)
@@ -612,6 +544,6 @@ if __name__ == '__main__':
     print(f'Number of train patches: {len(patches_tr)}')
     print(f'Number of val patches: {len(patches_val)}')
 
-    scaler = None
+    # scaler = None
     save_patches(patches_tr, patches_tr_ref, folder_path, scaler, args.data_aug, mode='train')
     save_patches(patches_val, patches_val_ref, folder_path, scaler, args.data_aug, mode='val')

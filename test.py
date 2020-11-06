@@ -239,7 +239,7 @@ ctx = mx.gpu(0)
 if args.model == 'resuneta':
     nfilters_init = 32
     Nbatch = 8
-    net = ResUNet_d6(nfilters_init, args.num_classes)
+    net = ResUNet_d6('tanimoto', nfilters_init, args.num_classes)
 else:
     net = UNet(args.num_classes, nfilter=64)
     args.use_multitasking = False
