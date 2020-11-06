@@ -2,7 +2,10 @@ import numpy as np
 import cv2
 # from skimage.morphology import disk
 # import skimage
-from osgeo import gdal
+try:
+    from osgeo import gdal
+except:
+    print('Please install gdal')
 
 # Functions
 
