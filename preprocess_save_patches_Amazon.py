@@ -513,31 +513,31 @@ if __name__ == '__main__':
     # final_mask[img_mask_ref == -99] = -1
     show_deforastation_per_tile(all_tiles, mask_tiles, final_mask)
 
-    patches_tr, patches_tr_ref = extract_tiles2patches(all_tiles, mask_tiles, input_image,
+    # patches_tr, patches_tr_ref = extract_tiles2patches(all_tiles, mask_tiles, input_image,
+    #                                                    final_mask, args.patch_size,
+    #                                                    args.stride, args.def_percent)
+
+    # patches_tr, patches_val, patches_tr_ref, patches_val_ref = train_test_split(patches_tr,
+    #                                                                           patches_tr_ref,
+    #                                                                           test_size=0.2, random_state=42)
+
+    # Trainig tiles
+    tr_tiles = [tr1, tr2, tr3, tr4, tr5, tr6, tr7, tr8, tr9, tr10]
+
+    patches_tr, patches_tr_ref = extract_tiles2patches(tr_tiles, mask_tiles, input_image,
                                                        final_mask, args.patch_size,
                                                        args.stride, args.def_percent)
 
-    patches_tr, patches_val, patches_tr_ref, patches_val_ref = train_test_split(patches_tr,
-                                                                              patches_tr_ref,
-                                                                              test_size=0.2, random_state=42)
-
-    # # Trainig tiles
-    # tr_tiles = [tr1, tr2, tr3, tr4, tr5, tr6, tr7, tr8, tr9, tr10]
-    #
-    # patches_tr, patches_tr_ref = extract_tiles2patches(tr_tiles, mask_tiles, input_image,
-    #                                                    final_mask, args.patch_size,
-    #                                                    args.stride, args.def_percent)
-    #
     assert len(patches_tr) == len(patches_tr_ref), "Train: Input patches and reference \
     patches don't have the same numbers"
-    #
-    # # Validation tiles
-    # val_tiles = [val1, val3, val4, val5, val6]
-    #
-    # patches_val, patches_val_ref = extract_tiles2patches(val_tiles, mask_tiles, input_image,
-    #                                                      final_mask, args.patch_size, args.stride,
-    #                                                      args.def_percent)
-    #
+
+    # Validation tiles
+    val_tiles = [val1, val3, val4, val5, val6]
+
+    patches_val, patches_val_ref = extract_tiles2patches(val_tiles, mask_tiles, input_image,
+                                                         final_mask, args.patch_size, args.stride,
+                                                         args.def_percent)
+    
     assert len(patches_val) == len(patches_val_ref), "Val: Input patches and reference \
     patches don't have the same numbers"
 
