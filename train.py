@@ -104,7 +104,7 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
                     else:
                         seg_logits = net(X)
                     seg_losses.append(loss_clss(seg_logits, y_seg))
-                    logger.debug(f'Seg CE value: {seg_losses[i]}')
+                    # logger.debug(f'Seg CE value: {seg_losses[i]}')
                     acc_metric.update(mx.nd.argmax(seg_logits, axis=1), mx.nd.argmax(y_seg, axis=1))
                     if args.multitasking:
                         bound_losses.append(args.wbound*loss_clss(bound_logits, y_bound))

@@ -15,6 +15,7 @@ from tqdm import tqdm
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from skimage.morphology import disk
 import skimage
+from sklearn.model_selection import train_test_split
 
 
 def normalization(image, norm_type=1):
@@ -512,30 +513,38 @@ if __name__ == '__main__':
     # final_mask[img_mask_ref == -99] = -1
     show_deforastation_per_tile(all_tiles, mask_tiles, final_mask)
 
-    # Trainig tiles
-    tr_tiles = [tr1, tr2, tr3, tr4, tr5, tr6, tr7, tr8, tr9, tr10]
-
-    patches_tr, patches_tr_ref = extract_tiles2patches(tr_tiles, mask_tiles, input_image,
+    patches_tr, patches_tr_ref = extract_tiles2patches(all_tiles, mask_tiles, input_image,
                                                        final_mask, args.patch_size,
                                                        args.stride, args.def_percent)
 
+    patches_tr, patches_val, patches_tr_ref, patches_val_ref = train_test_split(patches_tr,
+                                                                              patches_tr_ref,
+                                                                              test_size=0.2, random_state=42)
+
+    # # Trainig tiles
+    # tr_tiles = [tr1, tr2, tr3, tr4, tr5, tr6, tr7, tr8, tr9, tr10]
+    #
+    # patches_tr, patches_tr_ref = extract_tiles2patches(tr_tiles, mask_tiles, input_image,
+    #                                                    final_mask, args.patch_size,
+    #                                                    args.stride, args.def_percent)
+    #
     assert len(patches_tr) == len(patches_tr_ref), "Train: Input patches and reference \
     patches don't have the same numbers"
-
-    # Validation tiles
-    val_tiles = [val1, val3, val4, val5, val6]
-
-    patches_val, patches_val_ref = extract_tiles2patches(val_tiles, mask_tiles, input_image,
-                                                         final_mask, args.patch_size, args.stride,
-                                                         args.def_percent)
-
+    #
+    # # Validation tiles
+    # val_tiles = [val1, val3, val4, val5, val6]
+    #
+    # patches_val, patches_val_ref = extract_tiles2patches(val_tiles, mask_tiles, input_image,
+    #                                                      final_mask, args.patch_size, args.stride,
+    #                                                      args.def_percent)
+    #
     assert len(patches_val) == len(patches_val_ref), "Val: Input patches and reference \
     patches don't have the same numbers"
 
     print('patches extracted!')
 
     print('saving images...')
-    folder_path = f'./DATASETS/Amazon_corrigido_patch_size={args.patch_size}_' + \
+    folder_path = f'./DATASETS/Amazon_testando_corrigido_patch_size={args.patch_size}_' + \
                 f'stride={args.stride}_norm_type={args.norm_type}_data_aug={args.data_aug}_def_percent={args.def_percent}'
 
     create_folders(folder_path, mode='train')

@@ -203,16 +203,10 @@ class ResUNet_d6(HybridBlock):
             logits = F.concat(conv, bound, dist)
             logits = self.logits(logits)
             #logits = F.softmax(logits,axis=1)
-            print('-'*40)
-            print(logits)
             if self.loss == 'tanimoto':
                 logits = self.ChannelAct(logits)
-                print(logits)
-                print('-'*40)
                 return logits, bound, dist, convc
             else:
-                print(logits)
-                print('-'*40)
                 return logits, bound, dist, convc
         else:
             seg_logits = self.seg_pointwise(conv)
