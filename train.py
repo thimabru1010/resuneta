@@ -2,6 +2,7 @@ from resuneta.models.resunet_d6_causal_mtskcolor_ddist import ResUNet_d6
 from resuneta.models.Unet import UNet
 from resuneta.src.NormalizeDataset import Normalize
 from resuneta.src.ISPRSDataset import ISPRSDataset
+from resuneta.src.semseg_aug_cv2 import SemSegAugmentor_CV, ParamsRange
 from resuneta.nn.loss.loss import Tanimoto_with_dual
 import mxnet as mx
 from mxnet import gluon, autograd
@@ -415,10 +416,17 @@ if __name__ == '__main__':
         # tnorm = Normalize(mean=mean, std=std)
         tnorm = None
 
+    params_range = ParamsRange()
+    transform = SemSegAugmentor_CV(params_range=params_range, =prob=0.7)
+
     train_dataset = ISPRSDataset(root=args.dataset_path,
-                                 mode='train', color=True, mtsk=args.multitasking, norm=tnorm)
+                                 mode='train', color=True,
+                                 mtsk=args.multitasking, norm=tnorm,
+                                 transform=transform)
     val_dataset = ISPRSDataset(root=args.dataset_path,
-                               mode='val', color=True, mtsk=args.multitasking, norm=tnorm)
+                               mode='val', color=True,
+                               mtsk=args.multitasking, norm=tnorm,
+                               transform=transform)
 
     dataloader = {}
     dataloader['train'] = gluon.data.DataLoader(train_dataset,
