@@ -346,6 +346,9 @@ if __name__ == '__main__':
                         type=float, default=1.0)
     parser.add_argument("--wcolor", help="HSV transform loss weight",
                         type=float, default=1.0)
+    parser.add_argument("--aug_prob", help="probability ofapply \
+                        data augmentation",
+                        type=float, default=0.7)
     args = parser.parse_args()
 
     if not os.path.exists(os.path.join(args.results_path)):
@@ -417,7 +420,7 @@ if __name__ == '__main__':
         tnorm = None
 
     params_range = ParamsRange()
-    transform = SemSegAugmentor_CV(params_range=params_range, prob=0.7)
+    transform = SemSegAugmentor_CV(params_range=params_range, prob=args.aug_prob)
 
     train_dataset = ISPRSDataset(root=args.dataset_path,
                                  mode='train', color=True,
