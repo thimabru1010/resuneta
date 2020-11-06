@@ -119,6 +119,8 @@ class ISPRSDataset(dataset.Dataset):
         #     mask = mask[:6,:,:]
 
         # Maybe there is an error here
+        print(base.shape)
+        print(masks.shape)
         if self._transform is not None:
             base, masks = self._transform(base, masks)
             print('aqui')

@@ -7,9 +7,9 @@ class ParamsRange(dict):
     def __init__(self):
 
         # Good default values for 256x256 images
-        self['center_range']   =[0, 256]
-        self['rot_range']      =[-85.0, 85.0]
-        self['zoom_range']     = [0.25, 1.25]
+        self['center_range'] = [0, 256]
+        self['rot_range'] = [-85.0, 85.0]
+        self['zoom_range'] = [0.25, 1.25]
 
 
 class SemSegAugmentor_CV(object):
@@ -109,7 +109,7 @@ class SemSegAugmentor_CV(object):
     def __call__(self,_img, _mask):
 
         rand = np.random.rand()
-        if (rand <= self.prob):
+        if(rand <= self.prob):
             return next(self.iterator)(_img,_mask)
-        else :
+        else:
             return _img, _mask
