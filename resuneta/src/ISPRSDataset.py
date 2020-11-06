@@ -143,6 +143,8 @@ class ISPRSDataset(dataset.Dataset):
             # Don't need to cast to Mxnet tensor. Dataset does this alone
             # Beware of casting with transforms. Zero the image. Leads to an error.
             print('Retornando')
+            print(base.shape)
+            print(masks.shape)
             return base.astype(np.float32).transpose((2, 0, 1)), masks.astype(np.float32).transpose((2, 0, 1))
         else:
             return base.astype(np.float32).transpose((2, 0, 1)), mask_seg.astype(np.float32).transpose((2, 0, 1))
