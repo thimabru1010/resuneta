@@ -537,14 +537,14 @@ if __name__ == '__main__':
     patches_val, patches_val_ref = extract_tiles2patches(val_tiles, mask_tiles, input_image,
                                                          final_mask, args.patch_size, args.stride,
                                                          args.def_percent)
-    
+
     assert len(patches_val) == len(patches_val_ref), "Val: Input patches and reference \
     patches don't have the same numbers"
 
     print('patches extracted!')
 
     print('saving images...')
-    folder_path = f'./DATASETS/Amazon_testando_corrigido_patch_size={args.patch_size}_' + \
+    folder_path = f'./DATASETS/Amazon_reduced_corrigido_patch_size={args.patch_size}_' + \
                 f'stride={args.stride}_norm_type={args.norm_type}_data_aug={args.data_aug}_def_percent={args.def_percent}'
 
     create_folders(folder_path, mode='train')
