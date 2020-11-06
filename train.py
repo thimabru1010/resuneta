@@ -417,7 +417,7 @@ if __name__ == '__main__':
         tnorm = None
 
     params_range = ParamsRange()
-    transform = SemSegAugmentor_CV(params_range=params_range, =prob=0.7)
+    transform = SemSegAugmentor_CV(params_range=params_range, prob=0.7)
 
     train_dataset = ISPRSDataset(root=args.dataset_path,
                                  mode='train', color=True,
