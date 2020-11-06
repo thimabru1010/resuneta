@@ -429,28 +429,28 @@ if __name__ == '__main__':
                                transform=transform)
 
     dataloader = {}
-    # dataloader['train'] = gluon.data.DataLoader(train_dataset,
-    #                                             batch_size=args.batch_size,
-    #                                             shuffle=True,
-    #                                             last_batch='rollover',
-    #                                             num_workers=8, pin_memory=True)
-    # dataloader['val'] = gluon.data.DataLoader(val_dataset,
-    #                                           batch_size=args.batch_size,
-    #                                           shuffle=True,
-    #                                           last_batch='rollover',
-    #                                           num_workers=8, pin_memory=True)
-
-    # DEBUG
     dataloader['train'] = gluon.data.DataLoader(train_dataset,
+                                                batch_size=args.batch_size,
+                                                shuffle=True,
+                                                last_batch='rollover',
+                                                num_workers=8, pin_memory=True)
+    dataloader['val'] = gluon.data.DataLoader(val_dataset,
                                               batch_size=args.batch_size,
                                               shuffle=True,
                                               last_batch='rollover',
-                                              pin_memory=True)
-    dataloader['val'] = gluon.data.DataLoader(val_dataset,
-                                            batch_size=args.batch_size,
-                                            shuffle=True,
-                                            last_batch='rollover',
-                                            pin_memory=True)
+                                              num_workers=8, pin_memory=True)
+
+    # DEBUG
+    # dataloader['train'] = gluon.data.DataLoader(train_dataset,
+    #                                           batch_size=args.batch_size,
+    #                                           shuffle=True,
+    #                                           last_batch='rollover',
+    #                                           pin_memory=True)
+    # dataloader['val'] = gluon.data.DataLoader(val_dataset,
+    #                                         batch_size=args.batch_size,
+    #                                         shuffle=True,
+    #                                         last_batch='rollover',
+    #                                         pin_memory=True)
 
     print('='*40)
     logger.info(f'Training on {len(train_dataset)} images')
