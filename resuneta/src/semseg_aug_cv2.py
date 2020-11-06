@@ -54,9 +54,9 @@ class SemSegAugmentor_CV(object):
         img_trans = cv2.warpAffine(imgT, tRotMat, (cols,rows), flags=cv2.INTER_AREA, borderMode=cv2.BORDER_REFLECT_101) #  """,flags=cv2.INTER_CUBIC,"""
         mask_trans= cv2.warpAffine(maskT,tRotMat,(cols,rows),flags=cv2.INTER_AREA, borderMode=cv2.BORDER_REFLECT_101)
 
-        img_trans = img_trans.transpose([2,0,1])
-        if (self.one_hot):
-            mask_trans = mask_trans.transpose([2,0,1])
+        # img_trans = img_trans.transpose([2,0,1])
+        # if (self.one_hot):
+        #     mask_trans = mask_trans.transpose([2,0,1])
 
         return img_trans, mask_trans
 
