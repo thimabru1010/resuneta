@@ -254,8 +254,8 @@ def save_patches(patches_tr, patches_tr_ref, folder_path, scaler, data_aug, mode
             # Get only BGR from Aerial Image
             img_t1_patch = img_aug[j][:, :, 0:7]
             img_t2_patch = img_aug[j][:, :, 7:]
-            assert img_t1_patch.shape == (args.path_size, args.patch_size, 7), "Img T1 shape not matching"
-            assert img_t2_patch.shape == (args.path_size, args.patch_size, 7), "Img T2 shape not matching"
+            assert img_t1_patch.shape == (args.patch_size, args.patch_size, 7), "Img T1 shape not matching"
+            assert img_t2_patch.shape == (args.patch_size, args.patch_size, 7), "Img T2 shape not matching"
             # Convert from BGR 2 RGB
             img_t1_patch_bgr = (img_t1_patch[:, :, 1:4]*255).astype(np.uint8)
 
@@ -263,8 +263,8 @@ def save_patches(patches_tr, patches_tr_ref, folder_path, scaler, data_aug, mode
 
             print(img_t1_patch_bgr.shape)
             print(img_t2_patch_bgr.shape)
-            assert img_t1_patch_bgr.shape == (args.path_size, args.patch_size, 3), "BGR T1 shape not matching"
-            assert img_t2_patch_bgr.shape == (args.path_size, args.patch_size, 3), "BGR T2 shape not matching"
+            assert img_t1_patch_bgr.shape == (args.patch_size, args.patch_size, 3), "BGR T1 shape not matching"
+            assert img_t2_patch_bgr.shape == (args.patch_size, args.patch_size, 3), "BGR T2 shape not matching"
 
             img_t1_patch_hsv = cv2.cvtColor(img_t1_patch_bgr,
                                      cv2.COLOR_BGR2HSV).astype(np.float32)
