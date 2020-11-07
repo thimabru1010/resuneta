@@ -445,7 +445,7 @@ if __name__ == '__main__':
 
     mask_tr_val = np.zeros((mask_tiles.shape))
     # tr1 = 5
-    tr2 = 6  # --> 8 # mesma bosta
+    tr2 = 8 # mesma bosta
     # tr3 = 13
     tr3 = 2
     tr4 = 7
@@ -460,7 +460,7 @@ if __name__ == '__main__':
     # val1 = 13
     # val2 = 10
     val3 = 4
-    val4 = 8  # --> 6
+    val4 = 6
     # Putting 15 and 12 to validation but don't have expressive deforastation %
     # val5 = 15
     # val6 = 12
