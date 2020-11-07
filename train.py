@@ -379,10 +379,18 @@ if __name__ == '__main__':
     for i in range(n_gpus):
         devices.append(mx.gpu(i))
 
+    if args.loss == 'tanimoto':
+        from_logits = False
+    else:
+        from_logits = True
+
     Nfilters_init = 32
     if args.model == 'resuneta':
         args.multitasking = True
-        net = ResUNet_d6(args, Nfilters_init, args.num_classes, patch_size=args.patch_size, verbose=args.debug, multitasking=args.multitasking)
+        net = ResUNet_d6(args.dataset_type=, Nfilters_init, args.num_classes,
+                         patch_size=args.patch_size, verbose=args.debug,
+                         from_logits=from_logits,
+                         multitasking=args.multitasking)
     elif args.model == 'unet':
         net = UNet(args.num_classes, nfilter=64)
         args.multitasking = False

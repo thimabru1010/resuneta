@@ -17,7 +17,8 @@ class ResUNet_d6(HybridBlock):
     This will be used for 256x256 image input, so the atrous convolutions should be determined by the depth
     """
 
-    def __init__(self, dataset_type, _nfilters_init,  _NClasses, patch_size=256, verbose=True,
+    def __init__(self, dataset_type, _nfilters_init,  _NClasses,
+                 patch_size=256, verbose=True, from_logits=False
                  _norm_type='BatchNorm', multitasking=True,  **kwards):
         HybridBlock.__init__(self,**kwards)
 
@@ -129,7 +130,7 @@ class ResUNet_d6(HybridBlock):
                 # # This conv will be only used for non multitasking mode
                 # self.seg_pointwise = gluon.nn.Conv2D(self.NClasses, kernel_size=1, padding=0)
 
-            if self.from_logits:
+            if not self.from_logits:
                 # Last activation, customization for binary results
                 if ( self.NClasses == 1):
                     self.ChannelAct = gluon.nn.HybridLambda(lambda F, x: F.sigmoid(x))
@@ -191,7 +192,7 @@ class ResUNet_d6(HybridBlock):
             # 1st find distance map, skeleton like, topology info
             dist = self.distance_logits(convl) # Modification here, do not use max pooling for distance
             #dist   = F.softmax(dist,axis=1)
-            if self.from_logits:
+            if not self.from_logits:
                 # TODO: Maybe the output not squeezed by softmax can affect other tasks
                 dist = self.ChannelAct(dist)
 
@@ -208,7 +209,7 @@ class ResUNet_d6(HybridBlock):
             logits = F.concat(conv, bound, dist)
             logits = self.logits(logits)
             #logits = F.softmax(logits,axis=1)
-            if self.from_logits:
+            if not self.from_logits:
                 logits = self.ChannelAct(logits)
                 return logits, bound, dist, convc
             else:
