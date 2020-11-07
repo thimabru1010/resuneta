@@ -2,7 +2,7 @@ import tensorflow as tf
 import numpy as np
 
 from utils import load_npy_image, get_boundary_label, get_distance_label, \
-    data_augmentation, check_memory, normalization
+    data_augmentation, check_memory, normalization, mask_no_considered
 import argparse
 import os
 
@@ -263,8 +263,8 @@ def save_patches(patches_tr, patches_tr_ref, folder_path, scaler, data_aug, mode
 
             print(img_t1_patch_bgr.shape)
             print(img_t2_patch_bgr.shape)
-            assert img_t1_patch_bgr.shape == (args.path_size, args.patch_size, 3), "BGR shape not matching"
-            assert img_t2_patch_bgr.shape == (args.path_size, args.patch_size, 3), "BGR shape not matching"
+            assert img_t1_patch_bgr.shape == (args.path_size, args.patch_size, 3), "BGR T1 shape not matching"
+            assert img_t2_patch_bgr.shape == (args.path_size, args.patch_size, 3), "BGR T2 shape not matching"
 
             img_t1_patch_hsv = cv2.cvtColor(img_t1_patch_bgr,
                                      cv2.COLOR_BGR2HSV).astype(np.float32)
