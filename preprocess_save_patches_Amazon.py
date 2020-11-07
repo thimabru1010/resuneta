@@ -323,7 +323,7 @@ if __name__ == '__main__':
                         help="Choose type of normalization to be used",
                         type=int, default=1, choices=[1, 2, 3])
     parser.add_argument("--patch_size",
-                        help="Choose size of patches", type=int, default=256)
+                        help="Choose size of patches", type=int, default=128)
     parser.add_argument("--stride",
                         help="Choose stride to be using on patches extraction",
                         type=int, default=32)
@@ -470,14 +470,14 @@ if __name__ == '__main__':
     mask_tiles = np.concatenate((mask_c_1, mask_c_2, mask_c_3, mask_c_4, mask_c_5), axis=0)
 
     mask_tr_val = np.zeros((mask_tiles.shape))
-    tr1 = 5
+    # tr1 = 5
     tr2 = 8
     # tr3 = 13
     tr3 = 2
     tr4 = 7
-    tr5 = 11
+    # tr5 = 11
     tr6 = 1
-    tr7 = 14
+    # tr7 = 14
     tr8 = 3
     tr9 = 9
     tr10 = 10
@@ -488,16 +488,21 @@ if __name__ == '__main__':
     val3 = 4
     val4 = 6
     # Putting 15 and 12 to validation but don't have expressive deforastation %
-    val5 = 15
+    # val5 = 15
     val6 = 12
 
-    mask_tr_val[mask_tiles == tr1] = 1
+    tst1 = 5 # 357
+    tst2 = 11 # 257
+    tst3 = 14
+    tst4 = 15
+
+    # mask_tr_val[mask_tiles == tr1] = 1
     mask_tr_val[mask_tiles == tr2] = 1
     mask_tr_val[mask_tiles == tr3] = 1
     mask_tr_val[mask_tiles == tr4] = 1
-    mask_tr_val[mask_tiles == tr5] = 1
+    # mask_tr_val[mask_tiles == tr5] = 1
     mask_tr_val[mask_tiles == tr6] = 1
-    mask_tr_val[mask_tiles == tr7] = 1
+    # mask_tr_val[mask_tiles == tr7] = 1
     mask_tr_val[mask_tiles == tr8] = 1
     mask_tr_val[mask_tiles == tr9] = 1
     mask_tr_val[mask_tiles == tr10] = 1
@@ -505,7 +510,7 @@ if __name__ == '__main__':
     # mask_tr_val[mask_tiles == val2] = 2
     mask_tr_val[mask_tiles == val3] = 2
     mask_tr_val[mask_tiles == val4] = 2
-    mask_tr_val[mask_tiles == val5] = 2
+    # mask_tr_val[mask_tiles == val5] = 2
     mask_tr_val[mask_tiles == val6] = 2
 
     all_tiles = [i for i in range(1, 16)]
@@ -521,8 +526,11 @@ if __name__ == '__main__':
     #                                                                           patches_tr_ref,
     #                                                                           test_size=0.2, random_state=42)
 
+    # Testing tiles
+    tst_tiles = [tst1, tst2, tst3, tst4]
     # Trainig tiles
-    tr_tiles = [tr1, tr2, tr3, tr4, tr5, tr6, tr7, tr8, tr9, tr10]
+    # tr_tiles = [tr1, tr2, tr3, tr4, tr5, tr6, tr7, tr8, tr9, tr10]
+    tr_tiles = [tr2, tr3, tr4, tr6, tr8, tr9, tr10]
 
     patches_tr, patches_tr_ref = extract_tiles2patches(tr_tiles, mask_tiles, input_image,
                                                        final_mask, args.patch_size,
@@ -532,7 +540,8 @@ if __name__ == '__main__':
     patches don't have the same numbers"
 
     # Validation tiles
-    val_tiles = [val1, val3, val4, val5, val6]
+    # val_tiles = [val1, val3, val4, val5, val6]
+    val_tiles = [val1, val3, val4, val6]
 
     patches_val, patches_val_ref = extract_tiles2patches(val_tiles, mask_tiles, input_image,
                                                          final_mask, args.patch_size, args.stride,
