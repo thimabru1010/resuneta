@@ -81,7 +81,10 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
                 # color_label_list = gluon.utils.split_and_load(label[:, 15:18, :, :], devices)
                 bound_label_list = gluon.utils.split_and_load(label[:, nclasses:2*nclasses, :, :], devices)
                 dist_label_list = gluon.utils.split_and_load(label[:, 2*nclasses:3*nclasses, :, :], devices)
-                color_label_list = gluon.utils.split_and_load(label[:, 3*nclasses:(3*nclasses+3), :, :], devices)
+                if args.dataset_type == 'amazon':
+                    color_label_list = gluon.utils.split_and_load(label[:, 3*nclasses:(3*nclasses+6), :, :], devices)
+                else:
+                    color_label_list = gluon.utils.split_and_load(label[:, 3*nclasses:(3*nclasses+3), :, :], devices)
             else:
                 bound_label_list = seg_label_list
                 dist_label_list = seg_label_list
@@ -166,7 +169,10 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
             if args.multitasking:
                 bound_label_list = gluon.utils.split_and_load(label[:, nclasses:2*nclasses, :, :], devices)
                 dist_label_list = gluon.utils.split_and_load(label[:, 2*nclasses:3*nclasses, :, :], devices)
-                color_label_list = gluon.utils.split_and_load(label[:, 3*nclasses:(3*nclasses+3), :, :], devices)
+                if args.dataset_type == 'amazon':
+                    color_label_list = gluon.utils.split_and_load(label[:, 3*nclasses:(3*nclasses+6), :, :], devices)
+                else:
+                    color_label_list = gluon.utils.split_and_load(label[:, 3*nclasses:(3*nclasses+3), :, :], devices)
             else:
                 bound_label_list = seg_label_list
                 dist_label_list = seg_label_list

@@ -123,9 +123,6 @@ class ISPRSDataset(dataset.Dataset):
         # print(masks.shape)
         if self._transform is not None:
             base, masks = self._transform(base, masks)
-            # print('aqui')
-            # print(base.dtype)
-            # print(type(base))
             if self._norm is not None:
                 base = self._norm(base.astype(np.float32))
                 if self.mtsk:
