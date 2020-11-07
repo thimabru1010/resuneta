@@ -230,7 +230,7 @@ def save_patches(patches_tr, patches_tr_ref, folder_path, scaler, data_aug, mode
             # Input image 14 bands of Staelite
             # Float32 its need to train the model
             img_float = img_aug[j].astype(np.float32)
-            print(f'Checking input image shape: {img_float.shape}')
+            # print(f'Checking input image shape: {img_float.shape}')
             img_reshaped = img_float.reshape((img_float.shape[0] * img_float.shape[1]),
                                            img_float.shape[2])
             img_normed = scaler.transform(img_reshaped)
@@ -261,8 +261,8 @@ def save_patches(patches_tr, patches_tr_ref, folder_path, scaler, data_aug, mode
 
             img_t2_patch_bgr = (img_t2_patch[:, :, 1:4]*255).astype(np.uint8)
 
-            print(img_t1_patch_bgr.shape)
-            print(img_t2_patch_bgr.shape)
+            # print(img_t1_patch_bgr.shape)
+            # print(img_t2_patch_bgr.shape)
             assert img_t1_patch_bgr.shape == (args.patch_size, args.patch_size, 3), "BGR T1 shape not matching"
             assert img_t2_patch_bgr.shape == (args.patch_size, args.patch_size, 3), "BGR T2 shape not matching"
 
