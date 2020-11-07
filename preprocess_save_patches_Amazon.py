@@ -227,9 +227,10 @@ def save_patches(patches_tr, patches_tr_ref, folder_path, scaler, data_aug, mode
         # plt.show()
         # plt.close()
         for j in range(len(img_aug)):
-            # Input image 7 bands of Staelite
+            # Input image 14 bands of Staelite
             # Float32 its need to train the model
             img_float = img_aug[j].astype(np.float32)
+            print(f'Checking input image shape: {img_float.shape}')
             img_reshaped = img_float.reshape((img_float.shape[0] * img_float.shape[1]),
                                            img_float.shape[2])
             img_normed = scaler.transform(img_reshaped)
@@ -251,14 +252,33 @@ def save_patches(patches_tr, patches_tr_ref, folder_path, scaler, data_aug, mode
             # Color
             # print(f'Checking if rgb img is in uint8 before hsv: {img_aug[j].dtype}')
             # Get only BGR from Aerial Image
-            bgr_patch = img_aug[j][:, :, 1:4].astype(np.uint8)*255
-            hsv_patch = cv2.cvtColor(bgr_patch,
+            img_t1_patch = img_aug[j][:, :, 0:7]
+            img_t2_patch = img_aug[j][:, :, 7:]
+            assert img_t1_patch.shape == (args.path_size, args.patch_size, 7), "Img T1 shape not matching"
+            assert img_t2_patch.shape == (args.path_size, args.patch_size, 7), "Img T2 shape not matching"
+            # Convert from BGR 2 RGB
+            img_t1_patch_bgr = (img_t1_patch[:, :, 1:4]*255).astype(np.uint8)
+
+            img_t2_patch_bgr = (img_t2_patch[:, :, 1:4]*255).astype(np.uint8)
+
+            print(img_t1_patch_bgr.shape)
+            print(img_t2_patch_bgr.shape)
+            assert img_t1_patch_bgr.shape == (args.path_size, args.patch_size, 3), "BGR shape not matching"
+            assert img_t2_patch_bgr.shape == (args.path_size, args.patch_size, 3), "BGR shape not matching"
+
+            img_t1_patch_hsv = cv2.cvtColor(img_t1_patch_bgr,
                                      cv2.COLOR_BGR2HSV).astype(np.float32)
-            hsv_patch = hsv_patch * np.array([1./179, 1./255, 1./255])
+            img_t1_patch_hsv = img_t1_patch_hsv * np.array([1./179, 1./255, 1./255])
+
+            img_t2_patch_hsv = cv2.cvtColor(img_t2_patch_bgr,
+                                     cv2.COLOR_BGR2HSV).astype(np.float32)
+            img_t2_patch_hsv = img_t2_patch_hsv * np.array([1./179, 1./255, 1./255])
             # print(hsv_patch.shape)
+            img_both_patch_hsv = np.concatenate((img_t1_patch_hsv,
+                                                 img_t2_patch_hsv), axis=-1)
             # Float32 its need to train the model
             np.save(os.path.join(folder_path, mode, 'masks/color', filename(i*5 + j)),
-                    hsv_patch)
+                    img_both_patch_hsv)
     print(classes_dict)
     class0 = classes_dict[0] / (classes_dict[0] + classes_dict[1] + classes_dict[2])
     class0 = round(class0, 5)

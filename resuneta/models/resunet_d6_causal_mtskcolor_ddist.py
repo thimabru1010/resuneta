@@ -17,7 +17,7 @@ class ResUNet_d6(HybridBlock):
     This will be used for 256x256 image input, so the atrous convolutions should be determined by the depth
     """
 
-    def __init__(self, loss, _nfilters_init,  _NClasses, patch_size=256, verbose=True,
+    def __init__(self, args, _nfilters_init,  _NClasses, patch_size=256, verbose=True,
                  _norm_type='BatchNorm', multitasking=True,  **kwards):
         HybridBlock.__init__(self,**kwards)
 
@@ -38,7 +38,9 @@ class ResUNet_d6(HybridBlock):
         elif patch_size == 128:
             self.psp_depth = 3
 
-        self.loss = loss
+        self.loss = args.loss
+
+        self.dataset_type = args.dataset_type
 
 
         with self.name_scope():
@@ -116,7 +118,10 @@ class ResUNet_d6(HybridBlock):
 
 
                 # This layer is trying to identify the exact coloration on HSV scale (cv2 devined)
-                self.color_logits = gluon.nn.Conv2D(3, kernel_size=1, padding=0)
+                if self.dataset_type == 'ISPRS':
+                    self.color_logits = gluon.nn.Conv2D(3, kernel_size=1, padding=0)
+                elif self.dataset_type == 'amazon':
+                    self.color_logits = gluon.nn.Conv2D(6, kernel_size=1, padding=0)
             else:
                 self.seg_pointwise = gluon.nn.HybridSequential()
                 self.seg_pointwise.add(gluon.nn.Conv2D(self.NClasses, kernel_size=1, padding=0))
