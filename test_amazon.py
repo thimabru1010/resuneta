@@ -490,10 +490,10 @@ if args.use_multitasking:
         img_t2 = img[:, :, 7:]
         # Convert from BGR 2 RGB
         img_t1_bgr = img_t1[:, :, 1:4]
-        img_t1_rgb = img_t1_bgr[:, :, ::-1]
+        img_t1_rgb = (img_t1_bgr[:, :, ::-1]*255).astype(np.uint8)
 
         img_t2_bgr = img_t2[:, :, 1:4]
-        img_t2_rgb = img_t2_bgr[:, :, ::-1]
+        img_t2_rgb = (img_t2_bgr[:, :, ::-1]*255).astype(np.uint8)
         print(img_t1_rgb.shape)
         print(img_t2_rgb.shape)
         img_both_rgb = np.concatenate((img_t1_rgb, img_t2_rgb), axis=-1)
@@ -545,38 +545,47 @@ if args.use_multitasking:
         for n_class in range(args.num_classes):
             axes[n_class, 0].set_ylabel(f'{label_name[n_class]}')
 
-        # # Color
-        # fig2, axes_c = plt.subplots(nrows=1, ncols=5, figsize=(10, 5))
-        # axes_c[0, 0].set_title('Original T1')
-        # axes_c[0, 0].imshow(img_t1_rgb)
-        #
-        # axes_c[0, 1].set_title('Pred T1 HSV in RGB')
-        # task = 3
-        # hsv_pred = patches_pred[task][i]
-        # # print(f'HSV max {i}: {hsv_patch.max()}, HSV min: {hsv_patch.min()}')
-        # # As long as the normalization process was just img = img / 255
-        # # Talvez de problemas ao mudar para np uint8
-        # hsv_patch = (hsv_pred * np.array([179, 255, 255])).astype(np.uint8)
-        # rgb_patch = cv2.cvtColor(hsv_patch, cv2.COLOR_HSV2RGB)
-        # rgb_pred_t1 = rgb_patch[:, :, 0:3]
-        # axes_c[0, 1].imshow(rgb_pred_t1)
-        #
-        # axes_c[0, 2].set_title('Original T2')
-        # axes_c[0, 2].imshow(img_t2_rgb)
-        #
-        # axes_c[0, 3].set_title('Pred T2 HSV in RGB')
-        # rgb_pred_t2 = rgb_patch[:, :, 3:]
-        # axes_c[0, 3].imshow(rgb_pred_t2)
-        #
-        # axes_c.set_title('Difference between both')
-        # hsv_label = cv2.cvtColor(img_both_rgb, cv2.COLOR_RGB2HSV)
-        # diff = np.mean(hsv_patch - hsv_label, axis=-1)
-        # diff = 2*(diff-diff.min())/(diff.max()-diff.min()) - np.ones_like(diff)
-        # im = axes_c[0, 4].imshow(diff, cmap=cm.Greys_r)
-        # colorbar(im, axes_c[0, 4], fig2)
-        #
-        # plt.savefig(os.path.join(args.output_path, f'pred{i}_color.jpg'))
+        # Color
+        fig2, axes_c = plt.subplots(nrows=1, ncols=5, figsize=(10, 5))
+        print(axes_c.shape)
+        axes_c[0].set_title('Original T1')
+        axes_c[0].imshow(img_t1_rgb)
+
+        axes_c[1].set_title('Pred T1 HSV in RGB')
+        task = 3
+        hsv_pred = patches_pred[task][i]
+        # print(f'HSV max {i}: {hsv_patch.max()}, HSV min: {hsv_patch.min()}')
+        # As long as the normalization process was just img = img / 255
+        # Talvez de problemas ao mudar para np uint8
+        hsv_pred_t1 = (hsv_pred[:, :, :3] * np.array([179, 255, 255])).astype(np.uint8)
+        rgb_pred_t1 = cv2.cvtColor(hsv_pred_t1, cv2.COLOR_HSV2RGB)
+        axes_c[1].imshow(rgb_pred_t1)
+
+        axes_c[2].set_title('Original T2')
+        axes_c[2].imshow(img_t2_rgb)
+
+        axes_c[3].set_title('Pred T2 HSV in RGB')
+        hsv_pred_t2 = (hsv_pred[:, :, 3:] * np.array([179, 255, 255])).astype(np.uint8)
+        rgb_pred_t2 = cv2.cvtColor(hsv_pred_t1, cv2.COLOR_HSV2RGB)
+        axes_c[3].imshow(rgb_pred_t2)
+
+        axes_c[4].set_title('Difference between both')
+        print(img_t1_rgb.min(), img_t1_rgb.max())
+        hsv_t1_label = cv2.cvtColor(img_t1_rgb, cv2.COLOR_RGB2HSV)
+        hsv_t2_label = cv2.cvtColor(img_t2_rgb, cv2.COLOR_RGB2HSV)
+        hsv_label = np.concatenate((hsv_t1_label, hsv_t2_label), axis=-1)
+
+        hsv_patch = np.concatenate((hsv_pred_t1, hsv_pred_t2), axis=-1)
+
+        diff = np.mean(hsv_patch - hsv_label, axis=-1)
+        diff = 2*(diff-diff.min())/(diff.max()-diff.min()) - np.ones_like(diff)
+        im = axes_c[4].imshow(diff, cmap=cm.Greys_r)
+        colorbar(im, axes_c[4], fig2)
+
+
         plt.tight_layout()
+
+        fig2.savefig(os.path.join(args.output_path, f'pred{i}_color.jpg'))
         plt.subplots_adjust(top=0.99, left=0.05, hspace=0.01, wspace=0.4)
         plt.show()
         fig1.savefig(os.path.join(args.output_path, f'pred{i}_classes.jpg'),
