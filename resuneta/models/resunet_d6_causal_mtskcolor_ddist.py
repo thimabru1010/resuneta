@@ -18,7 +18,7 @@ class ResUNet_d6(HybridBlock):
     """
 
     def __init__(self, dataset_type, _nfilters_init,  _NClasses,
-                 patch_size=256, verbose=True, from_logits=False
+                 patch_size=256, verbose=True, from_logits=False,
                  _norm_type='BatchNorm', multitasking=True,  **kwards):
         HybridBlock.__init__(self,**kwards)
 
