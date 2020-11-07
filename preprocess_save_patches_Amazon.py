@@ -483,18 +483,20 @@ if __name__ == '__main__':
     tr10 = 10
 
     # val1 = 2
-    val1 = 13
+    # val1 = 13
     # val2 = 10
     val3 = 4
     val4 = 6
     # Putting 15 and 12 to validation but don't have expressive deforastation %
     # val5 = 15
-    val6 = 12
+    # val6 = 12
 
     tst1 = 5 # 357
     tst2 = 11 # 257
     tst3 = 14
     tst4 = 15
+    tst5 = 13
+    tst6 = 12
 
     # mask_tr_val[mask_tiles == tr1] = 1
     mask_tr_val[mask_tiles == tr2] = 1
@@ -506,12 +508,12 @@ if __name__ == '__main__':
     mask_tr_val[mask_tiles == tr8] = 1
     mask_tr_val[mask_tiles == tr9] = 1
     mask_tr_val[mask_tiles == tr10] = 1
-    mask_tr_val[mask_tiles == val1] = 2
+    # mask_tr_val[mask_tiles == val1] = 2
     # mask_tr_val[mask_tiles == val2] = 2
     mask_tr_val[mask_tiles == val3] = 2
     mask_tr_val[mask_tiles == val4] = 2
     # mask_tr_val[mask_tiles == val5] = 2
-    mask_tr_val[mask_tiles == val6] = 2
+    # mask_tr_val[mask_tiles == val6] = 2
 
     all_tiles = [i for i in range(1, 16)]
     print(f'All tiles: {all_tiles}')
@@ -541,7 +543,7 @@ if __name__ == '__main__':
 
     # Validation tiles
     # val_tiles = [val1, val3, val4, val5, val6]
-    val_tiles = [val1, val3, val4, val6]
+    val_tiles = [val3, val4]
 
     patches_val, patches_val_ref = extract_tiles2patches(val_tiles, mask_tiles, input_image,
                                                          final_mask, args.patch_size, args.stride,
