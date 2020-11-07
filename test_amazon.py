@@ -46,20 +46,21 @@ def compute_metrics(true_labels, predicted_labels):
     return accuracy, f1score, recall, precision
 
 
-def pred_recostruction(patch_size, pred_labels, binary_img_test_ref, img_type=1):
+def pred_recostruction(patch_size, pred_labels, binary_img_test_ref, img_type=1,
+                       cont=0):
     # Patches Reconstruction
     if img_type == 1:
         stride = patch_size
 
-        height, width, _= binary_img_test_ref.shape
+        height, width, _ = binary_img_test_ref.shape
 
         num_patches_h = height // stride
         num_patches_w = width // stride
         #print(num_patches_h, num_patches_w)
 
         new_shape = (height, width)
-        img_reconstructed = np.zeros(new_shape)
-        cont = 0
+        img_reconstructed = np.full(new_shape, -1)
+        # cont = 0
         # rows
         for h in range(num_patches_h):
             # columns
@@ -85,7 +86,29 @@ def pred_recostruction(patch_size, pred_labels, binary_img_test_ref, img_type=1)
                 img_reconstructed[h*stride:(h+1)*stride, w*stride:(w+1)*stride, :] = pred_labels[cont]
                 cont += 1
         print('Reconstruction Done!')
-    return img_reconstructed
+    return img_reconstructed, cont
+
+
+def reconstruct_patches2tiles(tiles, mask_amazon, image_ref, patch_size, preds):
+    new_image_ref = np.full((image_ref.shape[0], image_ref.shape[1]), -1)
+    print('Reconstructing tiles')
+    cont = 0
+    for num_tile in tiles:
+        # print('='*60)
+        # print(num_tile)
+        rows, cols = np.where(mask_amazon == num_tile)
+        x1 = np.min(rows)
+        y1 = np.min(cols)
+        x2 = np.max(rows)
+        y2 = np.max(cols)
+
+        # tile_img = input_image[x1:x2+1, y1:y2+1, :]
+        tile = image_ref[x1:x2+1, y1:y2+1]
+        tile_rec, cont = pred_recostruction(patch_size, preds, tile, cont=cont)
+
+        new_image_ref[x1:x2+1, y1:y2+1] = tile_rec.copy()
+
+    return new_image_ref
 
 
 def convert_preds2rgb(img_reconstructed, label_dict):
@@ -132,8 +155,8 @@ def extract_tiles2patches(tiles, mask_amazon, input_image, image_ref, patch_size
 
         # Extract patches for each tile
         print(tile_img.shape)
-        patches_img, patches_ref = extract_patches(tile_img, tile_ref,
-                                                   patch_size, stride)
+        patches_img = extract_patches(tile_img, patch_size)
+        patches_ref = extract_patches(tile_ref, patch_size, img_type=2)
 
         print(f'Patches of tile {num_tile} extracted!')
         assert len(patches_img) == len(patches_ref), "Train: Input patches and reference \
@@ -284,12 +307,35 @@ buffer = 2
 '''
 final_mask = mask_no_considered(image_ref, buffer, past_ref_sum)
 
-# Dictionary used in training
-label_dict = {'(0, 255, 0)': 0, '(255, 0, 0)': 1, '(0, 0, 255)': 2}
+check_memory()
+del img_t1, img_t2, image_ref, past_ref1, past_ref2
+print('Images deleted!')
+check_memory()
 
 # Put the patch size according to you training here
-input_patches = extract_patches(input_image, args.patch_size, img_type=1)
-ref_patches = extract_patches(final_mask, args.patch_size, img_type=2)
+# input_patches = extract_patches(input_image, args.patch_size, img_type=1)
+# ref_patches = extract_patches(final_mask, args.patch_size, img_type=2)
+
+# Separate per tiles
+tile_number = np.ones((1020, 1700))
+mask_c_1 = np.concatenate((tile_number, 2*tile_number, 3*tile_number), axis=1)
+mask_c_2 = np.concatenate((4*tile_number, 5*tile_number, 6*tile_number), axis=1)
+mask_c_3 = np.concatenate((7*tile_number, 8*tile_number, 9*tile_number), axis=1)
+mask_c_4 = np.concatenate((10*tile_number, 11*tile_number, 12*tile_number), axis=1)
+mask_c_5 = np.concatenate((13*tile_number, 14*tile_number, 15*tile_number), axis=1)
+mask_tiles = np.concatenate((mask_c_1, mask_c_2, mask_c_3, mask_c_4, mask_c_5), axis=0)
+
+tst1 = 5 # 357
+tst2 = 11 # 257
+tst3 = 14
+tst4 = 15
+tst5 = 13
+tst6 = 12
+
+# Testing tiles
+tst_tiles = [tst1, tst2, tst3, tst4]
+input_patches, ref_patches = extract_tiles2patches(tst_tiles, mask_tiles, input_image,
+                                                   final_mask, args.patch_size)
 
 assert len(input_patches) == len(ref_patches), "Input patches and Reference patches have a different lenght"
 
@@ -298,8 +344,11 @@ ctx = mx.gpu(0)
 # ctx = mx.cpu()
 if args.model == 'resuneta':
     nfilters_init = 32
-    Nbatch = 8
-    net = ResUNet_d6('tanimoto', nfilters_init, args.num_classes)
+    # Nbatch = 8
+    net = ResUNet_d6('tanimoto', nfilters_init, args.num_classes,
+                     patch_size=args.patch_size,
+                     multitasking=args.use_multitasking)
+    # net = ResUNet_d6('tanimoto', nfilters_init, args.num_classes)
 else:
     net = UNet(args.num_classes, nfilter=64)
     args.use_multitasking = False
@@ -312,8 +361,6 @@ net.hybridize()
 
 tnorm = Normalize()
 
-# dataset = ISPRSDataset(root=args.dataset_path, mode='train', color=True, mtsk=True, norm=tnorm)
-# datagen = gluon.data.DataLoader(dataset, batch_size=Nbatch, shuffle=False)
 
 preds = []
 # seg_preds = np.zeros((len(datagen), Nbatch, args.num_classes, args.patch_size, args.patch_size))
@@ -325,11 +372,16 @@ color_preds = []
 seg_refs = []
 patches_test = []
 
-for i in range(len(input_patches)):
-    img = input_patches[i]
+for i in tqdm(range(len(input_patches))):
+    img_float = input_patches[i].astype(np.float32)
     # plt.imshow(img.astype(np.uint8))
     # plt.show()
-    img_normed = mx.ndarray.array(tnorm(img).transpose((2, 0, 1)))
+    img_reshaped = img_float.reshape((img_float.shape[0] * img_float.shape[1]),
+                                   img_float.shape[2])
+    img_normed = scaler.transform(img_reshaped)
+    img_float = img_normed.reshape(img_float.shape[0], img_float.shape[1], img_float.shape[2])
+    img_float = img_float.transpose((2, 0, 1))
+    img_normed = mx.ndarray.array(img_float)
     # plt.imshow(tnorm.restore(img_normed.asnumpy().transpose((1, 2, 0))))
     # plt.show()
     img_normed = mx.nd.expand_dims(img_normed, axis=0)
@@ -343,7 +395,7 @@ for i in range(len(input_patches)):
         color_preds.append(preds4.asnumpy())
     else:
         preds1 = net(img_normed.copyto(ctx))
-        print(preds1)
+        # print(preds1)
         seg_preds.append(preds1.asnumpy())
 
 
@@ -384,22 +436,44 @@ print('F1score: ', metrics[1])
 print('Recall: ', metrics[2])
 print('Precision: ', metrics[3])
 
+check_memory()
+del predicted_labels, true_labels
+check_memory()
+
+# Dictionary used in training
+# -1 --> tiles not used
+label_dict = {'(255, 255, 255)': -1, '(0, 255, 0)': 0, '(255, 0, 0)': 1, '(0, 0, 255)': 2}
+
 # Reconstruct entire image segmentation predction
-img_reconstructed = pred_recostruction(args.patch_size, seg_pred,
-                                       img_ref, img_type=1)
-img_reconstructed_rgb = convert_preds2rgb(img_reconstructed,
-                                          label_dict)
+print(final_mask.shape)
+final_mask = np.expand_dims(final_mask, axis=-1)
+print(final_mask.shape)
+# img_reconstructed = pred_recostruction(args.patch_size, seg_pred,
+#                                        final_mask, img_type=1)
 
 if not os.path.exists(args.output_path):
     os.makedirs(args.output_path)
 
-plt.imsave(os.path.join(args.output_path, 'pred_seg_reconstructed.jpeg'),
-           img_reconstructed_rgb)
-
-print('Image Saved!')
+# print(tst_tiles)
+# tst_tiles.reverse()
+# print(tst_tiles)
+# img_reconstructed = reconstruct_patches2tiles(tst_tiles, mask_tiles, final_mask,
+#                                               args.patch_size, seg_pred)
+# img_reconstructed_rgb = convert_preds2rgb(img_reconstructed,
+#                                           label_dict)
+#
+#
+# plt.imsave(os.path.join(args.output_path, 'pred_seg_reconstructed.jpeg'),
+#            img_reconstructed_rgb)
+#
+# print('Image Saved!')
 
 print(f'Input patches: {type(input_patches)}')
 print(f'Input patches: {input_patches.dtype}')
+
+label_name = {0: 'No def', 1: 'Actual def', 2: 'Past def'}
+
+import matplotlib
 
 # Visualize inference per class
 if args.use_multitasking:
@@ -408,9 +482,22 @@ if args.use_multitasking:
         print(f'Patch: {i}')
         # Plot predictions for each class and each task; Each row corresponds to a
         # class and has its predictions of each task
-        fig1, axes = plt.subplots(nrows=args.num_classes, ncols=7, figsize=(15, 10))
-        img = input_patches[i].astype(np.uint8)
-        # img = (img * np.array([255, 255, 255])).astype(np.uint8)
+        fig1, axes = plt.subplots(nrows=args.num_classes, ncols=8,
+                                  figsize=(30, 30))
+        # fig1, axes = plt.subplots(nrows=args.num_classes, ncols=8)
+        # fig1.tight_layout()
+        img = input_patches[i]  # .astype(np.uint8)
+        img_t1 = img[:, :, 0:7]
+        img_t2 = img[:, :, 7:]
+        # Convert from BGR 2 RGB
+        img_t1_bgr = img_t1[:, :, 1:4]
+        img_t1_rgb = img_t1_bgr[:, :, ::-1]
+
+        img_t2_bgr = img_t2[:, :, 1:4]
+        img_t2_rgb = img_t2_bgr[:, :, ::-1]
+        print(img_t1_rgb.shape)
+        print(img_t2_rgb.shape)
+        img_both_rgb = np.concatenate((img_t1_rgb, img_t2_rgb), axis=-1)
         # print(img)
         # img = tnorm.restore(img)
 
@@ -420,14 +507,15 @@ if args.use_multitasking:
         dist_ref_h = get_distance_label(img_ref_h)
         # Put the first plot as the patch to be observed on each row
         for n_class in range(args.num_classes):
-            axes[n_class, 0].imshow(img)
+            axes[n_class, 0].imshow(img_t1_rgb)
+            axes[n_class, 1].imshow(img_t2_rgb)
             # Loop the columns to display each task prediction and reference
             # Remeber we are not displaying color preds here, since this task
             # do not use classes
             # Multiply by 2 cause its always pred and ref side by side
             for task in range(len(patches_pred) - 1):
                 task_pred = patches_pred[task]
-                col_ref = (task + 1)*2
+                col_ref = (task + 1)*2 + 1
                 print(task_pred.shape)
                 axes[n_class, col_ref].imshow(task_pred[i, :, :, n_class],
                                               cmap=cm.Greys_r)
@@ -445,38 +533,53 @@ if args.use_multitasking:
                     # Distance Transform
                     axes[n_class, col].imshow(dist_ref_h[:, :, n_class],
                                               cmap=cm.Greys_r)
-        axes[0, 0].set_title('Patch')
-        axes[0, 1].set_title('Seg Ref')
-        axes[0, 2].set_title('Seg Pred')
-        axes[0, 3].set_title('Bound Ref')
-        axes[0, 4].set_title('Bound Pred')
-        axes[0, 5].set_title('Dist Ref')
-        axes[0, 6].set_title('Dist Pred')
+        axes[0, 0].set_title('Patch T1')
+        axes[0, 1].set_title('Patch T2')
+
+        axes[0, 2].set_title('Seg Ref')
+        axes[0, 3].set_title('Seg Pred')
+        axes[0, 4].set_title('Bound Ref')
+        axes[0, 5].set_title('Bound Pred')
+        axes[0, 6].set_title('Dist Ref')
+        axes[0, 7].set_title('Dist Pred')
 
         for n_class in range(args.num_classes):
-            axes[n_class, 0].set_ylabel(f'Class {n_class}')
+            axes[n_class, 0].set_ylabel(f'{label_name[n_class]}')
 
-        plt.savefig(os.path.join(args.output_path, f'pred{i}_classes.jpg'))
-
-        # Color
-        fig2, (ax1, ax2, ax3) = plt.subplots(nrows=1, ncols=3, figsize=(10, 5))
-        ax1.set_title('Original')
-        ax1.imshow(img)
-        ax2.set_title('Pred HSV in RGB')
-        task = 3
-        hsv_pred = patches_pred[task][i]
-        # print(f'HSV max {i}: {hsv_patch.max()}, HSV min: {hsv_patch.min()}')
-        # As long as the normalization process was just img = img / 255
-        hsv_patch = (hsv_pred * np.array([179, 255, 255])).astype(np.uint8)
-        rgb_patch = cv2.cvtColor(hsv_patch, cv2.COLOR_HSV2RGB)
-        ax2.imshow(rgb_patch)
-        ax3.set_title('Difference between both')
-        hsv_label = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
-        diff = np.mean(hsv_patch - hsv_label, axis=-1)
-        diff = 2*(diff-diff.min())/(diff.max()-diff.min()) - np.ones_like(diff)
-        im = ax3.imshow(diff, cmap=cm.Greys_r)
-        colorbar(im, ax3, fig2)
-
-        plt.savefig(os.path.join(args.output_path, f'pred{i}_color.jpg'))
+        # # Color
+        # fig2, axes_c = plt.subplots(nrows=1, ncols=5, figsize=(10, 5))
+        # axes_c[0, 0].set_title('Original T1')
+        # axes_c[0, 0].imshow(img_t1_rgb)
+        #
+        # axes_c[0, 1].set_title('Pred T1 HSV in RGB')
+        # task = 3
+        # hsv_pred = patches_pred[task][i]
+        # # print(f'HSV max {i}: {hsv_patch.max()}, HSV min: {hsv_patch.min()}')
+        # # As long as the normalization process was just img = img / 255
+        # # Talvez de problemas ao mudar para np uint8
+        # hsv_patch = (hsv_pred * np.array([179, 255, 255])).astype(np.uint8)
+        # rgb_patch = cv2.cvtColor(hsv_patch, cv2.COLOR_HSV2RGB)
+        # rgb_pred_t1 = rgb_patch[:, :, 0:3]
+        # axes_c[0, 1].imshow(rgb_pred_t1)
+        #
+        # axes_c[0, 2].set_title('Original T2')
+        # axes_c[0, 2].imshow(img_t2_rgb)
+        #
+        # axes_c[0, 3].set_title('Pred T2 HSV in RGB')
+        # rgb_pred_t2 = rgb_patch[:, :, 3:]
+        # axes_c[0, 3].imshow(rgb_pred_t2)
+        #
+        # axes_c.set_title('Difference between both')
+        # hsv_label = cv2.cvtColor(img_both_rgb, cv2.COLOR_RGB2HSV)
+        # diff = np.mean(hsv_patch - hsv_label, axis=-1)
+        # diff = 2*(diff-diff.min())/(diff.max()-diff.min()) - np.ones_like(diff)
+        # im = axes_c[0, 4].imshow(diff, cmap=cm.Greys_r)
+        # colorbar(im, axes_c[0, 4], fig2)
+        #
+        # plt.savefig(os.path.join(args.output_path, f'pred{i}_color.jpg'))
+        plt.tight_layout()
+        plt.subplots_adjust(top=0.99, left=0.05, hspace=0.01, wspace=0.4)
         plt.show()
+        fig1.savefig(os.path.join(args.output_path, f'pred{i}_classes.jpg'),
+                     dpi=300)
         plt.close()

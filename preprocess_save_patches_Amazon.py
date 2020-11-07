@@ -271,19 +271,6 @@ def save_patches(patches_tr, patches_tr_ref, folder_path, scaler, data_aug, mode
     print(f'class 2 %: {class2*100}')
 
 
-def check_memory():
-    process = psutil.Process(os.getpid())
-    print('-'*50)
-    print('[CHECKING MEMORY]')
-    # print(process.memory_info().rss)
-    print(process.memory_percent())
-    # print(process.memory_info().rss)
-    gc.collect()
-    print('[GC COLLECT]')
-    print(process.memory_percent())
-    print('-'*50)
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--norm_type",
@@ -438,7 +425,7 @@ if __name__ == '__main__':
 
     mask_tr_val = np.zeros((mask_tiles.shape))
     # tr1 = 5
-    tr2 = 6  # --> 8
+    tr2 = 6  # --> 8 # mesma bosta
     # tr3 = 13
     tr3 = 2
     tr4 = 7
