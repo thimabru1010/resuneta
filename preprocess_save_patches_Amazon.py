@@ -1,38 +1,18 @@
 import tensorflow as tf
 import numpy as np
 
-from utils import load_npy_image, get_boundary_label, get_distance_label, data_augmentation
+from utils import load_npy_image, get_boundary_label, get_distance_label, \
+    data_augmentation, check_memory, normalization
 import argparse
 import os
 
 from skimage.util.shape import view_as_windows
 
-import gc
-import psutil
 import cv2
 from tqdm import tqdm
 
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
-from skimage.morphology import disk
-import skimage
-from sklearn.model_selection import train_test_split
-
-
-def normalization(image, norm_type=1):
-    image = image.reshape((image.shape[0] * image.shape[1]),
-                                   image.shape[2])
-    if(norm_type == 1):
-        scaler = StandardScaler()
-    if(norm_type == 2):
-        scaler = MinMaxScaler(feature_range=(0, 1))
-    if(norm_type == 3):
-        scaler = MinMaxScaler(feature_range=(-1, 1))
-    scaler = scaler.fit(image)
-    print(scaler.get_params())
-    # print(scaler.mean_)
-    # image_normalized = scaler.fit_transform(image_reshaped)
-    # image_normalized1 = image_normalized.reshape(image.shape[0],image.shape[1],image.shape[2])
-    return scaler
+# from sklearn.preprocessing import StandardScaler, MinMaxScaler
+# from sklearn.model_selection import train_test_split
 
 
 def create_folders(folder_path, mode='train'):
@@ -89,19 +69,6 @@ def count_deforastation(image_ref, image_mask_ref):
     if image_mask_ref is not None:
         image_ref[img_mask_ref == -99] = 0
 
-
-def mask_no_considered(image_ref, buffer, past_ref):
-    '''
-        Creation of buffer for pixel no considered
-    '''
-    image_ref_ = image_ref.copy()
-    im_dilate = skimage.morphology.dilation(image_ref_, disk(buffer))
-    outer_buffer = im_dilate - image_ref_
-    outer_buffer[outer_buffer == 1] = 2
-    # 1 deforestation, 2 past deforastation
-    final_mask = image_ref_ + outer_buffer
-    final_mask[past_ref == 1] = 2
-    return final_mask
 
 
 def filter_patches(patches_img, patches_ref, percent):
@@ -471,7 +438,7 @@ if __name__ == '__main__':
 
     mask_tr_val = np.zeros((mask_tiles.shape))
     # tr1 = 5
-    tr2 = 8
+    tr2 = 6  # --> 8
     # tr3 = 13
     tr3 = 2
     tr4 = 7
@@ -486,7 +453,7 @@ if __name__ == '__main__':
     # val1 = 13
     # val2 = 10
     val3 = 4
-    val4 = 6
+    val4 = 8  # --> 6
     # Putting 15 and 12 to validation but don't have expressive deforastation %
     # val5 = 15
     # val6 = 12

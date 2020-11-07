@@ -1,13 +1,64 @@
 import numpy as np
 import cv2
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from skimage.morphology import disk
+import skimage
 # from skimage.morphology import disk
 # import skimage
+import gc
+import psutil
+import os
 try:
     from osgeo import gdal
 except:
     print('Please install gdal')
 
 # Functions
+
+
+def mask_no_considered(image_ref, buffer, past_ref):
+    '''
+        Creation of buffer for pixel no considered
+    '''
+    image_ref_ = image_ref.copy()
+    im_dilate = skimage.morphology.dilation(image_ref_, disk(buffer))
+    outer_buffer = im_dilate - image_ref_
+    outer_buffer[outer_buffer == 1] = 2
+    # 1 deforestation, 2 past deforastation
+    final_mask = image_ref_ + outer_buffer
+    final_mask[past_ref == 1] = 2
+    return final_mask
+
+
+def normalization(image, norm_type=1):
+    image = image.reshape((image.shape[0] * image.shape[1]),
+                                   image.shape[2])
+    if(norm_type == 1):
+        scaler = StandardScaler()
+    if(norm_type == 2):
+        scaler = MinMaxScaler(feature_range=(0, 1))
+    if(norm_type == 3):
+        scaler = MinMaxScaler(feature_range=(-1, 1))
+    scaler = scaler.fit(image)
+    print(scaler.get_params())
+    # print(scaler.mean_)
+    # image_normalized = scaler.fit_transform(image_reshaped)
+    # image_normalized1 = image_normalized.reshape(image.shape[0],image.shape[1],image.shape[2])
+    return scaler
+
+
+def check_memory():
+    process = psutil.Process(os.getpid())
+    print('-'*50)
+    print('[CHECKING MEMORY]')
+    # print(process.memory_info().rss)
+    print(process.memory_percent())
+    # print(process.memory_info().rss)
+    gc.collect()
+    print('[GC COLLECT]')
+    print(process.memory_percent())
+    print('-'*50)
+
 
 def load_tiff_image(patch):
     # Read tiff Image
