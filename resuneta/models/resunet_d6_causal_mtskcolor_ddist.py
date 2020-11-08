@@ -17,7 +17,7 @@ class ResUNet_d6(HybridBlock):
     This will be used for 256x256 image input, so the atrous convolutions should be determined by the depth
     """
 
-    def __init__(self, dataset_type, _nfilters_init,  _NClasses,
+    def __init__(self, devices, dataset_type, _nfilters_init,  _NClasses,
                  patch_size=256, verbose=True, from_logits=False,
                  _norm_type='BatchNorm', multitasking=True,  **kwards):
         HybridBlock.__init__(self,**kwards)
@@ -137,7 +137,7 @@ class ResUNet_d6(HybridBlock):
                 else:
                     self.ChannelAct = gluon.nn.HybridLambda(lambda F, x: F.softmax(x, axis=1))
 
-            self.weights = mx.ndarray([1, 33.333, 0])
+            self.weights = mx.nd.array([1, 33.333, 0], ctx=devices)
 
     def hybrid_forward(self,F,_input):
 
