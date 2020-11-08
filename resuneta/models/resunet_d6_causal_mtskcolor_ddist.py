@@ -137,7 +137,7 @@ class ResUNet_d6(HybridBlock):
                 else:
                     self.ChannelAct = gluon.nn.HybridLambda(lambda F, x: F.softmax(x, axis=1))
 
-            self.weights = mx.nd.array([1, 33.333, 0], ctx=devices)
+            self.weights = mx.nd.array([1, 33.333, 0])
 
     def hybrid_forward(self,F,_input):
 
