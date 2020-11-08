@@ -17,7 +17,7 @@ class ResUNet_d6(HybridBlock):
     This will be used for 256x256 image input, so the atrous convolutions should be determined by the depth
     """
 
-    def __init__(self, devices, dataset_type, _nfilters_init,  _NClasses,
+    def __init__(self, dataset_type, _nfilters_init,  _NClasses,
                  patch_size=256, verbose=True, from_logits=False,
                  _norm_type='BatchNorm', multitasking=True,  **kwards):
         HybridBlock.__init__(self,**kwards)
@@ -39,7 +39,7 @@ class ResUNet_d6(HybridBlock):
         elif patch_size == 128:
             self.psp_depth = 3
 
-        self.from_logits = True
+        self.from_logits = from_logits
 
         self.dataset_type = dataset_type
 

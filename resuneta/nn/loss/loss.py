@@ -29,6 +29,8 @@ class Tanimoto(Loss):
         wli = F.where( wli == np.float('inf'), F.broadcast_mul(F.ones_like(wli),F.max(new_weights)) , wli)
         # ************************************************************************************************
 
+        
+
 
         rl_x_pl = F.sum( F.broadcast_mul(_label , _preds), axis=self.axis)
         # This is sum of squares
