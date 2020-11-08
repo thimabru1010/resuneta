@@ -137,7 +137,7 @@ class ResUNet_d6(HybridBlock):
                 else:
                     self.ChannelAct = gluon.nn.HybridLambda(lambda F, x: F.softmax(x, axis=1))
 
-            ones = mx.nd.ones(32, patch_size, patch_size, _NClasses)
+            ones = mx.nd.ones((32, patch_size, patch_size, _NClasses))
             w = mx.nd.array([1, 33.333, 0])
             weights = mx.nd.broadcast_mul(ones, w)
             self.weights = weights.transpose((0, 3, 1, 2))
