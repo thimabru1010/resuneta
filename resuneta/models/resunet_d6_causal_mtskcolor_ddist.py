@@ -216,7 +216,7 @@ class ResUNet_d6(HybridBlock):
             #logits = F.softmax(logits,axis=1)
             if not self.from_logits:
                 logits = self.ChannelAct(logits)
-                logits = F.broadcast_mul(logits, self.weights)
+                logits = mx.nd.broadcast_mul(logits, self.weights)
                 return logits, bound, dist, convc
             else:
                 return logits, bound, dist, convc
