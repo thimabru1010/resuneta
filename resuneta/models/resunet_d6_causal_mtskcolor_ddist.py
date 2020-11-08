@@ -137,6 +137,8 @@ class ResUNet_d6(HybridBlock):
                 else:
                     self.ChannelAct = gluon.nn.HybridLambda(lambda F, x: F.softmax(x, axis=1))
 
+            self.weights = mx.ndarray([1, 33.333, 0])
+
     def hybrid_forward(self,F,_input):
 
         # First convolution
@@ -211,6 +213,7 @@ class ResUNet_d6(HybridBlock):
             #logits = F.softmax(logits,axis=1)
             if not self.from_logits:
                 logits = self.ChannelAct(logits)
+                logits = F.broadcast_mul(logits, self.weights)
                 return logits, bound, dist, convc
             else:
                 return logits, bound, dist, convc
