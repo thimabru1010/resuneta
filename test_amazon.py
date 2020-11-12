@@ -17,11 +17,64 @@ from resuneta.src.NormalizeDataset import Normalize
 # from resuneta.models.resunet_d7_causal_mtskcolor_ddist import *
 from resuneta.models.resunet_d6_causal_mtskcolor_ddist import ResUNet_d6
 from resuneta.models.Unet import UNet
-from utils import load_npy_image, get_boundary_label, get_distance_label, check_memory, \
-    normalization, mask_no_considered
+from utils import load_npy_image, get_boundary_label, get_distance_label, \
+    check_memory, normalization, mask_no_considered
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 from tensorflow.keras.utils import to_categorical
+import itertools
+
+
+def plot_confusion_matrix(cm, classes,
+                          normalize=False,
+                          title='Confusion matrix',
+                          cmap=plt.cm.Blues):
+    """
+    This function prints and plots the confusion matrix.
+    Normalization can be applied by setting `normalize=True`.
+    """
+    if title == 'Metrics':
+        plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    else:
+        plt.imshow(cm, interpolation='nearest', cmap=cmap)
+        plt.colorbar()
+    plt.title(title)
+    tick_marks = np.arange(len(classes))
+    plt.xticks(tick_marks, classes, rotation=45)
+    if title == 'Metrics':
+        classes = ['F1score', 'Recall', 'Precision']
+        plt.yticks(tick_marks, classes)
+    else:
+        plt.yticks(tick_marks, classes)
+
+    if normalize:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        print("Normalized confusion matrix")
+    else:
+        print('Confusion matrix, without normalization')
+
+    print(cm)
+
+    thresh = cm.max() / 2.
+    if title == 'Metrics':
+        for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+            plt.text(j, i, format(cm[i, j],  '.2f'),
+                     horizontalalignment="center", #  color="black")
+                     color="white" if cm[i, j] > thresh else "black")
+
+        plt.tight_layout()
+        # plt.ylabel('Metric')
+        # plt.xlabel('Predicted label')
+    else:
+        for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+            plt.text(j, i, format(cm[i, j],  '.5f'),
+                     horizontalalignment="center", color="red")
+                     # color="white" if cm[i, j] > thresh else "black")
+
+        plt.tight_layout()
+        plt.ylabel('True label')
+        plt.xlabel('Predicted label')
+
 
 
 def Test(model, patches, args):
@@ -427,6 +480,8 @@ predicted_labels = np.reshape(seg_pred, (seg_pred.shape[0] *
 # Metrics
 metrics = compute_metrics(true_labels, predicted_labels)
 confusion_matrix = confusion_matrix(true_labels, predicted_labels)
+np.set_printoptions(precision=2)
+class_names = ['No def', 'Def', 'Past def']
 
 print('Confusion  matrix \n', confusion_matrix)
 print()
@@ -434,6 +489,26 @@ print('Accuracy: ', metrics[0])
 print('F1score: ', metrics[1])
 print('Recall: ', metrics[2])
 print('Precision: ', metrics[3])
+
+fig = plt.figure()
+plot_confusion_matrix(confusion_matrix, classes=class_names, normalize=True)
+# plt.gcf().subplots_adjust(bottom=0.2)
+fig.savefig(os.path.join(args.output_path, 'confusion_matrix.jpg'), dpi=300,
+            bbox_inches="tight")
+plt.show()
+plt.close()
+
+print(metrics[1].shape)
+print(metrics[2].shape)
+print(metrics[3].shape)
+new_metrics = np.stack((metrics[1], metrics[2], metrics[3]), axis=0)
+fig = plt.figure()
+plot_confusion_matrix(new_metrics, classes=class_names, title='Metrics')
+# plt.gcf().subplots_adjust(bottom=0.2)
+fig.savefig(os.path.join(args.output_path, 'metrics.jpg'), dpi=300,
+            bbox_inches="tight")
+plt.show()
+plt.close()
 
 check_memory()
 del predicted_labels, true_labels

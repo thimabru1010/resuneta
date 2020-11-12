@@ -362,7 +362,7 @@ if __name__ == '__main__':
         0 --> No deforastation
         1 --> Deforastation
     '''
-    img_ref_path = 'ref_2019_ok.npy'
+    img_ref_path = 'cut_ref_2019_ok.npy'
     image_ref = load_npy_image(os.path.join(root_path,
                                             'labels', img_ref_path)).astype(np.float32)
     # Clip to fit tiles of your specific image
@@ -375,11 +375,11 @@ if __name__ == '__main__':
 
     # Load past deforastation reference ----------------------------------------
     # past_ref1_path = 'binary_clipped_2013_2018.npy'
-    past_ref1_path = 'ref_2007_ok.npy'
+    past_ref1_path = 'cut_ref_1988_2007_ok.npy'
     past_ref1 = load_npy_image(os.path.join(root_path,
                                             'labels', past_ref1_path)).astype(np.float32)
     # past_ref2_path = 'binary_clipped_1988_2012.npy'
-    past_ref2_path = 'ref_2008_2018_ok.npy'
+    past_ref2_path = 'cut_ref_2008_2018_ok.npy'
     past_ref2 = load_npy_image(os.path.join(root_path,
                                             'labels', past_ref2_path)).astype(np.float32)
     past_ref_sum = past_ref1 + past_ref2

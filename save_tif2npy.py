@@ -98,7 +98,7 @@ def load_tiff_image(patch):
 
 # Dataset TCC corrigido
 
-root_path = '/media/thimabru/ssd/TCC/imagens_satelite_dataset/cut_img_66'
+root_path = '/media/thimabru/ssd/TCC/imagens_satelite_dataset/cut_img_66_new'
 output_path = 'DATASETS/Amazon_npy_corrigido'
 if not os.path.exists(output_path):
     os.makedirs(output_path)
@@ -124,20 +124,20 @@ del img_t2
 # del img_mask_ref
 
 # Load deforastation reference
-img_ref_path = 'ref_2019_ok.tif'
+img_ref_path = 'cut_ref_2019_ok.tif'
 image_ref = load_tiff_image(os.path.join(root_path, img_ref_path))
 print(image_ref.dtype)
 np.save(os.path.join(output_path, 'labels', img_ref_path[:-4] + '.npy'), image_ref)
 del image_ref
 
 # Load past deforastation reference
-past_ref1_path = 'ref_2007_ok.tif'
+past_ref1_path = 'cut_ref_1988_2007_ok.tif'
 past_ref1 = load_tiff_image(os.path.join(root_path, past_ref1_path))
 print(past_ref1.dtype)
 np.save(os.path.join(output_path, 'labels', past_ref1_path[:-4] + '.npy'), past_ref1)
 del past_ref1
 
-past_ref2_path = 'ref_2008_2018_ok.tif'
+past_ref2_path = 'cut_ref_2008_2018_ok.tif'
 past_ref2 = load_tiff_image(os.path.join(root_path, past_ref2_path))
 print(past_ref2.dtype)
 np.save(os.path.join(output_path, 'labels', past_ref2_path[:-4] + '.npy'), past_ref2)
