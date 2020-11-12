@@ -257,9 +257,9 @@ def save_patches(patches_tr, patches_tr_ref, folder_path, scaler, data_aug, mode
             assert img_t1_patch.shape == (args.patch_size, args.patch_size, 7), "Img T1 shape not matching"
             assert img_t2_patch.shape == (args.patch_size, args.patch_size, 7), "Img T2 shape not matching"
             # Convert from BGR 2 RGB
-            img_t1_patch_bgr = (img_t1_patch[:, :, 1:4]*255).astype(np.uint8)
+            img_t1_patch_bgr = (img_t1_patch[:, :, 1:4]).astype(np.uint8)
 
-            img_t2_patch_bgr = (img_t2_patch[:, :, 1:4]*255).astype(np.uint8)
+            img_t2_patch_bgr = (img_t2_patch[:, :, 1:4]).astype(np.uint8)
 
             # print(img_t1_patch_bgr.shape)
             # print(img_t2_patch_bgr.shape)
@@ -341,7 +341,7 @@ if __name__ == '__main__':
     # Concatenation of images
     input_image = np.concatenate((img_t1, img_t2), axis=-1)
     # input_image = input_image[:6100, :6600]
-    input_image = input_image[:5200, :5000]
+    input_image = input_image[:5200, :5040]
     h_, w_, channels = input_image.shape
     print(f"Input image shape: {input_image.shape}")
     check_memory()
@@ -402,7 +402,7 @@ if __name__ == '__main__':
         2 --> Past deforastation (No considered)
     '''
     final_mask = mask_no_considered(image_ref, buffer, past_ref_sum)
-    final_mask = final_mask[:5200, :5000]
+    final_mask = final_mask[:5200, :5040]
 
     # final_mask[img_mask_ref == -99] = -1
     unique, counts = np.unique(final_mask, return_counts=True)
@@ -436,7 +436,7 @@ if __name__ == '__main__':
     # mask_c_3 = np.concatenate((7*tile_number, 8*tile_number, 9*tile_number, 20*tile_number, 21*tile_number), axis=1)
     # mask_c_4 = np.concatenate((10*tile_number, 11*tile_number, 12*tile_number, 22*tile_number, 23*tile_number), axis=1)
     # mask_c_5 = np.concatenate((13*tile_number, 14*tile_number, 15*tile_number, 24*tile_number, 25*tile_number), axis=1)
-    tile_number = np.ones((1020, 1700))
+    tile_number = np.ones((1040, 1680))
     mask_c_1 = np.concatenate((tile_number, 2*tile_number, 3*tile_number), axis=1)
     mask_c_2 = np.concatenate((4*tile_number, 5*tile_number, 6*tile_number), axis=1)
     mask_c_3 = np.concatenate((7*tile_number, 8*tile_number, 9*tile_number), axis=1)
