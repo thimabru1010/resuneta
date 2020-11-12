@@ -341,7 +341,7 @@ if __name__ == '__main__':
     # Concatenation of images
     input_image = np.concatenate((img_t1, img_t2), axis=-1)
     # input_image = input_image[:6100, :6600]
-    input_image = input_image[:5100, :5100]
+    input_image = input_image[:5200, :5000]
     h_, w_, channels = input_image.shape
     print(f"Input image shape: {input_image.shape}")
     check_memory()
@@ -367,7 +367,7 @@ if __name__ == '__main__':
                                             'labels', img_ref_path)).astype(np.float32)
     # Clip to fit tiles of your specific image
     # image_ref = image_ref[:6100, :6600]
-    image_ref = image_ref[:5100, :5100]
+    # image_ref = image_ref[:5200, :5000]
     # image_ref[img_mask_ref == -99] = -1
     print(f"Image reference shape: {image_ref.shape}")
 
@@ -385,7 +385,7 @@ if __name__ == '__main__':
     past_ref_sum = past_ref1 + past_ref2
     # Clip to fit tiles of your specific image
     # past_ref_sum = past_ref_sum[:6100, :6600]
-    past_ref_sum = past_ref_sum[:5100, :5100]
+    # past_ref_sum = past_ref_sum[:5200, :5000]
     # past_ref_sum[img_mask_ref==-99] = -1
     # Doing the sum, there are some pixels with value 2 (Case when both were deforastation).
     # past_ref_sum[past_ref_sum == 2] = 1
@@ -402,6 +402,7 @@ if __name__ == '__main__':
         2 --> Past deforastation (No considered)
     '''
     final_mask = mask_no_considered(image_ref, buffer, past_ref_sum)
+    final_mask = final_mask[:5200, :5000]
 
     # final_mask[img_mask_ref == -99] = -1
     unique, counts = np.unique(final_mask, return_counts=True)
