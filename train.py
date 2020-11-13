@@ -13,7 +13,8 @@ from prettytable import PrettyTable
 from tqdm import tqdm
 from mxboard import SummaryWriter
 import numpy as np
-from gluoncv.loss import ICNetLoss
+# from gluoncv.loss import ICNetLoss
+import gluoncv
 
 
 def add_tensorboard_scalars(summary_writer, result_path, epoch, task, loss, acc=None, val_mcc=None):
@@ -42,8 +43,10 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
         # weights = mx.nd.array(np.array([1.1494, 33.3333, 0]), ctx=devices)
         # loss_clss = gluon.loss.SoftmaxCrossEntropyLoss(axis=1, from_logits=False,
         #                                                sparse_label=False)
-        loss_clss = ICNetLoss(weights=(1.1494, 33.3333, 0), ignore_label=2,
-                              height=args.patch_size, width=args.patch_size)
+        # loss_clss = ICNetLoss(weights=(1.1494, 33.3333, 0), ignore_label=2,
+        #                       height=args.patch_size, width=args.patch_size)
+        loss_clss = gluoncv.loss.SoftmaxCrossEntropyLoss(axis=1, from_logits=False,
+                                                       sparse_label=False, ignore_label=2)
         # L2Loss --> MSE
         loss_dist = gluon.loss.L2Loss() #  TODO: Maybe should put weights for distance
         loss_color = gluon.loss.L2Loss()
