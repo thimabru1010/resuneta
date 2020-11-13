@@ -13,7 +13,7 @@ from prettytable import PrettyTable
 from tqdm import tqdm
 from mxboard import SummaryWriter
 import numpy as np
-from mxnet.gluoncv.loss import ICNetLoss
+from gluoncv.loss import ICNetLoss
 
 
 def add_tensorboard_scalars(summary_writer, result_path, epoch, task, loss, acc=None, val_mcc=None):
