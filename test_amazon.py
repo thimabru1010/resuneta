@@ -314,7 +314,7 @@ print(img_t2.shape)
 # Concatenation of images
 input_image = np.concatenate((img_t1, img_t2), axis=-1)
 # input_image = input_image[:6100, :6600]
-input_image = input_image[:5100, :5100]
+input_image = input_image[:5200, :5040]
 h_, w_, channels = input_image.shape
 print(f"Input image shape: {input_image.shape}")
 check_memory()
@@ -326,28 +326,28 @@ check_memory()
     0 --> No deforastation
     1 --> Deforastation
 '''
-img_ref_path = 'ref_2019_ok.npy'
+img_ref_path = 'cut_ref_2019_ok.npy'
 image_ref = load_npy_image(os.path.join(root_path,
                                         'labels', img_ref_path)).astype(np.float32)
 # Clip to fit tiles of your specific image
 # image_ref = image_ref[:6100, :6600]
-image_ref = image_ref[:5100, :5100]
+image_ref = image_ref[:5200, :5040]
 # image_ref[img_mask_ref == -99] = -1
 print(f"Image reference shape: {image_ref.shape}")
 
 # Load past deforastation reference ----------------------------------------
 # past_ref1_path = 'binary_clipped_2013_2018.npy'
-past_ref1_path = 'ref_2007_ok.npy'
+past_ref1_path = 'cut_ref_1988_2007_ok.npy'
 past_ref1 = load_npy_image(os.path.join(root_path,
                                         'labels', past_ref1_path)).astype(np.float32)
 # past_ref2_path = 'binary_clipped_1988_2012.npy'
-past_ref2_path = 'ref_2008_2018_ok.npy'
+past_ref2_path = 'cut_ref_2008_2018_ok.npy'
 past_ref2 = load_npy_image(os.path.join(root_path,
                                         'labels', past_ref2_path)).astype(np.float32)
 past_ref_sum = past_ref1 + past_ref2
 # Clip to fit tiles of your specific image
 # past_ref_sum = past_ref_sum[:6100, :6600]
-past_ref_sum = past_ref_sum[:5100, :5100]
+past_ref_sum = past_ref_sum[:5200, :5040]
 print(f"Past reference shape: {past_ref_sum.shape}")
 
 #  Creation of buffer
@@ -370,7 +370,7 @@ check_memory()
 # ref_patches = extract_patches(final_mask, args.patch_size, img_type=2)
 
 # Separate per tiles
-tile_number = np.ones((1020, 1700))
+tile_number = np.ones((1040, 1680))
 mask_c_1 = np.concatenate((tile_number, 2*tile_number, 3*tile_number), axis=1)
 mask_c_2 = np.concatenate((4*tile_number, 5*tile_number, 6*tile_number), axis=1)
 mask_c_3 = np.concatenate((7*tile_number, 8*tile_number, 9*tile_number), axis=1)
@@ -397,6 +397,7 @@ ctx = mx.gpu(0)
 # ctx = mx.cpu()
 if args.model == 'resuneta':
     nfilters_init = 32
+    args.use_multitasking = True
     # Nbatch = 8
     net = ResUNet_d6('amazon', nfilters_init, args.num_classes,
                      patch_size=args.patch_size,
@@ -564,11 +565,13 @@ if args.use_multitasking:
         img_t1 = img[:, :, 0:7]
         img_t2 = img[:, :, 7:]
         # Convert from BGR 2 RGB
-        img_t1_bgr = img_t1[:, :, 1:4]
-        img_t1_rgb = (img_t1_bgr[:, :, ::-1]*255).astype(np.uint8)
+        img_t1_bgr = img_t1[:, :, 1:4].astype(np.uint8)
+        # img_t1_rgb = img_t1_bgr[:, :, ::-1]
+        img_t1_rgb = img_t1_bgr
 
-        img_t2_bgr = img_t2[:, :, 1:4]
-        img_t2_rgb = (img_t2_bgr[:, :, ::-1]*255).astype(np.uint8)
+        img_t2_bgr = img_t2[:, :, 1:4].astype(np.uint8)
+        # img_t2_rgb = img_t2_bgr[:, :, ::-1]
+        img_t2_rgb = img_t2_bgr
         print(img_t1_rgb.shape)
         print(img_t2_rgb.shape)
         img_both_rgb = np.concatenate((img_t1_rgb, img_t2_rgb), axis=-1)

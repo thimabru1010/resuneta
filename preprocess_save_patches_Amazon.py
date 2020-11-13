@@ -70,7 +70,6 @@ def count_deforastation(image_ref, image_mask_ref):
         image_ref[img_mask_ref == -99] = 0
 
 
-
 def filter_patches(patches_img, patches_ref, percent):
     filt_patches_img = []
     filt_patches_ref = []
@@ -267,11 +266,11 @@ def save_patches(patches_tr, patches_tr_ref, folder_path, scaler, data_aug, mode
             assert img_t2_patch_bgr.shape == (args.patch_size, args.patch_size, 3), "BGR T2 shape not matching"
 
             img_t1_patch_hsv = cv2.cvtColor(img_t1_patch_bgr,
-                                     cv2.COLOR_BGR2HSV).astype(np.float32)
+                                     cv2.COLOR_RGB2HSV).astype(np.float32)
             img_t1_patch_hsv = img_t1_patch_hsv * np.array([1./179, 1./255, 1./255])
 
             img_t2_patch_hsv = cv2.cvtColor(img_t2_patch_bgr,
-                                     cv2.COLOR_BGR2HSV).astype(np.float32)
+                                     cv2.COLOR_RGB2HSV).astype(np.float32)
             img_t2_patch_hsv = img_t2_patch_hsv * np.array([1./179, 1./255, 1./255])
             # print(hsv_patch.shape)
             img_both_patch_hsv = np.concatenate((img_t1_patch_hsv,
@@ -445,54 +444,56 @@ if __name__ == '__main__':
     mask_tiles = np.concatenate((mask_c_1, mask_c_2, mask_c_3, mask_c_4, mask_c_5), axis=0)
 
     mask_tr_val = np.zeros((mask_tiles.shape))
-    # tr1 = 5
+    tr1 = 5
     tr2 = 8 # mesma bosta
-    # tr3 = 13
-    tr3 = 2
+    tr3 = 13
+    # tr3 = 2
     tr4 = 7
-    # tr5 = 11
+    tr5 = 11
     tr6 = 1
-    # tr7 = 14
+    tr7 = 14
     tr8 = 3
     tr9 = 9
-    tr10 = 10
+    # tr10 = 10
 
-    # val1 = 2
+    val1 = 2
     # val1 = 13
-    # val2 = 10
+    val2 = 10
     val3 = 4
     val4 = 6
     # Putting 15 and 12 to validation but don't have expressive deforastation %
-    # val5 = 15
-    # val6 = 12
+    val5 = 15
+    val6 = 12
 
-    tst1 = 5 # 357
-    tst2 = 11 # 257
-    tst3 = 14
-    tst4 = 15
-    tst5 = 13
-    tst6 = 12
+    # tst1 = 5 # 357
+    # tst2 = 11 # 257
+    # tst3 = 14
+    # tst4 = 15
+    # tst5 = 13
+    # tst6 = 12
 
-    # mask_tr_val[mask_tiles == tr1] = 1
-    mask_tr_val[mask_tiles == tr2] = 1
-    mask_tr_val[mask_tiles == tr3] = 1
-    mask_tr_val[mask_tiles == tr4] = 1
-    # mask_tr_val[mask_tiles == tr5] = 1
-    mask_tr_val[mask_tiles == tr6] = 1
-    # mask_tr_val[mask_tiles == tr7] = 1
-    mask_tr_val[mask_tiles == tr8] = 1
-    mask_tr_val[mask_tiles == tr9] = 1
-    mask_tr_val[mask_tiles == tr10] = 1
-    # mask_tr_val[mask_tiles == val1] = 2
-    # mask_tr_val[mask_tiles == val2] = 2
-    mask_tr_val[mask_tiles == val3] = 2
-    mask_tr_val[mask_tiles == val4] = 2
-    # mask_tr_val[mask_tiles == val5] = 2
-    # mask_tr_val[mask_tiles == val6] = 2
+    # # mask_tr_val[mask_tiles == tr1] = 1
+    # mask_tr_val[mask_tiles == tr2] = 1
+    # mask_tr_val[mask_tiles == tr3] = 1
+    # mask_tr_val[mask_tiles == tr4] = 1
+    # # mask_tr_val[mask_tiles == tr5] = 1
+    # mask_tr_val[mask_tiles == tr6] = 1
+    # # mask_tr_val[mask_tiles == tr7] = 1
+    # mask_tr_val[mask_tiles == tr8] = 1
+    # mask_tr_val[mask_tiles == tr9] = 1
+    # mask_tr_val[mask_tiles == tr10] = 1
+    # # mask_tr_val[mask_tiles == val1] = 2
+    # # mask_tr_val[mask_tiles == val2] = 2
+    # mask_tr_val[mask_tiles == val3] = 2
+    # mask_tr_val[mask_tiles == val4] = 2
+    # # mask_tr_val[mask_tiles == val5] = 2
+    # # mask_tr_val[mask_tiles == val6] = 2
 
     # all_tiles = [i for i in range(1, 16)]
-    tr_tiles = [tr2, tr3, tr4, tr6, tr8, tr9, tr10]
-    val_tiles = [val3, val4]
+    # tr_tiles = [tr2, tr3, tr4, tr6, tr8, tr9]
+    tr_tiles = [tr1, tr2, tr3, tr4, tr5, tr6, tr7, tr8, tr9]
+    # val_tiles = [val3, val4]
+    val_tiles = [val1, val2, val3, val4, val5, val6]
     all_tiles = tr_tiles + val_tiles
     print(f'All tiles: {all_tiles}')
     # final_mask[img_mask_ref == -99] = -1
@@ -507,7 +508,7 @@ if __name__ == '__main__':
     #                                                                           test_size=0.2, random_state=42)
 
     # Testing tiles
-    tst_tiles = [tst1, tst2, tst3, tst4]
+    # tst_tiles = [tst1, tst2, tst3, tst4]
 
     # Trainig tiles ------------------------------------------------------------
     # tr_tiles = [tr1, tr2, tr3, tr4, tr5, tr6, tr7, tr8, tr9, tr10]
