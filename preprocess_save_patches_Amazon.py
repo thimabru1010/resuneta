@@ -454,13 +454,13 @@ if __name__ == '__main__':
     tr7 = 14
     tr8 = 3
     tr9 = 9
+    tr10 = 6
     # tr10 = 10
 
     val1 = 5
     # val1 = 13
     val2 = 10
     val3 = 4
-    val4 = 6
     # Putting 15 and 12 to validation but don't have expressive deforastation %
     val5 = 15
     val6 = 12
@@ -491,9 +491,9 @@ if __name__ == '__main__':
 
     # all_tiles = [i for i in range(1, 16)]
     # tr_tiles = [tr2, tr3, tr4, tr6, tr8, tr9]
-    tr_tiles = [tr1, tr2, tr3, tr4, tr5, tr6, tr7, tr8, tr9]
+    tr_tiles = [2, 8, 13, 7, 11, 1, 14, 13, 9, 6]
     # val_tiles = [val3, val4]
-    val_tiles = [val1, val2, val3, val4, val5, val6]
+    val_tiles = [5, 10, 4, 15, 12]
     all_tiles = tr_tiles + val_tiles
     print(f'All tiles: {all_tiles}')
     # final_mask[img_mask_ref == -99] = -1
