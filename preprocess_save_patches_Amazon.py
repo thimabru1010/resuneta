@@ -444,7 +444,7 @@ if __name__ == '__main__':
     mask_tiles = np.concatenate((mask_c_1, mask_c_2, mask_c_3, mask_c_4, mask_c_5), axis=0)
 
     mask_tr_val = np.zeros((mask_tiles.shape))
-    tr1 = 5
+    tr1 = 2
     tr2 = 8 # mesma bosta
     tr3 = 13
     # tr3 = 2
@@ -456,7 +456,7 @@ if __name__ == '__main__':
     tr9 = 9
     # tr10 = 10
 
-    val1 = 2
+    val1 = 5
     # val1 = 13
     val2 = 10
     val3 = 4
