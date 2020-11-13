@@ -230,10 +230,10 @@ def save_patches(patches_tr, patches_tr_ref, folder_path, scaler, data_aug, mode
             # Float32 its need to train the model
             img_float = img_aug[j].astype(np.float32)
             # print(f'Checking input image shape: {img_float.shape}')
-            img_reshaped = img_float.reshape((img_float.shape[0] * img_float.shape[1]),
-                                           img_float.shape[2])
-            img_normed = scaler.transform(img_reshaped)
-            img_float = img_normed.reshape(img_float.shape[0], img_float.shape[1], img_float.shape[2])
+            # img_reshaped = img_float.reshape((img_float.shape[0] * img_float.shape[1]),
+            #                                img_float.shape[2])
+            # img_normed = scaler.transform(img_reshaped)
+            # img_float = img_normed.reshape(img_float.shape[0], img_float.shape[1], img_float.shape[2])
             np.save(os.path.join(folder_path, mode, 'imgs', filename(i*5 + j)),
                     img_float)
             # All multitasking labels are saved in one-hot
@@ -251,8 +251,11 @@ def save_patches(patches_tr, patches_tr_ref, folder_path, scaler, data_aug, mode
             # Color
             # print(f'Checking if rgb img is in uint8 before hsv: {img_aug[j].dtype}')
             # Get only BGR from Aerial Image
-            img_t1_patch = img_aug[j][:, :, 0:7]
-            img_t2_patch = img_aug[j][:, :, 7:]
+            img_aug_unnorm = scaler.inverse_transform(img_aug[j])
+            # img_t1_patch = img_aug[j][:, :, 0:7]
+            # img_t2_patch = img_aug[j][:, :, 7:]
+            img_t1_patch = img_aug_unnorm[:, :, 0:7]
+            img_t2_patch = img_aug_unnorm[:, :, 7:]
             assert img_t1_patch.shape == (args.patch_size, args.patch_size, 7), "Img T1 shape not matching"
             assert img_t2_patch.shape == (args.patch_size, args.patch_size, 7), "Img T2 shape not matching"
             # Convert from BGR 2 RGB
@@ -344,7 +347,7 @@ if __name__ == '__main__':
     h_, w_, channels = input_image.shape
     print(f"Input image shape: {input_image.shape}")
     check_memory()
-    scaler = normalization(input_image, norm_type=args.norm_type)
+    scaler, input_image = normalization(input_image, norm_type=args.norm_type)
     check_memory()
 
     # Load Mask area -----------------------------------------------------------
