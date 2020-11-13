@@ -43,7 +43,7 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
         # loss_clss = gluon.loss.SoftmaxCrossEntropyLoss(axis=1, from_logits=False,
         #                                                sparse_label=False)
         loss_clss = ICNetLoss(weights=(1.1494, 33.3333, 0), ignore_label=2,
-                              from_logits=False)
+                              height=args.patch_size, width=args.patch_size)
         # L2Loss --> MSE
         loss_dist = gluon.loss.L2Loss() #  TODO: Maybe should put weights for distance
         loss_color = gluon.loss.L2Loss()
