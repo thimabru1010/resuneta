@@ -437,11 +437,12 @@ if __name__ == '__main__':
         # tnorm = Normalize(mean=mean, std=std)
         tnorm = None
 
+    prob = 0.9
     aug = A.Compose([
-        A.OneOf([A.HorizontalFlip(p=0.7), A.VerticalFlip(p=0.7)], p=1),
-        A.RandomRotate90(p=0.7),
+        A.OneOf([A.HorizontalFlip(p=prob), A.VerticalFlip(p=prob)], p=1),
+        A.RandomRotate90(p=prob),
         A.RandomSizedCrop(min_max_height=(60, 100),
-                          height=args.patch_size, width=args.patch_size, p=0.7)
+                          height=args.patch_size, width=args.patch_size, p=prob)
         # A.OneOf([
         #     A.ElasticTransform(p=0.5, alpha=120, sigma=120 * 0.05, alpha_affine=120 * 0.03),
         #     A.GridDistortion(p=0.5),
