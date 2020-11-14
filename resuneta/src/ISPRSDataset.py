@@ -104,7 +104,8 @@ class ISPRSDataset(dataset.Dataset):
             # Maybe mask_color will fucked up
             # H x W x 18
             masks = np.concatenate([mask_seg, mask_bound, mask_dist, mask_color], axis=-1)
-        else masks = mask_seg
+        else:
+            masks = mask_seg
 
 
         # if self.color:
