@@ -15,6 +15,7 @@ from mxboard import SummaryWriter
 import numpy as np
 # from gluoncv.loss import ICNetLoss
 import gluoncv
+import albumentations as A
 
 
 def add_tensorboard_scalars(summary_writer, result_path, epoch, task, loss, acc=None, val_mcc=None):
@@ -358,9 +359,6 @@ if __name__ == '__main__':
                         type=float, default=1.0)
     parser.add_argument("--wcolor", help="HSV transform loss weight",
                         type=float, default=1.0)
-    parser.add_argument("--aug_prob", help="probability ofapply \
-                        data augmentation",
-                        type=float, default=0.0)
     args = parser.parse_args()
 
     if not os.path.exists(os.path.join(args.results_path)):
@@ -439,18 +437,25 @@ if __name__ == '__main__':
         # tnorm = Normalize(mean=mean, std=std)
         tnorm = None
 
-    params_range = ParamsRange()
-    # transform = SemSegAugmentor_CV(params_range=params_range, prob=args.aug_prob)
-    transform = None
+    aug = A.Compose([
+        A.OneOf([A.HorizontalFlip(p=0.7), A.VerticalFlip(p=0.7)], p=1),
+        A.RandomRotate90(p=0.7),
+        A.RandomSizedCrop(min_max_height=(60, 100),
+                          height=args.patch_size, width=args.patch_size, p=0.7)
+        # A.OneOf([
+        #     A.ElasticTransform(p=0.5, alpha=120, sigma=120 * 0.05, alpha_affine=120 * 0.03),
+        #     A.GridDistortion(p=0.5),
+        #     A.OpticalDistortion(distort_limit=1, shift_limit=0.5, p=1),], p=0.8),
+        ])
 
     train_dataset = ISPRSDataset(root=args.dataset_path,
                                  mode='train', color=True,
                                  mtsk=args.multitasking, norm=tnorm,
-                                 transform=transform)
+                                 transform=aug)
     val_dataset = ISPRSDataset(root=args.dataset_path,
                                mode='val', color=True,
                                mtsk=args.multitasking, norm=tnorm,
-                               transform=transform)
+                               transform=None)
 
     dataloader = {}
     dataloader['train'] = gluon.data.DataLoader(train_dataset,

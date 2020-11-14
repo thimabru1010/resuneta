@@ -15,7 +15,6 @@ except:
 
 # Functions
 
-
 def mask_no_considered(image_ref, buffer, past_ref):
     '''
         Creation of buffer for pixel no considered

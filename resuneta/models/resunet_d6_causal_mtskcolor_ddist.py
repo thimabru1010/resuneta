@@ -142,7 +142,7 @@ class ResUNet_d6(HybridBlock):
             weights = mx.nd.broadcast_mul(ones, w)
             self.weights = weights.transpose((0, 3, 1, 2))
 
-    def hybrid_forward(self,F,_input):
+    def hybrid_forward(self, F, _input):
 
         # First convolution
         conv1 = self.encoder.conv_first_normed(_input)

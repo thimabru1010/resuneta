@@ -117,7 +117,9 @@ class ISPRSDataset(dataset.Dataset):
         # print(base.shape)
         # print(masks.shape)
         if self._transform is not None:
-            base, masks = self._transform(base, masks)
+            augmented = self._transform(image=base, mask=masks)
+            base = augmented['image']
+            masks = augmented['mask']
             if self._norm is not None:
                 base = self._norm(base.astype(np.float32))
                 if self.mtsk:
