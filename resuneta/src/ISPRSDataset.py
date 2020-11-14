@@ -104,6 +104,7 @@ class ISPRSDataset(dataset.Dataset):
             # Maybe mask_color will fucked up
             # H x W x 18
             masks = np.concatenate([mask_seg, mask_bound, mask_dist, mask_color], axis=-1)
+        else masks = mask_seg
 
 
         # if self.color:
@@ -133,15 +134,16 @@ class ISPRSDataset(dataset.Dataset):
                     masks[:, :, -3:] = masks[:, :, -3:] * self.colornorm
                 # mask_color = (mask_color.transpose([1, 2, 0]) * self.colornorm).transpose([2,0,1])
 
-        if self.mtsk:
-            # Don't need to cast to Mxnet tensor. Dataset does this alone
-            # Beware of casting with transforms. Zero the image. Leads to an error.
-            # print('Retornando')
-            # print(base.shape)
-            # print(masks.shape)
-            return base.astype(np.float32).transpose((2, 0, 1)), masks.astype(np.float32).transpose((2, 0, 1))
-        else:
-            return base.astype(np.float32).transpose((2, 0, 1)), mask_seg.astype(np.float32).transpose((2, 0, 1))
+        # if self.mtsk:
+        #     # Don't need to cast to Mxnet tensor. Dataset does this alone
+        #     # Beware of casting with transforms. Zero the image. Leads to an error.
+        #     # print('Retornando')
+        #     # print(base.shape)
+        #     # print(masks.shape)
+        #     return base.astype(np.float32).transpose((2, 0, 1)), masks.astype(np.float32).transpose((2, 0, 1))
+        # else:
+        #     return base.astype(np.float32).transpose((2, 0, 1)), mask_seg.astype(np.float32).transpose((2, 0, 1))
+        return base.astype(np.float32).transpose((2, 0, 1)), masks.astype(np.float32).transpose((2, 0, 1))
 
     def __len__(self):
         return len(self.img_names)
