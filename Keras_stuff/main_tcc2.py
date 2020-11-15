@@ -45,10 +45,12 @@ def filter_patches(patches_img, patches_ref, percent):
         deforastation = counts_dict[1] / (counts_dict[0] + counts_dict[1] + counts_dict[2])
         patch = patches_ref[i]
         class1 = patch[patch == 1]
+        print('='*10)
         print(len(class1))
         print(counts_dict[1])
         print(int((patch_size**2)*(percent/100)))
         print(deforastation * 100)
+        print('='*10)
         if len(class1) >= int((patch_size**2)*(percent/100)):
         # if deforastation * 100 > percent:
             filt_patches_img.append(patches_img[i])
