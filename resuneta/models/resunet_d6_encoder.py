@@ -41,7 +41,7 @@ class ResUNet_d6_encoder(HybridBlock):
             self.conv_first_normed = Conv2DNormed(channels=self.nfilters,
                                               kernel_size=(1,1),
                                               _norm_type = _norm_type,
-                                              prefix="_conv_first_")
+                                              prefix="_conv_first_", group=2)
 
 
             # Progressively reducing the dilation_rate of Atrous convolutions (the deeper the smaller).

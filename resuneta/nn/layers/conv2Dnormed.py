@@ -3,17 +3,18 @@ from mxnet.gluon import HybridBlock
 
 class Conv2DNormed(HybridBlock):
     """
-        Convenience wrapper layer for 2D convolution followed by a normalization layer 
-        (either BatchNorm or InstanceNorm). 
-        norm_type: Either BatchNorm (default) or InstanceNorm strings. 
-        axis : axis in normalization (exists only in BatchNorm). 
-        All other keywords are the same as gluon.nn.Conv2D 
+        Convenience wrapper layer for 2D convolution followed by a normalization layer
+        (either BatchNorm or InstanceNorm).
+        norm_type: Either BatchNorm (default) or InstanceNorm strings.
+        axis : axis in normalization (exists only in BatchNorm).
+        All other keywords are the same as gluon.nn.Conv2D
     """
 
-    def __init__(self,  channels, kernel_size, strides=(1, 1), 
-                 padding=(0, 0), dilation=(1, 1),   activation=None, 
-                 weight_initializer=None,  in_channels=0, _norm_type = 'BatchNorm', axis =1 ,**kwards):
-        HybridBlock.__init__(self,**kwards)
+    def __init__(self,  channels, kernel_size, strides=(1, 1),
+                 padding=(0, 0), dilation=(1, 1),   activation=None,
+                 weight_initializer=None,  in_channels=0,
+                 _norm_type='BatchNorm', axis=1, group=1, **kwards):
+        HybridBlock.__init__(self, **kwards)
 
         if (_norm_type == 'BatchNorm'):
             self.norm = gluon.nn.BatchNorm
@@ -30,13 +31,13 @@ class Conv2DNormed(HybridBlock):
 
 
         with self.name_scope():
-            self.conv2d = gluon.nn.Conv2D(channels, kernel_size = kernel_size, 
-                                          strides= strides, 
+            self.conv2d = gluon.nn.Conv2D(channels, kernel_size = kernel_size,
+                                          strides= strides,
                                           padding=padding,
-                                          dilation= dilation, 
-                                          activation=activation, 
-                                          use_bias=False, 
-                                          weight_initializer = weight_initializer, 
+                                          dilation= dilation,
+                                          activation=activation,
+                                          use_bias=False,
+                                          weight_initializer = weight_initializer,
                                           in_channels=0)
 
             self.norm_layer = self.norm(axis=axis)
@@ -48,5 +49,3 @@ class Conv2DNormed(HybridBlock):
         x = self.norm_layer(x)
 
         return x
-
-
