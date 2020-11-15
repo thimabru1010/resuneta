@@ -27,6 +27,7 @@ def check_memory():
     print('-'*50)
 
 def filter_patches(patches_img, patches_ref, percent):
+    patch_size = 128
     filt_patches_img = []
     filt_patches_ref = []
     for i in range(len(patches_img)):
@@ -39,10 +40,16 @@ def filter_patches(patches_img, patches_ref, percent):
         if 2 not in counts_dict.keys():
             counts_dict[2] = 0
         # print(counts_dict)
-        if -1 in counts_dict.keys():
-            continue
+        # if -1 in counts_dict.keys():
+        #     continue
         deforastation = counts_dict[1] / (counts_dict[0] + counts_dict[1] + counts_dict[2])
-        if deforastation * 100 > percent:
+        patch = patches_ref[i]
+        class1 = patch[patch == 1]
+        print(len(class1))
+        print(counts_dict[1])
+        print(int((patch_size**2)*(percent/100)))
+        if len(class1) >= int((patch_size**2)*(percent/100)):
+        # if deforastation * 100 > percent:
             filt_patches_img.append(patches_img[i])
             filt_patches_ref.append(patches_ref[i])
 
