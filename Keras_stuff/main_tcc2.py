@@ -286,8 +286,8 @@ start_time = time.time()
 exp = 1
 rows = patch_size
 cols = patch_size
-adam = Adam(lr=0.0001 , beta_1=0.9)
-batch_size = 32
+adam = Adam(lr=1e-3, beta_1=0.9)
+batch_size = 64
 
 weights = [weight0, weight1, 0]
 #print('='*80)
@@ -312,7 +312,10 @@ callbacks_list = [earlystop, checkpoint]
 
 # train the model
 start_training = time.time()
-model_info = model.fit(patches_tr_aug, patches_tr_ref_aug_h, batch_size=batch_size, epochs=10, callbacks=callbacks_list, verbose=1, validation_data= (patches_val_aug, patches_val_ref_aug_h) )
+model_info = model.fit(patches_tr_aug, patches_tr_ref_aug_h,
+                       batch_size=batch_size, epochs=100,
+                       callbacks=callbacks_list, verbose=1,
+                       validation_data=(patches_val_aug, patches_val_ref_aug_h))
 end_training = time.time() - start_time
 #%% Test model
 # Creation of mask with test tiles
@@ -338,10 +341,13 @@ mask_ts_[mask_tiles == ts9] = 1
 
 #% Load model
 model = load_model(filepath+'unet_exp_'+str(exp)+'.h5', compile=False)
-model.summary()
+# model.summary()
 area = 11
 # Prediction
-ref_final, pre_final, prob_recontructed, ref_reconstructed, mask_no_considered_, mask_ts, time_ts = prediction(model, image_array, image_ref, final_mask, mask_ts_, patch_size, area)
+img_ref_path = 'cut_ref_2019_ok.npy'
+image_ref = load_npy_image(os.path.join(root_path,
+                                        'labels', img_ref_path)).astype(np.float32)
+ref_final, pre_final, prob_recontructed, ref_reconstructed, mask_no_considered_, mask_ts, time_ts = prediction(model, input_image, image_ref, final_mask, mask_ts_, patch_size, area)
 
 # Metrics
 cm = confusion_matrix(ref_final, pre_final)
@@ -368,4 +374,4 @@ plt.imsave('whole_pred.jpg', prob_recontructed)
 fig2 = plt.figure('prediction of test set')
 plt.imshow(prob_recontructed*mask_ts)
 plt.imsave('pred_test_set.jpg', prob_recontructed*mask_ts)
-plt.show()
+# plt.show()
