@@ -385,15 +385,15 @@ def bal_aug_patches(percent, patch_size, patches_img, patches_ref):
     patches_labels = []
 
     for i in range(0, len(patches_img)):
-        # patch = patches_ref[i]
-        # class1 = patch[patch==1]
+        patch = patches_ref[i]
+        class1 = patch[patch==1]
 
-        #if len(class1) >= int((patch_size**2)*(percent/100)):
-        patch_img = patches_img[i]
-        patch_label = patches_ref[i]
-        img_aug, label_aug = data_augmentation(patch_img, patch_label)
-        patches_images.append(img_aug)
-        patches_labels.append(label_aug)
+        if len(class1) >= int((patch_size**2)*(percent/100)):
+            patch_img = patches_img[i]
+            patch_label = patches_ref[i]
+            img_aug, label_aug = data_augmentation(patch_img, patch_label)
+            patches_images.append(img_aug)
+            patches_labels.append(label_aug)
 
     patches_bal = np.concatenate(patches_images).astype(np.float32)
     labels_bal = np.concatenate(patches_labels).astype(np.float32)

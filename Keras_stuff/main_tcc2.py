@@ -244,8 +244,9 @@ number_class = 3
 print('extracting training patches....')
 # tr_tiles = [tr1, tr2, tr3, tr4, tr5, tr6]
 
-patches_tr, patches_tr_ref = extract_tiles2patches(tr_tiles, mask_tiles, input_image,
-                                         final_mask, patch_size, stride, percent)
+# patches_tr, patches_tr_ref = extract_tiles2patches(tr_tiles, mask_tiles, input_image,
+                                         # final_mask, patch_size, stride, percent)
+patches_tr, patches_tr_ref = patch_tiles(tr_tiles, mask_tiles, input_image, final_mask, patch_size, stride)
 
 print(f"Trainig patches size: {patches_tr.shape}")
 print(f"Trainig ref patches size: {patches_tr_ref.shape}")
@@ -262,7 +263,7 @@ print('extracting validation patches....')
 # patches_tr_aug, patches_val_aug, patches_tr_ref_aug_h, patches_val_ref_aug_h = train_test_split(patches_tr_aug, patches_tr_ref_aug_h, test_size=0.2, random_state=42)
 
 # val_tiles = [val1, val2]
-# # patches_val, patches_val_ref = patch_tiles(val_tiles, mask_tiles, image_array, final_mask, patch_size, stride)
+patches_val, patches_val_ref = patch_tiles(val_tiles, mask_tiles, input_image, final_mask, patch_size, stride)
 # patches_val, patches_val_ref = patch_tiles2(val_tiles, mask_tiles, image_array, final_mask, img_mask_ref, patch_size, stride, percent)
 #
 # print(f"Validation patches size: {patches_val.shape}")
@@ -271,10 +272,10 @@ print('extracting validation patches....')
 # patches_val_aug, patches_val_ref_aug = bal_aug_patches2(percent, patch_size, patches_val, patches_val_ref)
 # patches_val_ref_aug_h = tf.keras.utils.to_categorical(patches_val_ref_aug, number_class)
 
-patches_val, patches_val_ref = extract_tiles2patches(val_tiles, mask_tiles, input_image,
-                                         final_mask, patch_size, stride, percent)
-patches_val_aug = patches_val
-patches_val_ref_aug = patches_val_ref
+# patches_val, patches_val_ref = extract_tiles2patches(val_tiles, mask_tiles, input_image,
+#                                          final_mask, patch_size, stride, percent)
+# patches_val_aug = patches_val
+# patches_val_ref_aug = patches_val_ref
 
 patches_val_aug, patches_val_ref_aug = bal_aug_patches(percent, patch_size, patches_val, patches_val_ref)
 
