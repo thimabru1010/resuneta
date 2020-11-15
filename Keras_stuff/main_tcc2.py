@@ -253,8 +253,6 @@ patches_tr_aug = patches_tr
 patches_tr_ref_aug = patches_tr_ref
 patches_tr_aug, patches_tr_ref_aug = bal_aug_patches(percent, patch_size, patches_tr, patches_tr_ref)
 #
-# print(f"Trainig patches size with data aug: {patches_tr_aug.shape}")
-# print(f"Trainig ref patches sizewith data aug: {patches_tr_ref_aug.shape}")
 
 patches_tr_ref_aug_h = tf.keras.utils.to_categorical(patches_tr_ref_aug, number_class)
 
@@ -281,15 +279,13 @@ patches_val_ref_aug = patches_val_ref
 patches_val_aug, patches_val_ref_aug = bal_aug_patches(percent, patch_size, patches_val, patches_val_ref)
 
 patches_val_ref_aug_h = tf.keras.utils.to_categorical(patches_val_ref_aug, number_class)
-# print(f"Validation patches size with data aug: {patches_val_aug.shape}")
-# print(f"Validation ref patches sizewith data aug: {patches_val_ref_aug_h.shape}")
 
 #%%
 start_time = time.time()
 exp = 1
 rows = patch_size
 cols = patch_size
-adam = Adam(lr=1e-3, beta_1=0.9)
+adam = Adam(lr=1e-4, beta_1=0.9)
 batch_size = 64
 
 weights = [weight0, weight1, 0]
@@ -302,6 +298,12 @@ model = unet((rows, cols, channels), num_classes=3)
 model.compile(optimizer=adam, loss=loss, metrics=['accuracy'])
 # print model information
 model.summary()
+
+print(f"Trainig patches size with data aug: {patches_tr_aug.shape}")
+print(f"Trainig ref patches sizewith data aug: {patches_tr_ref_aug.shape}")
+
+print(f"Validation patches size with data aug: {patches_val_aug.shape}")
+print(f"Validation ref patches sizewith data aug: {patches_val_ref_aug_h.shape}")
 
 print(f"Class Weights CE: {weights}")
 
