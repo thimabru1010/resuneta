@@ -67,8 +67,8 @@ def extract_patches_mask_indices(input_image, patch_size, stride):
     return patches_array
 
 def data_augmentation(image, labels):
-    aug_imgs = np.zeros((4, image.shape[0], image.shape[1], image.shape[2]), dtype=np.uint8)
-    aug_lbs = np.zeros((4, image.shape[0], image.shape[1]), dtype=np.uint8)
+    aug_imgs = np.zeros((5, image.shape[0], image.shape[1], image.shape[2]), dtype=np.float32)
+    aug_lbs = np.zeros((5, image.shape[0], image.shape[1]), dtype=np.float32)
 
     for i in range(0, len(aug_imgs)):
         aug_imgs[0, :, :, :] = image
@@ -76,8 +76,8 @@ def data_augmentation(image, labels):
         aug_imgs[2, :, :, :] = np.rot90(image, 2)
         #aug_imgs[3, :, :, :] = np.rot90(image, 3)
         #horizontal_flip = np.flip(image,0)
-        aug_imgs[3, :, :, :] = np.flip(image,0)
-        # aug_imgs[4, :, :, :] = np.flip(image, 1)
+        aug_imgs[3, :, :, :] = np.flip(image, 0)
+        aug_imgs[4, :, :, :] = np.flip(image, 1)
         #aug_imgs[6, :, :] = np.rot90(horizontal_flip, 2)
         #aug_imgs[7, :, :] =np.rot90(horizontal_flip, 3)
 
@@ -87,8 +87,8 @@ def data_augmentation(image, labels):
         aug_lbs[2, :, :] = np.rot90(labels, 2)
         #aug_lbs[3, :, :] = np.rot90(labels, 3)
         #horizontal_flip_lb = np.flip(labels,0)
-        aug_lbs[3, :, :] = np.flip(labels,0)
-        # aug_lbs[4, :, :] = np.flip(labels, 1)
+        aug_lbs[3, :, :] = np.flip(labels, 0)
+        aug_lbs[4, :, :] = np.flip(labels, 1)
         #aug_lbs[6, :, :] = np.rot90(horizontal_flip_lb, 2)
         #aug_lbs[7, :, :] =np.rot90(horizontal_flip_lb, 3)
 
@@ -384,9 +384,9 @@ def bal_aug_patches(percent, patch_size, patches_img, patches_ref):
     patches_images = []
     patches_labels = []
 
-    for i in range(0,len(patches_img)):
-        patch = patches_ref[i]
-        class1 = patch[patch==1]
+    for i in range(0, len(patches_img)):
+        # patch = patches_ref[i]
+        # class1 = patch[patch==1]
 
         #if len(class1) >= int((patch_size**2)*(percent/100)):
         patch_img = patches_img[i]

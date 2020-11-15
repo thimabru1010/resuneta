@@ -228,7 +228,7 @@ print('Images deleted!')
 #%% Patches extraction
 patch_size = 128
 #stride = patch_size
-stride = 16
+stride = 32
 
 print("="*40)
 print(f'Patche size: {patch_size}')
@@ -236,7 +236,7 @@ print(f'Stride: {stride}')
 print("="*40)
 
 # Percent of class deforestation
-percent = 3
+percent = 2
 # 0 -> No-DEf, 1-> Def, 2 -> No considered
 number_class = 3
 
@@ -251,7 +251,7 @@ print(f"Trainig patches size: {patches_tr.shape}")
 print(f"Trainig ref patches size: {patches_tr_ref.shape}")
 patches_tr_aug = patches_tr
 patches_tr_ref_aug = patches_tr_ref
-# patches_tr_aug, patches_tr_ref_aug = bal_aug_patches(percent, patch_size, patches_tr, patches_tr_ref)
+patches_tr_aug, patches_tr_ref_aug = bal_aug_patches(percent, patch_size, patches_tr, patches_tr_ref)
 #
 # print(f"Trainig patches size with data aug: {patches_tr_aug.shape}")
 # print(f"Trainig ref patches sizewith data aug: {patches_tr_ref_aug.shape}")
@@ -278,7 +278,7 @@ patches_val, patches_val_ref = extract_tiles2patches(val_tiles, mask_tiles, inpu
 patches_val_aug = patches_val
 patches_val_ref_aug = patches_val_ref
 
-# patches_val_aug, patches_val_ref_aug = bal_aug_patches(percent, patch_size, patches_val, patches_val_ref)
+patches_val_aug, patches_val_ref_aug = bal_aug_patches(percent, patch_size, patches_val, patches_val_ref)
 
 patches_val_ref_aug_h = tf.keras.utils.to_categorical(patches_val_ref_aug, number_class)
 # print(f"Validation patches size with data aug: {patches_val_aug.shape}")

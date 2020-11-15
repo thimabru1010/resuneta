@@ -438,16 +438,17 @@ if __name__ == '__main__':
         tnorm = None
 
     prob = 0.9
-    aug = A.Compose([
-        A.OneOf([A.HorizontalFlip(p=prob), A.VerticalFlip(p=prob)], p=1),
-        A.RandomRotate90(p=prob),
-        A.RandomSizedCrop(min_max_height=(60, 100),
-                          height=args.patch_size, width=args.patch_size, p=prob)
-        # A.OneOf([
-        #     A.ElasticTransform(p=0.5, alpha=120, sigma=120 * 0.05, alpha_affine=120 * 0.03),
-        #     A.GridDistortion(p=0.5),
-        #     A.OpticalDistortion(distort_limit=1, shift_limit=0.5, p=1),], p=0.8),
-        ])
+    # aug = A.Compose([
+    #     A.OneOf([A.HorizontalFlip(p=prob), A.VerticalFlip(p=prob)], p=1),
+    #     A.RandomRotate90(p=prob),
+    #     A.RandomSizedCrop(min_max_height=(60, 100),
+    #                       height=args.patch_size, width=args.patch_size, p=prob)
+    #     # A.OneOf([
+    #     #     A.ElasticTransform(p=0.5, alpha=120, sigma=120 * 0.05, alpha_affine=120 * 0.03),
+    #     #     A.GridDistortion(p=0.5),
+    #     #     A.OpticalDistortion(distort_limit=1, shift_limit=0.5, p=1),], p=0.8),
+    #     ])
+    aug = None
 
     train_dataset = ISPRSDataset(root=args.dataset_path,
                                  mode='train', color=True,
