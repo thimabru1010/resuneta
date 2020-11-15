@@ -341,7 +341,8 @@ if __name__ == '__main__':
     print(img_t2.shape)
 
     # Concatenation of images
-    input_image = np.concatenate((img_t1, img_t2), axis=-1)
+    # Need to be in float32 to be normalized
+    input_image = np.concatenate((img_t1, img_t2), axis=-1).astype(np.float32)
     # input_image = input_image[:6100, :6600]
     input_image = input_image[:5200, :5040]
     h_, w_, channels = input_image.shape
@@ -474,23 +475,6 @@ if __name__ == '__main__':
     # tst4 = 15
     # tst5 = 13
     # tst6 = 12
-
-    # # mask_tr_val[mask_tiles == tr1] = 1
-    # mask_tr_val[mask_tiles == tr2] = 1
-    # mask_tr_val[mask_tiles == tr3] = 1
-    # mask_tr_val[mask_tiles == tr4] = 1
-    # # mask_tr_val[mask_tiles == tr5] = 1
-    # mask_tr_val[mask_tiles == tr6] = 1
-    # # mask_tr_val[mask_tiles == tr7] = 1
-    # mask_tr_val[mask_tiles == tr8] = 1
-    # mask_tr_val[mask_tiles == tr9] = 1
-    # mask_tr_val[mask_tiles == tr10] = 1
-    # # mask_tr_val[mask_tiles == val1] = 2
-    # # mask_tr_val[mask_tiles == val2] = 2
-    # mask_tr_val[mask_tiles == val3] = 2
-    # mask_tr_val[mask_tiles == val4] = 2
-    # # mask_tr_val[mask_tiles == val5] = 2
-    # # mask_tr_val[mask_tiles == val6] = 2
 
     # all_tiles = [i for i in range(1, 16)]
     # tr_tiles = [tr2, tr3, tr4, tr6, tr8, tr9]

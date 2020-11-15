@@ -75,8 +75,9 @@ def load_npy_image(patch):
 
 
 def data_augmentation(image, labels):
-    aug_imgs = np.zeros((3, image.shape[0], image.shape[1], image.shape[2]), dtype=np.uint8)
-    aug_lbs = np.zeros((3, image.shape[0], image.shape[1]), dtype=np.uint8)
+    aug_imgs = np.zeros((3, image.shape[0], image.shape[1], image.shape[2]),
+                        dtype=np.float32)
+    aug_lbs = np.zeros((3, image.shape[0], image.shape[1]), dtype=np.float32)
 
     for i in range(0, len(aug_imgs)):
         aug_imgs[0, :, :, :] = image
