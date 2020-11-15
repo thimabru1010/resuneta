@@ -295,9 +295,9 @@ print(f"Class Weights CE: {weights}")
 #print(gc.get_count())
 loss = weighted_categorical_crossentropy(weights)
 
-model = unet((rows, cols, channels))
+model = unet((rows, cols, channels), num_classes=3)
 #model.compile(optimizer=adam, loss=loss, metrics=['accuracy'])
-model.compile(optimizer=adam, loss='categorical_crossentropy', metrics=['accuracy'])
+model.compile(optimizer=adam, loss=loss, metrics=['accuracy'])
 # print model information
 model.summary()
 
