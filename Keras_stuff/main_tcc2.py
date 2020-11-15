@@ -228,7 +228,7 @@ print('Images deleted!')
 #%% Patches extraction
 patch_size = 128
 #stride = patch_size
-stride = 16
+stride = 32
 
 print("="*40)
 print(f'Patche size: {patch_size}')
