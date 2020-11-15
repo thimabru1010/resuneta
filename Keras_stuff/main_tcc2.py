@@ -228,7 +228,7 @@ print('Images deleted!')
 #%% Patches extraction
 patch_size = 128
 #stride = patch_size
-stride = patch_size//8
+stride = 16
 
 print("="*40)
 print(f'Patche size: {patch_size}')
@@ -287,10 +287,9 @@ exp = 1
 rows = patch_size
 cols = patch_size
 adam = Adam(lr=0.0001 , beta_1=0.9)
-batch_size = 8
+batch_size = 32
 
 weights = [weight0, weight1, 0]
-print(f"Class Weights CE: {weights}")
 #print('='*80)
 #print(gc.get_count())
 loss = weighted_categorical_crossentropy(weights)
@@ -301,7 +300,11 @@ model.compile(optimizer=adam, loss=loss, metrics=['accuracy'])
 # print model information
 model.summary()
 
+print(f"Class Weights CE: {weights}")
+
 filepath = './models/'
+if not os.path.exists(filepath):
+    os.makedirs(filepath)
 # define early stopping callback
 earlystop = EarlyStopping(monitor='val_loss', min_delta=0.0001, patience=10, verbose=1, mode='min')
 checkpoint = ModelCheckpoint(filepath+'unet_exp_'+str(exp)+'.h5', monitor='val_loss', verbose=1, save_best_only=True, mode='min')
@@ -309,7 +312,7 @@ callbacks_list = [earlystop, checkpoint]
 
 # train the model
 start_training = time.time()
-model_info = model.fit(patches_tr_aug, patches_tr_ref_aug_h, batch_size=batch_size, epochs=10, callbacks=callbacks_list, verbose=2, validation_data= (patches_val_aug, patches_val_ref_aug_h) )
+model_info = model.fit(patches_tr_aug, patches_tr_ref_aug_h, batch_size=batch_size, epochs=10, callbacks=callbacks_list, verbose=1, validation_data= (patches_val_aug, patches_val_ref_aug_h) )
 end_training = time.time() - start_time
 #%% Test model
 # Creation of mask with test tiles
