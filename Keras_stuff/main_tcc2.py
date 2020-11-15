@@ -236,7 +236,7 @@ print(f'Stride: {stride}')
 print("="*40)
 
 # Percent of class deforestation
-percent = 5
+percent = 2
 # 0 -> No-DEf, 1-> Def, 2 -> No considered
 number_class = 3
 
