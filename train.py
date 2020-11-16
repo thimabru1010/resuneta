@@ -42,11 +42,11 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
         loss_color = Tanimoto_with_dual()
     elif args.loss == 'cross_entropy':
         # weights = mx.nd.array(np.array([1.1494, 33.3333, 0]), ctx=devices)
-        # loss_clss = gluon.loss.SoftmaxCrossEntropyLoss(axis=1, from_logits=False,
-        #                                                sparse_label=False)
+        loss_clss = gluon.loss.SoftmaxCrossEntropyLoss(axis=1, from_logits=False,
+                                                       sparse_label=False)
         # loss_clss = ICNetLoss(weights=(1.1494, 33.3333, 0), ignore_label=2,
         #                       height=args.patch_size, width=args.patch_size)
-        loss_clss = gluoncv.loss.SoftmaxCrossEntropyLoss(ignore_label=2)
+        # loss_clss = gluoncv.loss.SoftmaxCrossEntropyLoss(ignore_label=2)
         # L2Loss --> MSE
         loss_dist = gluon.loss.L2Loss() #  TODO: Maybe should put weights for distance
         loss_color = gluon.loss.L2Loss()
