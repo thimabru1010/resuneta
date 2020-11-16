@@ -52,7 +52,7 @@ def filter_patches(patches_img, patches_ref, percent):
         print(deforastation * 100)
         print('='*10)
         if len(class1) >= int((patch_size**2)*(percent/100)):
-        # if deforastation * 100 > percent:
+        # if deforastation * 100 >= percent:
             filt_patches_img.append(patches_img[i])
             filt_patches_ref.append(patches_ref[i])
 
@@ -247,7 +247,7 @@ print("="*40)
 
 # Percent of class deforestation
 percent = 2
-# 0 -> No-DEf, 1-> Def, 2 -> No considered
+# 0 -> No-DEf, 1-> Def, 2 -> No consideredj
 number_class = 3
 
 # Trainig tiles
@@ -305,8 +305,8 @@ weights = [weight0, weight1, 0]
 loss = weighted_categorical_crossentropy(weights)
 
 model = unet((rows, cols, channels), num_classes=3)
+model.compile(optimizer=adam, loss='categorical_crossentropy', metrics=['accuracy'])
 #model.compile(optimizer=adam, loss=loss, metrics=['accuracy'])
-model.compile(optimizer=adam, loss=loss, metrics=['accuracy'])
 # print model information
 model.summary()
 
