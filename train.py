@@ -54,11 +54,13 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
     acc_metric = mx.metric.Accuracy()
     mcc_metric = mx.metric.PCC()
     if args.optimizer == 'adam':
-        trainer = gluon.Trainer(net.collect_params(), 'adam',
-                                {'learning_rate': args.learning_rate})
+        optm = mx.optimizer.Adam(learning_rate=args.learning_rate,
+                                 wd=args.weight_decay)
     elif args.optimizer == 'sgd':
-        trainer = gluon.Trainer(net.collect_params(), 'sgd',
-                                {'learning_rate': args.learning_rate})
+        optm = mx.optimizer.SGD(learning_rate=args.learning_rate,
+                                wd=args.weight_decay,
+                                momemtum=args.momemtum)
+    trainer = gluon.Trainer(net.collect_params(), optm)
     min_loss = float('inf')
     early_cont = 0
     nclasses = args.num_classes
@@ -326,10 +328,12 @@ if __name__ == '__main__':
                         type=str, choices=['resuneta', 'unet'], default='resuneta')
     parser.add_argument("--multitasking", help="choose resunet-a multitasking \
                         or not", action='store_true')
+
     parser.add_argument("--dataset_type", help="choose which dataset to use",
                         type=str, choices=['amazon', 'ISPRS'], default='ISPRS')
     parser.add_argument("--debug", help="choose if you want to shoe debug logs",
                         action='store_true', default=False)
+
     parser.add_argument("--norm_path", help="Load a txt with normalization you want to apply.",
                         type=str, default=None)
     parser.add_argument("-rp", "--results_path", help="Path where to save logs and model checkpoint. \
@@ -340,24 +344,34 @@ if __name__ == '__main__':
                         type=str, default=None)
     parser.add_argument("-dp", "--dataset_path", help="Path where to load dataset",
                         type=str, default='./DATASETS/patch_size=256_stride=256_norm_type=1_data_aug=False')
+
     parser.add_argument("-bs", "--batch_size", help="Batch size on training",
                         type=int, default=4)
-    parser.add_argument("-lr", "--learning_rate",
-                        help="Learning rate on training",
-                        type=float, default=1e-4)
     parser.add_argument("--loss", help="choose which loss you want to use",
                         type=str, default='tanimoto',
                         choices=['weighted_cross_entropy', 'cross_entropy',
                                  'tanimoto'])
+
+    parser.add_argument("-lr", "--learning_rate",
+                        help="Learning rate on training",
+                        type=float, default=1e-4)
     parser.add_argument("-optm", "--optimizer",
                         help="Choose which optmizer to use",
                         type=str, choices=['adam', 'sgd'], default='adam')
+    parser.add_argument("--momentum", help="SGD momemtum's. \
+                        Should be used along with SGD optmizer",
+                        type=float, default=0.0)
+    parser.add_argument("-wd", "--weight_decay", help="Amount of weight decay",
+                        type=float, default=0.0)
+
     parser.add_argument("--num_classes", help="Number of classes",
                          type=int, default=5)
     parser.add_argument("--epochs", help="Number of epochs",
                         type=int, default=500)
+
     parser.add_argument("-ps", "--patch_size", help="Size of patches extracted",
                         type=int, default=256)
+
     parser.add_argument("--wbound", help="Boundary loss weight",
                         type=float, default=1.0)
     parser.add_argument("--wdist", help="Distance transform loss weight",
