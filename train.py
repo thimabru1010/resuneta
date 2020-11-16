@@ -53,7 +53,12 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
         loss_color = gluon.loss.L2Loss()
     acc_metric = mx.metric.Accuracy()
     mcc_metric = mx.metric.PCC()
-    trainer = gluon.Trainer(net.collect_params(), 'adam', {'learning_rate': 1e-4})
+    if args.optimizer == 'adam':
+        trainer = gluon.Trainer(net.collect_params(), 'adam',
+                                {'learning_rate': args.learning_rate})
+    elif args.optimizer == 'sgd':
+        trainer = gluon.Trainer(net.collect_params(), 'sgd',
+                                {'learning_rate': args.learning_rate})
     min_loss = float('inf')
     early_cont = 0
     nclasses = args.num_classes
