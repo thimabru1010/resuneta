@@ -57,7 +57,7 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
         optm = mx.optimizer.Adam(learning_rate=args.learning_rate,
                                  wd=args.weight_decay)
     elif args.optimizer == 'sgd':
-        optm = mx.optimizer.SGD(momemtum=args.momemtum, learning_rate=args.learning_rate,
+        optm = mx.optimizer.SGD(momentum=args.momentum, learning_rate=args.learning_rate,
                                 wd=args.weight_decay)
     trainer = gluon.Trainer(net.collect_params(), optm)
     min_loss = float('inf')
@@ -357,7 +357,7 @@ if __name__ == '__main__':
     parser.add_argument("-optm", "--optimizer",
                         help="Choose which optmizer to use",
                         type=str, choices=['adam', 'sgd'], default='adam')
-    parser.add_argument("--momemtum", help="SGD momemtum's. \
+    parser.add_argument("--momentum", help="SGD momemtum's. \
                         Should be used along with SGD optmizer",
                         type=float, default=0.0)
     parser.add_argument("-wd", "--weight_decay", help="Amount of weight decay",
