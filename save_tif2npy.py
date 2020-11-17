@@ -98,8 +98,9 @@ def load_tiff_image(patch):
 
 # Dataset TCC corrigido
 
-root_path = '/media/thimabru/ssd/TCC/imagens_satelite_dataset/cut_img_66_new'
-output_path = 'DATASETS/Amazon_npy_corrigido'
+# root_path = '/media/thimabru/ssd/TCC/imagens_satelite_dataset/cut_img_66_new'
+root_path = '/media/thimabru/ssd/TCC/imagens_satelite_dataset/cut_227_63'
+output_path = 'DATASETS/Amazon_npy_cut_test'
 if not os.path.exists(output_path):
     os.makedirs(output_path)
     os.makedirs(os.path.join(output_path, 'labels'))

@@ -39,7 +39,7 @@ def normalization(image, norm_type=1):
     if(norm_type == 3):
         scaler = MinMaxScaler(feature_range=(-1, 1))
     # scaler = scaler.fit(image_reshaped)
-    print(scaler.get_params())
+    # print(scaler.get_params())
     # print(scaler.mean_)
     image_normalized = scaler.fit_transform(image_reshaped)
     image_normalized1 = image_normalized.reshape(image.shape[0],image.shape[1],image.shape[2])

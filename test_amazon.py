@@ -369,26 +369,29 @@ check_memory()
 # input_patches = extract_patches(input_image, args.patch_size, img_type=1)
 # ref_patches = extract_patches(final_mask, args.patch_size, img_type=2)
 
-# Separate per tiles
-tile_number = np.ones((1040, 1680))
-mask_c_1 = np.concatenate((tile_number, 2*tile_number, 3*tile_number), axis=1)
-mask_c_2 = np.concatenate((4*tile_number, 5*tile_number, 6*tile_number), axis=1)
-mask_c_3 = np.concatenate((7*tile_number, 8*tile_number, 9*tile_number), axis=1)
-mask_c_4 = np.concatenate((10*tile_number, 11*tile_number, 12*tile_number), axis=1)
-mask_c_5 = np.concatenate((13*tile_number, 14*tile_number, 15*tile_number), axis=1)
-mask_tiles = np.concatenate((mask_c_1, mask_c_2, mask_c_3, mask_c_4, mask_c_5), axis=0)
+# # Separate per tiles
+# tile_number = np.ones((1040, 1680))
+# mask_c_1 = np.concatenate((tile_number, 2*tile_number, 3*tile_number), axis=1)
+# mask_c_2 = np.concatenate((4*tile_number, 5*tile_number, 6*tile_number), axis=1)
+# mask_c_3 = np.concatenate((7*tile_number, 8*tile_number, 9*tile_number), axis=1)
+# mask_c_4 = np.concatenate((10*tile_number, 11*tile_number, 12*tile_number), axis=1)
+# mask_c_5 = np.concatenate((13*tile_number, 14*tile_number, 15*tile_number), axis=1)
+# mask_tiles = np.concatenate((mask_c_1, mask_c_2, mask_c_3, mask_c_4, mask_c_5), axis=0)
+#
+# tst1 = 5 # 357
+# tst2 = 11 # 257
+# tst3 = 14
+# tst4 = 15
+# tst5 = 13
+# tst6 = 12
+#
+# # Testing tiles
+# tst_tiles = [tst1, tst2, tst3, tst4]
+# input_patches, ref_patches = extract_tiles2patches(tst_tiles, mask_tiles, input_image,
+#                                                    final_mask, args.patch_size)
 
-tst1 = 5 # 357
-tst2 = 11 # 257
-tst3 = 14
-tst4 = 15
-tst5 = 13
-tst6 = 12
-
-# Testing tiles
-tst_tiles = [tst1, tst2, tst3, tst4]
-input_patches, ref_patches = extract_tiles2patches(tst_tiles, mask_tiles, input_image,
-                                                   final_mask, args.patch_size)
+input_patches = extract_patches(input_image, args.patch_size, img_type=1)
+ref_patches = extract_patches(final_mask, args.patch_size, img_type=2)
 
 assert len(input_patches) == len(ref_patches), "Input patches and Reference patches have a different lenght"
 

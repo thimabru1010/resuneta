@@ -36,20 +36,32 @@ def add_tensorboard_scalars(summary_writer, result_path, epoch, task, loss, acc=
 def train_model(args, net, dataloader, devices, summary_writer, patience=10, delta=0.001):
     # [TODO] substitute args parsers for variables
     # softmax_cross_entropy = gluon.loss.SoftmaxCrossEntropyLoss()
+    if args.model == 'resuneta':
+        from_logits = True
+    else:
+        from_logits = False
+
     if args.loss == 'tanimoto':
         loss_clss = Tanimoto_with_dual()
         loss_dist = Tanimoto_with_dual()
         loss_color = Tanimoto_with_dual()
     elif args.loss == 'cross_entropy':
         # weights = mx.nd.array(np.array([1.1494, 33.3333, 0]), ctx=devices)
-        loss_clss = gluon.loss.SoftmaxCrossEntropyLoss(axis=1, from_logits=False,
+        loss_clss = gluon.loss.SoftmaxCrossEntropyLoss(axis=1,
+                                                       from_logits=from_logits,
                                                        sparse_label=False)
-        # loss_clss = ICNetLoss(weights=(1.1494, 33.3333, 0), ignore_label=2,
-        #                       height=args.patch_size, width=args.patch_size)
         # loss_clss = gluoncv.loss.SoftmaxCrossEntropyLoss(ignore_label=2)
         # L2Loss --> MSE
         loss_dist = gluon.loss.L2Loss() #  TODO: Maybe should put weights for distance
         loss_color = gluon.loss.L2Loss()
+    elif args.loss == 'focal':
+        loss_clss = gluoncv.loss.FocalLoss(axis=1, from_logits=from_logits,
+                                           sparse_label=False, alpha=args.alpha,
+                                           gamma=args.gamma)
+        # L2Loss --> MSE
+        loss_dist = gluon.loss.L2Loss() #  TODO: Maybe should put weights for distance transform
+        loss_color = gluon.loss.L2Loss()
+
     acc_metric = mx.metric.Accuracy()
     mcc_metric = mx.metric.PCC()
     if args.optimizer == 'adam':
@@ -345,10 +357,17 @@ if __name__ == '__main__':
 
     parser.add_argument("-bs", "--batch_size", help="Batch size on training",
                         type=int, default=4)
-    parser.add_argument("--loss", help="choose which loss you want to use",
+    parser.add_argument("--loss", help="choose which loss you want to use | \
+                        [weighted_categorical_cross_entropy, cross_entropy, \
+                        tanimoto with dual loss, focal loss]",
                         type=str, default='tanimoto',
-                        choices=['weighted_cross_entropy', 'cross_entropy',
-                                 'tanimoto'])
+                        choices=['wce', 'ce', 'tanimoto', 'focal'])
+    parser.add_argument("--alpha", help="Choose Alpha value for focal \
+                        loss if you use it.",
+                        type=float, default=0.25)
+    parser.add_argument("--gamma", help="Choose Gamma value for focal \
+                        loss if you use it.",
+                        type=int, default=2)
 
     parser.add_argument("-lr", "--learning_rate",
                         help="Learning rate on training",
