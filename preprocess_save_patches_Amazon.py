@@ -415,12 +415,12 @@ if __name__ == '__main__':
     print(f"Total Deforastation: {deforastation * 100}%")
 
     # Calculates weights for weighted cross entropy
-    # total_pixels = counts_dict[0] + counts_dict[1] + counts_dict[2]
-    # weight0 = total_pixels / counts_dict[0]
-    # weight1 = total_pixels / counts_dict[1]
-    # print('weights')
-    # print(weight0)
-    # print(weight1)
+    total_pixels = counts_dict[0] + counts_dict[1] + counts_dict[2]
+    weight0 = total_pixels / counts_dict[0]
+    weight1 = total_pixels / counts_dict[1]
+    print('weights')
+    print(weight0)
+    print(weight1)
 
     check_memory()
     del img_t1, img_t2, image_ref, past_ref1, past_ref2
