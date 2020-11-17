@@ -160,5 +160,7 @@ class UNet(nn.HybridBlock):
         conv9_2 = F.relu(conv9_2)
 
         out = self.conv_pred(conv9_2)
+        out = F.log_softmax(out, axis=1)
+        # print(out)
 
         return out

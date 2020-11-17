@@ -4,6 +4,7 @@ from resuneta.src.NormalizeDataset import Normalize
 from resuneta.src.ISPRSDataset import ISPRSDataset
 from resuneta.src.semseg_aug_cv2 import SemSegAugmentor_CV, ParamsRange
 from resuneta.nn.loss.loss import Tanimoto_with_dual
+from weighted_cross_entropy import WeightedSoftmaxCrossEntropyLoss
 import mxnet as mx
 from mxnet import gluon, autograd
 import argparse
@@ -16,6 +17,7 @@ import numpy as np
 # from gluoncv.loss import ICNetLoss
 import gluoncv
 import albumentations as A
+
 
 
 def add_tensorboard_scalars(summary_writer, result_path, epoch, task, loss, acc=None, val_mcc=None):
@@ -45,7 +47,7 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
         loss_clss = Tanimoto_with_dual()
         loss_dist = Tanimoto_with_dual()
         loss_color = Tanimoto_with_dual()
-    elif args.loss == 'cross_entropy':
+    elif args.loss == 'ce':
         # weights = mx.nd.array(np.array([1.1494, 33.3333, 0]), ctx=devices)
         loss_clss = gluon.loss.SoftmaxCrossEntropyLoss(axis=1,
                                                        from_logits=from_logits,
@@ -58,6 +60,19 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
         loss_clss = gluoncv.loss.FocalLoss(axis=1, from_logits=from_logits,
                                            sparse_label=False, alpha=args.alpha,
                                            gamma=args.gamma)
+        # L2Loss --> MSE
+        loss_dist = gluon.loss.L2Loss() #  TODO: Maybe should put weights for distance transform
+        loss_color = gluon.loss.L2Loss()
+    elif args.loss == 'wce':
+        weights = mx.nd.array(np.array([1.1494, 33.3333, 0]))
+        # weights = mx.nd.array([1.1494, 33.3333, 0.0])
+        # print(type(weights))
+        # weights = weights.copyto(devices)
+        # weights = [1.1494, 33.3333, 0]
+        loss_clss = WeightedSoftmaxCrossEntropyLoss(axis=1,
+                                                    from_logits=from_logits,
+                                                    sparse_label=False,
+                                                    class_weights=weights)
         # L2Loss --> MSE
         loss_dist = gluon.loss.L2Loss() #  TODO: Maybe should put weights for distance transform
         loss_color = gluon.loss.L2Loss()
@@ -131,6 +146,7 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
                     # logger.debug(f'Seg logits: {seg_logits}')
                     else:
                         seg_logits = net(X)
+                        # print(seg_logits)
                     seg_losses.append(loss_clss(seg_logits, y_seg))
                     # logger.debug(f'Seg CE value: {seg_losses[i]}')
                     acc_metric.update(mx.nd.argmax(seg_logits, axis=1), mx.nd.argmax(y_seg, axis=1))

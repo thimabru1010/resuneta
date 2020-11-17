@@ -135,7 +135,8 @@ class ResUNet_d6(HybridBlock):
                 if ( self.NClasses == 1):
                     self.ChannelAct = gluon.nn.HybridLambda(lambda F, x: F.sigmoid(x))
                 else:
-                    self.ChannelAct = gluon.nn.HybridLambda(lambda F, x: F.softmax(x, axis=1))
+                    self.ChannelAct = gluon.nn.HybridLambda(lambda F, x: F.log_softmax(x, axis=1))
+                    # self.ChannelAct = gluon.nn.HybridLambda(lambda F, x: F.softmax(x, axis=1))
 
             ones = mx.nd.ones((32, patch_size, patch_size, _NClasses))
             w = mx.nd.array([1, 33.333, 0])

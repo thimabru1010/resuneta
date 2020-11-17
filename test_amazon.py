@@ -293,6 +293,8 @@ parser.add_argument("--output_path",
                     type=str, default='results/preds_run')
 parser.add_argument("--model", help="Path to where save predictions",
                     type=str, default='resuneta', choices=['resuneta', 'unet'])
+parser.add_argument("--groups", help="Groups to be used in convolutions",
+                    type=int, default=1)
 args = parser.parse_args()
 
 # Test model
@@ -406,7 +408,7 @@ if args.model == 'resuneta':
                      patch_size=args.patch_size,
                      multitasking=args.use_multitasking)
 else:
-    net = UNet(args.num_classes, nfilter=64)
+    net = UNet(args.num_classes, groups=args.groups, nfilter=64)
     args.use_multitasking = False
 
 net.initialize()
