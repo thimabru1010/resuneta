@@ -65,6 +65,8 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
         loss_color = gluon.loss.L2Loss()
     elif args.loss == 'wce':
         weights = mx.nd.array(np.array([1.1060, 238.8582, 0]))
+        weights = weights / mx.nd.norm(weights)
+        print(f'New weights: {weights}')
         # weights = mx.nd.array([1.1494, 33.3333, 0.0])
         # print(type(weights))
         # weights = weights.copyto(devices)
