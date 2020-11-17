@@ -318,7 +318,7 @@ input_image = input_image[:5200, :5040]
 h_, w_, channels = input_image.shape
 print(f"Input image shape: {input_image.shape}")
 check_memory()
-scaler = normalization(input_image, norm_type=args.norm_type)
+scaler, input_image = normalization(input_image, norm_type=args.norm_type)
 check_memory()
 
 # Load deforastation reference ---------------------------------------------
@@ -432,10 +432,10 @@ for i in tqdm(range(len(input_patches))):
     img_float = input_patches[i].astype(np.float32)
     # plt.imshow(img.astype(np.uint8))
     # plt.show()
-    img_reshaped = img_float.reshape((img_float.shape[0] * img_float.shape[1]),
-                                   img_float.shape[2])
-    img_normed = scaler.transform(img_reshaped)
-    img_float = img_normed.reshape(img_float.shape[0], img_float.shape[1], img_float.shape[2])
+    # img_reshaped = img_float.reshape((img_float.shape[0] * img_float.shape[1]),
+    #                                img_float.shape[2])
+    # img_normed = scaler.transform(img_reshaped)
+    # img_float = img_normed.reshape(img_float.shape[0], img_float.shape[1], img_float.shape[2])
     img_float = img_float.transpose((2, 0, 1))
     img_normed = mx.ndarray.array(img_float)
     # plt.imshow(tnorm.restore(img_normed.asnumpy().transpose((1, 2, 0))))
@@ -564,7 +564,11 @@ if args.use_multitasking:
                                   figsize=(30, 30))
         # fig1, axes = plt.subplots(nrows=args.num_classes, ncols=8)
         # fig1.tight_layout()
-        img = input_patches[i]  # .astype(np.uint8)
+        image = input_patches[i]  # .astype(np.uint8)
+        image_reshaped = image.reshape((image.shape[0] * image.shape[1]),
+                                       image.shape[2])
+        image_unnormalized = scaler.reverse_transform(image_reshaped)
+        img = image_unnormalized.reshape(image.shape[0], image.shape[1], image.shape[2])
         img_t1 = img[:, :, 0:7]
         img_t2 = img[:, :, 7:]
         # Convert from BGR 2 RGB

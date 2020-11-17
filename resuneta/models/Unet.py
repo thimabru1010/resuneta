@@ -3,7 +3,7 @@ import mxnet.gluon.nn as nn
 
 
 class UNet(nn.HybridBlock):
-    def __init__(self, num_classes, nfilter=64, **kwargs):
+    def __init__(self, num_classes, nfilter=64, groups=1, **kwargs):
         # nn.HybridBlock.__init__(self, **kwargs)
         super(UNet, self).__init__(**kwargs)
         with self.name_scope():
@@ -13,39 +13,61 @@ class UNet(nn.HybridBlock):
             # Check this: https://www.quora.com/How-can-I-calculate-the-size-of-output-of-convolutional-layer
             # Encoder
             # self.encoder = nn.HybridSequential()
-            self.conv1_1 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
-            self.conv1_2 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
+            self.conv1_1 = nn.Conv2D(nfilter, kernel_size=3, padding=1,
+                                     groups=groups)
+            self.conv1_2 = nn.Conv2D(nfilter, kernel_size=3, padding=1,
+                                     groups=groups)
             nfilter *= 2 #  128
-            self.conv2_1 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
-            self.conv2_2 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
+            self.conv2_1 = nn.Conv2D(nfilter, kernel_size=3, padding=1,
+                                     groups=groups)
+            self.conv2_2 = nn.Conv2D(nfilter, kernel_size=3, padding=1,
+                                     groups=groups)
             nfilter *= 2 #  256
-            self.conv3_1 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
-            self.conv3_2 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
+            self.conv3_1 = nn.Conv2D(nfilter, kernel_size=3, padding=1,
+                                     groups=groups)
+            self.conv3_2 = nn.Conv2D(nfilter, kernel_size=3, padding=1,
+                                     groups=groups)
             nfilter *= 2 #  512
-            self.conv4_1 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
-            self.conv4_2 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
+            self.conv4_1 = nn.Conv2D(nfilter, kernel_size=3, padding=1,
+                                     groups=groups)
+            self.conv4_2 = nn.Conv2D(nfilter, kernel_size=3, padding=1,
+                                     groups=groups)
 
             nfilter *= 2 #  1024
-            self.conv5_1 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
-            self.conv5_2 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
+            self.conv5_1 = nn.Conv2D(nfilter, kernel_size=3, padding=1,
+                                     groups=groups)
+            self.conv5_2 = nn.Conv2D(nfilter, kernel_size=3, padding=1,
+                                     groups=groups)
 
             # Decoder
             nfilter //= 2 #  512
-            self.upconv6 = nn.Conv2D(nfilter, kernel_size=1, padding=0, use_bias=False)
-            self.conv6_1 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
-            self.conv6_2 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
+            self.upconv6 = nn.Conv2D(nfilter, kernel_size=1, padding=0,
+                                     use_bias=False, groups=groups)
+            self.conv6_1 = nn.Conv2D(nfilter, kernel_size=3, padding=1,
+                                     groups=groups)
+            self.conv6_2 = nn.Conv2D(nfilter, kernel_size=3, padding=1,
+                                     groups=groups)
             nfilter //= 2 #  256
-            self.upconv7 = nn.Conv2D(nfilter, kernel_size=1, padding=0, use_bias=False)
-            self.conv7_1 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
-            self.conv7_2 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
+            self.upconv7 = nn.Conv2D(nfilter, kernel_size=1, padding=0,
+                                     use_bias=False, groups=groups)
+            self.conv7_1 = nn.Conv2D(nfilter, kernel_size=3, padding=1,
+                                     groups=groups)
+            self.conv7_2 = nn.Conv2D(nfilter, kernel_size=3, padding=1,
+                                     groups=groups)
             nfilter //= 2 #  128
-            self.upconv8 = nn.Conv2D(nfilter, kernel_size=1, padding=0, use_bias=False)
-            self.conv8_1 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
-            self.conv8_2 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
+            self.upconv8 = nn.Conv2D(nfilter, kernel_size=1, padding=0,
+                                     use_bias=False, groups=groups)
+            self.conv8_1 = nn.Conv2D(nfilter, kernel_size=3, padding=1,
+                                     groups=groups)
+            self.conv8_2 = nn.Conv2D(nfilter, kernel_size=3, padding=1,
+                                     groups=groups)
             nfilter //= 2 #  64
-            self.upconv9 = nn.Conv2D(nfilter, kernel_size=1, padding=0, use_bias=False)
-            self.conv9_1 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
-            self.conv9_2 = nn.Conv2D(nfilter, kernel_size=3, padding=1)
+            self.upconv9 = nn.Conv2D(nfilter, kernel_size=1, padding=0,
+                                     use_bias=False, groups=groups)
+            self.conv9_1 = nn.Conv2D(nfilter, kernel_size=3, padding=1,
+                                     groups=groups)
+            self.conv9_2 = nn.Conv2D(nfilter, kernel_size=3, padding=1,
+                                     groups=groups)
 
             # self.pool = nn.MaxPool2D()
             self.pool1 = nn.MaxPool2D()

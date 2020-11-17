@@ -395,6 +395,9 @@ if __name__ == '__main__':
                         type=float, default=1.0)
     parser.add_argument("--wcolor", help="HSV transform loss weight",
                         type=float, default=1.0)
+
+    parser.add_argument("--groups", help="Groups to be used in convolutions",
+                        type=int, default=1)
     args = parser.parse_args()
 
     if not os.path.exists(os.path.join(args.results_path)):
@@ -432,7 +435,7 @@ if __name__ == '__main__':
                          from_logits=from_logits,
                          multitasking=args.multitasking)
     elif args.model == 'unet':
-        net = UNet(args.num_classes, nfilter=64)
+        net = UNet(args.num_classes, groups=args.groups, nfilter=64)
         args.multitasking = False
         # net = UNet(input_channels=14, output_channels=args.num_classes)
     net.initialize()
