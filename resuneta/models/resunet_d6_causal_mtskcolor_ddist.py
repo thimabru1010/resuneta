@@ -146,7 +146,7 @@ class ResUNet_d6(HybridBlock):
             # self.res = mx.sym.Variable('res')
             self.tensor = mx.sym.Variable('tensor')
             self.w = mx.sym.Variable('w')
-            self.res = (lambda F, tensor, w: F.broadcast_mul(tensor, w))
+            self.res = gluon.nn.HybridLambda(lambda F, tensor, w: F.broadcast_mul(tensor, w))
 
     def hybrid_forward(self, F, _input):
 
@@ -227,8 +227,9 @@ class ResUNet_d6(HybridBlock):
                 logits = F.log_softmax(logits, axis=1)
                 if self.weights is not None:
                     out = logits.transpose((0, 2, 3, 1))# .outputs
-                    res_ = self.res.bind(ctx=mx.cpu(), args={'w': self.weights, 'tensor': out})
-                    wlogits = res_.forward()
+                    # res_ = self.res.bind(ctx=mx.cpu(), args={'w': self.weights, 'tensor': out})
+                    # wlogits = res_.forward()
+                    wlogits = self.res(out, self.weights)
                     # wout = out.transpose((0, 2, 3, 1)) * self.weights.copyto(out.ctx)
                     # # get back to original shape
                     # wlogits = wout.transpose((0, 3, 1, 2))
