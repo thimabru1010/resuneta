@@ -454,6 +454,7 @@ if __name__ == '__main__':
         weights_ = mx.nd.array(np.array([0.2, 0.8, 0]))
         ones = mx.ndarray.ones(shape=(args.batch_size, args.patch_size, args.patch_size, 3))
         weights = (ones * weights_).transpose((0, 3, 1, 2))
+        print(weights.shape)
     else:
         weights = None
 
