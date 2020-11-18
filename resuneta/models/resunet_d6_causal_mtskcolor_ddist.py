@@ -229,13 +229,14 @@ class ResUNet_d6(HybridBlock):
                 if self.weights is not None:
                     out = logits
                     print(out.shape)
+                    print(self.weights.shape)
                     # print(out)
                     # print(out[0])
                     # # res_ = self.res.bind(ctx=mx.cpu(), args={'w': self.weights, 'tensor': out})
                     # wlogits = res_.forward()
                     # wlogits = self.res(out, self.weights)
                     # wout = out.transpose((0, 2, 3, 1)) * self.weights# .copyto(out.ctx)
-                    wout = F.elemwise_mul(out, self.weights.transpose((0, 3, 1, 2)))
+                    wout = F.elemwise_mul(out, self.weights)
                     wlogits = wout
                     # .transpose((0, 2, 3, 1))
                     # wout = mx.ndarray.broadcast_mul(out.transpose((0, 2, 3, 1)), self.weights)
