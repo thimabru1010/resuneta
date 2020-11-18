@@ -228,6 +228,7 @@ class ResUNet_d6(HybridBlock):
                 logits = F.log_softmax(logits, axis=1)
                 if self.weights is not None:
                     out = logits
+                    print(out.shape)
                     # print(out)
                     # print(out[0])
                     # # res_ = self.res.bind(ctx=mx.cpu(), args={'w': self.weights, 'tensor': out})
