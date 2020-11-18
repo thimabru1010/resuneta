@@ -133,7 +133,7 @@ class ResUNet_d6(HybridBlock):
 
             if not self.from_logits:
                 # Last activation, customization for binary results
-                if ( self.NClasses == 1):
+                if (self.NClasses == 1):
                     self.ChannelAct = gluon.nn.HybridLambda(lambda F, x: F.sigmoid(x))
                 else:
                     self.ChannelAct = gluon.nn.HybridLambda(lambda F, x: F.log_softmax(x, axis=1))
@@ -218,10 +218,11 @@ class ResUNet_d6(HybridBlock):
             #logits = F.softmax(logits,axis=1)
             if not self.from_logits:
                 # logits = F.broadcast_mul(logits, self.weights)
-                logits = self.ChannelAct(logits)
+                # logits = self.ChannelAct(logits)
+                logits = F.log_softmax(logits)
                 if self.weights is not None:
                     out = logits
-                    wout = F.broadcast_mul(out.transpose((0, 2, 3, 1)), mx.symbol.cast(self.weights, dtype='float32'))# .copyto(out.ctx)
+                    wout = out.transpose((0, 2, 3, 1)) * self.weights.copyto(out.ctx)
                     # get back to original shape
                     wlogits = wout.transpose((0, 3, 1, 2))
 
