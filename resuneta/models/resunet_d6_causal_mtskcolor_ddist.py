@@ -131,12 +131,12 @@ class ResUNet_d6(HybridBlock):
                 # # This conv will be only used for non multitasking mode
                 # self.seg_pointwise = gluon.nn.Conv2D(self.NClasses, kernel_size=1, padding=0)
 
-            if not self.from_logits:
-                # Last activation, customization for binary results
-                if (self.NClasses == 1):
-                    self.ChannelAct = gluon.nn.HybridLambda(lambda F, x: F.sigmoid(x))
-                else:
-                    self.ChannelAct = gluon.nn.HybridLambda(lambda F, x: F.log_softmax(x, axis=1))
+            # if not self.from_logits:
+            #     # Last activation, customization for binary results
+            #     if (self.NClasses == 1):
+            #         self.ChannelAct = gluon.nn.HybridLambda(lambda F, x: F.sigmoid(x))
+            #     else:
+            #         self.ChannelAct = gluon.nn.HybridLambda(lambda F, x: F.log_softmax(x, axis=1))
                     # self.ChannelAct = gluon.nn.HybridLambda(lambda F, x: F.softmax(x, axis=1))
 
             # ones = mx.nd.ones((32, patch_size, patch_size, _NClasses))
@@ -146,7 +146,7 @@ class ResUNet_d6(HybridBlock):
             # self.res = mx.sym.Variable('res')
             self.tensor = mx.sym.Variable('tensor')
             self.w = mx.sym.Variable('w')
-            self.res = gluon.nn.HybridLambda(lambda F, tensor, w: F.broadcast_mul(tensor, w))
+            # self.res = gluon.nn.HybridLambda(lambda F, tensor, w: F.broadcast_mul(tensor, w))
 
     def hybrid_forward(self, F, _input):
 
@@ -229,10 +229,10 @@ class ResUNet_d6(HybridBlock):
                     out = logits.transpose((0, 2, 3, 1))# .outputs
                     # res_ = self.res.bind(ctx=mx.cpu(), args={'w': self.weights, 'tensor': out})
                     # wlogits = res_.forward()
-                    wlogits = self.res(out, self.weights)
-                    # wout = out.transpose((0, 2, 3, 1)) * self.weights.copyto(out.ctx)
+                    # wlogits = self.res(out, self.weights)
+                    wout = out.transpose((0, 2, 3, 1)) * self.weights.copyto(out.ctx)
                     # # get back to original shape
-                    # wlogits = wout.transpose((0, 3, 1, 2))
+                    wlogits = wout.transpose((0, 3, 1, 2))
 
                     out = bound
                     wout = out.transpose((0, 2, 3, 1)) * self.weights.copyto(out.ctx)
