@@ -19,7 +19,8 @@ class ResUNet_d6(HybridBlock):
 
     def __init__(self, dataset_type, _nfilters_init,  _NClasses,
                  patch_size=256, verbose=True, from_logits=False,
-                 _norm_type='BatchNorm', multitasking=True,  **kwards):
+                 _norm_type='BatchNorm', multitasking=True, weights=None,
+                 **kwards):
         HybridBlock.__init__(self,**kwards)
 
         self.model_name = "ResUNet_d6"
@@ -138,10 +139,10 @@ class ResUNet_d6(HybridBlock):
                     self.ChannelAct = gluon.nn.HybridLambda(lambda F, x: F.log_softmax(x, axis=1))
                     # self.ChannelAct = gluon.nn.HybridLambda(lambda F, x: F.softmax(x, axis=1))
 
-            ones = mx.nd.ones((32, patch_size, patch_size, _NClasses))
-            w = mx.nd.array([1, 33.333, 0])
-            weights = mx.nd.broadcast_mul(ones, w)
-            self.weights = weights.transpose((0, 3, 1, 2))
+            # ones = mx.nd.ones((32, patch_size, patch_size, _NClasses))
+            # w = mx.nd.array([1, 33.333, 0])
+            # weights = mx.nd.broadcast_mul(ones, w)
+            self.weights = weights
 
     def hybrid_forward(self, F, _input):
 
@@ -218,6 +219,22 @@ class ResUNet_d6(HybridBlock):
             if not self.from_logits:
                 # logits = F.broadcast_mul(logits, self.weights)
                 logits = self.ChannelAct(logits)
+                if self.weights is not None:
+                    out = logits
+                    wout = out.transpose((0, 2, 3, 1)) * self.weights.copyto(out.ctx)
+                    # get back to original shape
+                    wlogits = wout.transpose((0, 3, 1, 2))
+
+                    out = bound
+                    wout = out.transpose((0, 2, 3, 1)) * self.weights.copyto(out.ctx)
+                    # get back to original shape
+                    wbound = wout.transpose((0, 3, 1, 2))
+
+                    out = dist
+                    wout = out.transpose((0, 2, 3, 1)) * self.weights.copyto(out.ctx)
+                    # get back to original shape
+                    wdist = wout.transpose((0, 3, 1, 2))
+                    return wlogits, wbound, wdist, convc
                 return logits, bound, dist, convc
             else:
                 return logits, bound, dist, convc

@@ -417,6 +417,10 @@ if __name__ == '__main__':
 
     parser.add_argument("--groups", help="Groups to be used in convolutions",
                         type=int, default=1)
+
+    parser.add_argument("--class_weights",
+                        help="Use class weights at the model after softmax",
+                        action='store_true')
     args = parser.parse_args()
 
     if not os.path.exists(os.path.join(args.results_path)):
@@ -446,15 +450,22 @@ if __name__ == '__main__':
     else:
         from_logits = True
 
+    if args.class_weights:
+        weights = mx.nd.array(np.array([0.2, 0.8, 0]))
+    else:
+        weights = None
+
     Nfilters_init = 32
     if args.model == 'resuneta':
         args.multitasking = True
         net = ResUNet_d6(args.dataset_type, Nfilters_init, args.num_classes,
                          patch_size=args.patch_size, verbose=args.debug,
                          from_logits=from_logits,
-                         multitasking=args.multitasking)
+                         multitasking=args.multitasking,
+                         weights=weights)
     elif args.model == 'unet':
-        net = UNet(args.num_classes, groups=args.groups, nfilter=64)
+        net = UNet(args.num_classes, groups=args.groups, nfilter=64,
+                   weights=weights)
         args.multitasking = False
         # net = UNet(input_channels=14, output_channels=args.num_classes)
     net.initialize()

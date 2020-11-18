@@ -269,11 +269,11 @@ def save_patches(patches_tr, patches_tr_ref, folder_path, scaler, data_aug, mode
             assert img_t2_patch_bgr.shape == (args.patch_size, args.patch_size, 3), "BGR T2 shape not matching"
 
             img_t1_patch_hsv = cv2.cvtColor(img_t1_patch_bgr,
-                                     cv2.COLOR_RGB2HSV).astype(np.float32)
+                                     cv2.COLOR_BGR2HSV).astype(np.float32)
             img_t1_patch_hsv = img_t1_patch_hsv * np.array([1./179, 1./255, 1./255])
 
             img_t2_patch_hsv = cv2.cvtColor(img_t2_patch_bgr,
-                                     cv2.COLOR_RGB2HSV).astype(np.float32)
+                                     cv2.COLOR_BGR2HSV).astype(np.float32)
             img_t2_patch_hsv = img_t2_patch_hsv * np.array([1./179, 1./255, 1./255])
             # print(hsv_patch.shape)
             img_both_patch_hsv = np.concatenate((img_t1_patch_hsv,

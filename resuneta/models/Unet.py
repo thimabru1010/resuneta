@@ -3,7 +3,7 @@ import mxnet.gluon.nn as nn
 
 
 class UNet(nn.HybridBlock):
-    def __init__(self, num_classes, nfilter=64, groups=1, **kwargs):
+    def __init__(self, num_classes, nfilter=64, groups=1, weights=None, **kwargs):
         # nn.HybridBlock.__init__(self, **kwargs)
         super(UNet, self).__init__(**kwargs)
         with self.name_scope():
@@ -80,6 +80,8 @@ class UNet(nn.HybridBlock):
             # Don't know why
             # self.conv_pred = nn.HybridSequential()
             # self.conv_pred.add(nn.Conv2D(num_classes, kernel_size=1))
+
+            self.weights = weights
 
 
     def hybrid_forward(self, F, x):
@@ -162,5 +164,10 @@ class UNet(nn.HybridBlock):
         out = self.conv_pred(conv9_2)
         out = F.log_softmax(out, axis=1)
         # print(out)
+        if self.weights is not None:
+            wout = out.transpose((0, 2, 3, 1)) * self.weights.copyto(out.ctx)
+            # get back to original shape
+            wout = wout.transpose((0, 3, 1, 2))
+            return wout
 
         return out
