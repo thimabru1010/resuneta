@@ -220,8 +220,8 @@ class ResUNet_d6(HybridBlock):
                 # logits = F.broadcast_mul(logits, self.weights)
                 logits = self.ChannelAct(logits)
                 if self.weights is not None:
-                    out = mx.nd.array(logits)
-                    wout = F.broadcast_mul(out.transpose((0, 2, 3, 1)), self.weights)# .copyto(out.ctx)
+                    out = logits
+                    wout = F.broadcast_mul(out.transpose((0, 2, 3, 1)), mx.symbol.cast(self.weights, dtype='float32')# .copyto(out.ctx)
                     # get back to original shape
                     wlogits = wout.transpose((0, 3, 1, 2))
 
