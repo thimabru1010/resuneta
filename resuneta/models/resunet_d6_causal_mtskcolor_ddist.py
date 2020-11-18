@@ -143,6 +143,10 @@ class ResUNet_d6(HybridBlock):
             # w = mx.nd.array([1, 33.333, 0])
             # weights = mx.nd.broadcast_mul(ones, w)
             self.weights = weights
+            # self.res = mx.sym.Variable('res')
+            self.tensor = mx.sym.Variable('tensor')
+            self.w = mx.sym.Variable('w')
+            self.res = self.tensor * self.w
 
     def hybrid_forward(self, F, _input):
 
@@ -222,10 +226,12 @@ class ResUNet_d6(HybridBlock):
                 # logits = self.ChannelAct(logits)
                 logits = F.log_softmax(logits, axis=1)
                 if self.weights is not None:
-                    out = logits
-                    wout = out.transpose((0, 2, 3, 1)) * self.weights.copyto(out.ctx)
-                    # get back to original shape
-                    wlogits = wout.transpose((0, 3, 1, 2))
+                    out = logits.transpose((0, 2, 3, 1))# .outputs
+                    res_ = self.res.bind(args={'w': self.weights, 'tensor': out})
+                    wlogits = res_.forward()
+                    # wout = out.transpose((0, 2, 3, 1)) * self.weights.copyto(out.ctx)
+                    # # get back to original shape
+                    # wlogits = wout.transpose((0, 3, 1, 2))
 
                     out = bound
                     wout = out.transpose((0, 2, 3, 1)) * self.weights.copyto(out.ctx)
