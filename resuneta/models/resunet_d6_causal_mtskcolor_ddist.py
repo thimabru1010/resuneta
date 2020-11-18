@@ -227,18 +227,19 @@ class ResUNet_d6(HybridBlock):
                 # logits = self.ChannelAct(logits)
                 logits = F.log_softmax(logits, axis=1)
                 if self.weights is not None:
-                    out = logits.asndarray()
-                    print(out)
-                    print(out[0])
-                    # res_ = self.res.bind(ctx=mx.cpu(), args={'w': self.weights, 'tensor': out})
+                    out = logits
+                    # print(out)
+                    # print(out[0])
+                    # # res_ = self.res.bind(ctx=mx.cpu(), args={'w': self.weights, 'tensor': out})
                     # wlogits = res_.forward()
                     # wlogits = self.res(out, self.weights)
                     # wout = out.transpose((0, 2, 3, 1)) * self.weights# .copyto(out.ctx)
-                    # wout = F.broadcast_mul(out.transpose((0, 2, 3, 1)), self.weights)
+                    wout = F.elemwise_mul(out, self.weights)
+                    wlogits = wout
                     # .transpose((0, 2, 3, 1))
-                    wout = mx.ndarray.broadcast_mul(out.transpose((0, 2, 3, 1)), self.weights)
-                    # # get back to original shape
-                    wlogits = wout.transpose((0, 3, 1, 2))
+                    # wout = mx.ndarray.broadcast_mul(out.transpose((0, 2, 3, 1)), self.weights)
+                    # # # get back to original shape
+                    # wlogits = wout.transpose((0, 3, 1, 2))
 
                     out = bound
                     wout = out.transpose((0, 2, 3, 1)) * self.weights.copyto(out.ctx)
