@@ -227,7 +227,7 @@ class ResUNet_d6(HybridBlock):
                 logits = F.log_softmax(logits, axis=1)
                 if self.weights is not None:
                     out = logits.transpose((0, 2, 3, 1))# .outputs
-                    res_ = self.res.bind(ctx=mx.gpu(), args={'w': self.weights, 'tensor': out})
+                    res_ = self.res.bind(ctx=mx.gpu(), args={'w': self.weights.copyto(mx.gpu()), 'tensor': out})
                     wlogits = res_.forward()
                     # wout = out.transpose((0, 2, 3, 1)) * self.weights.copyto(out.ctx)
                     # # get back to original shape
