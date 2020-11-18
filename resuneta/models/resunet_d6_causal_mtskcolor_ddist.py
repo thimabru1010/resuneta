@@ -226,7 +226,7 @@ class ResUNet_d6(HybridBlock):
                 # logits = self.ChannelAct(logits)
                 logits = F.log_softmax(logits, axis=1)
                 if self.weights is not None:
-                    out = logits.transpose((0, 2, 3, 1))# .outputs
+                    out = logits# .outputs
                     # res_ = self.res.bind(ctx=mx.cpu(), args={'w': self.weights, 'tensor': out})
                     # wlogits = res_.forward()
                     # wlogits = self.res(out, self.weights)
