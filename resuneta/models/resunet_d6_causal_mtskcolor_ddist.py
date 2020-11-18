@@ -146,7 +146,7 @@ class ResUNet_d6(HybridBlock):
             # self.res = mx.sym.Variable('res')
             self.tensor = mx.sym.Variable('tensor')
             self.w = mx.sym.Variable('w')
-            self.res = (lambda F, self.tensor, self.w: F.broadcast_mul(self.tensor, self.w))
+            self.res = (lambda F, tensor, w: F.broadcast_mul(tensor, w))
 
     def hybrid_forward(self, F, _input):
 
