@@ -232,7 +232,8 @@ class ResUNet_d6(HybridBlock):
                     # wlogits = res_.forward()
                     # wlogits = self.res(out, self.weights)
                     # wout = out.transpose((0, 2, 3, 1)) * self.weights# .copyto(out.ctx)
-                    wout = F.broadcast_mul(out.transpose((0, 2, 3, 1)), self.weights)
+                    # wout = F.broadcast_mul(out.transpose((0, 2, 3, 1)), self.weights)
+                    wout = F.elemwise_mul(out.transpose((0, 2, 3, 1)), self.weights)
                     # # get back to original shape
                     wlogits = wout.transpose((0, 3, 1, 2))
 
