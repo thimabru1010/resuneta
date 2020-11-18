@@ -201,7 +201,8 @@ class ResUNet_d6(HybridBlock):
             #dist   = F.softmax(dist,axis=1)
             if not self.from_logits:
                 # TODO: Maybe the output not squeezed by softmax can affect other tasks
-                dist = self.ChannelAct(dist)
+                # dist = self.ChannelAct(dist)
+                dist = F.log_softmax(dist, axis=1)
 
             # Then find boundaries
             bound = F.concat(conv, dist)
@@ -219,7 +220,7 @@ class ResUNet_d6(HybridBlock):
             if not self.from_logits:
                 # logits = F.broadcast_mul(logits, self.weights)
                 # logits = self.ChannelAct(logits)
-                logits = F.log_softmax(logits)
+                logits = F.log_softmax(logits, axis=1)
                 if self.weights is not None:
                     out = logits
                     wout = out.transpose((0, 2, 3, 1)) * self.weights.copyto(out.ctx)
