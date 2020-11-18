@@ -197,7 +197,7 @@ class ResUNet_d6(HybridBlock):
         convl = F.concat(conv1, UpConv5)
         conv = self.psp_2ndlast(convl)
         conv = F.relu(conv)
-        print(conv)
+        # print(conv)
 
         if self.multitasking:
             # logits
@@ -228,7 +228,8 @@ class ResUNet_d6(HybridBlock):
                 logits = F.log_softmax(logits, axis=1)
                 if self.weights is not None:
                     out = logits
-                    # print(out[0])
+                    print(out)
+                    print(out[0])
                     # res_ = self.res.bind(ctx=mx.cpu(), args={'w': self.weights, 'tensor': out})
                     # wlogits = res_.forward()
                     # wlogits = self.res(out, self.weights)
