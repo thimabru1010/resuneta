@@ -447,28 +447,6 @@ if __name__ == '__main__':
     mask_c_5 = np.concatenate((13*tile_number, 14*tile_number, 15*tile_number), axis=1)
     mask_tiles = np.concatenate((mask_c_1, mask_c_2, mask_c_3, mask_c_4, mask_c_5), axis=0)
 
-    mask_tr_val = np.zeros((mask_tiles.shape))
-    tr1 = 2
-    tr2 = 8 # mesma bosta
-    tr3 = 13
-    # tr3 = 2
-    tr4 = 7
-    tr5 = 11
-    tr6 = 1
-    tr7 = 14
-    tr8 = 3
-    tr9 = 9
-    tr10 = 6
-    # tr10 = 10
-
-    val1 = 5
-    # val1 = 13
-    val2 = 10
-    val3 = 4
-    # Putting 15 and 12 to validation but don't have expressive deforastation %
-    val5 = 15
-    val6 = 12
-
     # tst1 = 5 # 357
     # tst2 = 11 # 257
     # tst3 = 14
@@ -478,9 +456,11 @@ if __name__ == '__main__':
 
     # all_tiles = [i for i in range(1, 16)]
     # tr_tiles = [tr2, tr3, tr4, tr6, tr8, tr9]
-    tr_tiles = [2, 8, 13, 7, 11, 1, 14, 13, 9, 6, 10]
+    # tr_tiles = [2, 8, 13, 7, 11, 1, 14, 13, 9, 6, 10]
+    tr_tiles = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     # val_tiles = [val3, val4]
-    val_tiles = [5, 4, 15, 12]
+    # val_tiles = [5, 4, 15, 12]
+    val_tiles = [11, 12, 13, 14, 15]
     all_tiles = tr_tiles + val_tiles
     print(f'All tiles: {all_tiles}')
     # final_mask[img_mask_ref == -99] = -1
