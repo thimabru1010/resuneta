@@ -116,6 +116,7 @@ class WeightedSoftmaxCrossEntropyLoss(Loss):
         self._axis = axis
         self._sparse_label = sparse_label
         self._from_logits = from_logits
+        print(f'Checing WCE from logits: {self._from_logits}')
         # self._class_weights = mx.nd.array(class_weights)
         self._class_weights = class_weights
 
