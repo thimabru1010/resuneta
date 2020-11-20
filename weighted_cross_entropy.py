@@ -140,7 +140,8 @@ class WeightedSoftmaxCrossEntropyLoss(Loss):
             wres = res.transpose((0, 2, 3, 1)) * self._class_weights.copyto(res.ctx)
             # get back to original shape
             wres = wres.transpose((0, 3, 1, 2))
-            loss = -(wres).sum(axis=self._axis, keepdims=True)
+            # loss = -(wres).sum(axis=self._axis, keepdims=True)
+            loss = (wres).sum(axis=self._axis, keepdims=True)
         # loss = _apply_weighting(F, loss, self._weight, sample_weight)
         # if is_np_array():
         if F is mx.ndarray:
