@@ -128,7 +128,8 @@ class WeightedSoftmaxCrossEntropyLoss(Loss):
             pick = F.pick
         if not self._from_logits:
             # pred = log_softmax(pred, self._axis)
-            pred = F.softmax(pred, self._axis)
+            pred = F.log_softmax(pred, self._axis)
+            print(pred)
         if self._sparse_label:
             loss = -pick(pred, label, axis=self._axis, keepdims=True)
         else:
