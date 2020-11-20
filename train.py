@@ -447,9 +447,9 @@ if __name__ == '__main__':
         devices.append(mx.gpu(i))
 
     if args.loss == 'tanimoto':
-        from_logits = False
-    else:
         from_logits = True
+    else:
+        from_logits = False
 
     if args.class_weights:
         weights = mx.nd.array(np.array([0.2, 0.8, 0]))

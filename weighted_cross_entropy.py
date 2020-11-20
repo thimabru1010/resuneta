@@ -130,7 +130,7 @@ class WeightedSoftmaxCrossEntropyLoss(Loss):
         if not self._from_logits:
             # pred = log_softmax(pred, self._axis)
             pred = F.log_softmax(pred, self._axis)
-            print(pred)
+            # print(pred)
         if self._sparse_label:
             loss = -pick(pred, label, axis=self._axis, keepdims=True)
         else:
@@ -145,7 +145,7 @@ class WeightedSoftmaxCrossEntropyLoss(Loss):
         # loss = _apply_weighting(F, loss, self._weight, sample_weight)
         # if is_np_array():
         if F is mx.ndarray:
-            return -1 * loss.mean(axis=tuple(range(1, loss.ndim)))
+            return loss.mean(axis=tuple(range(1, loss.ndim)))
         else:
             return F.npx.batch_flatten(loss).mean(axis=1)
         # else:

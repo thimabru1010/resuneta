@@ -202,44 +202,55 @@ class ResUNet_d6(HybridBlock):
         # if self.multitasking:
         # logits
         # 1st find distance map, skeleton like, topology info
-        dist_logits = self.distance_logits(convl) # Modification here, do not use max pooling for distance
+        dist = self.distance_logits(convl) # Modification here, do not use max pooling for distance
         # TODO: Maybe the output not squeezed by softmax can affect other tasks
-        dist = self.ChannelAct(dist_logits)
+        dist_logits = self.ChannelAct(dist)
         # dist   = F.softmax(dist,axis=1)
         # dist = F.log_softmax(dist, axis=1)
 
         # Then find boundaries
         bound = F.concat(conv, dist)
-        bound_logits = self.bound_logits(bound)
-        bound = F.sigmoid(bound_logits) # Boundaries are not mutually exclusive the way I am creating them.
+        bound = self.bound_logits(bound)
+        bound_logits = F.sigmoid(bound) # Boundaries are not mutually exclusive the way I am creating them.
         # Color prediction (HSV --> cv2)
         convc_logits = self.color_logits(convl)
         # HSV (cv2) color prediction
         convc = F.sigmoid(convc_logits) # This will be for self-supervised as well
 
         # Finally, find segmentation mask
-        logits = F.concat(conv, bound, dist)
-        seg_logits = self.logits(logits)
+        seg = F.concat(conv, bound, dist)
+        seg = self.logits(seg)
         #logits = F.softmax(logits,axis=1)
-        logits = self.ChannelAct(seg_logits)
+        seg_logits = self.ChannelAct(seg)
         if not self.from_logits:
+            if self.weights is not None:
+                # print(out.shape)
+                # print(self.weights.shape)
+                wseg = F.elemwise_mul(seg, self.weights)
+
+                # Should check if has to be applied before or after sigmoid
+                wbound = F.elemwise_mul(bound, self.weights)
+
+                wdist = F.elemwise_mul(dist, self.weights)
+                return wseg, wbound, wdist, convc
+
+
+            return seg, bound, dist, convc
+        else:
             # logits = F.broadcast_mul(logits, self.weights)
             if self.weights is not None:
                 # print(out.shape)
                 # print(self.weights.shape)
-                wlogits = F.elemwise_mul(logits, self.weights)
-
-                wbound = F.elemwise_mul(bound, self.weights)
+                wlogits = F.elemwise_mul(seg_logits, self.weights)
 
                 # Should check if has to be applied before or after sigmoid
-                wdist = F.elemwise_mul(dist, self.weights)
-                return wlogits, wbound, wdist, convc
+                wbound_logits = F.elemwise_mul(bound_logits, self.weights)
 
-            return logits, bound, dist, convc
-        else:
+                wdist_logits = F.elemwise_mul(dist_logits, self.weights)
+                return wlogits, wbound_logits, wdist_logits, convc
             # Return without apply any sofmtax
             # regressions are still returned after sigmoid
-            return seg_logits, bound_logits, dist, convc
+            return seg_logits, bound_logits, dist_logits, convc
         # else:
         #     seg_logits = self.seg_pointwise(conv)
         #     seg_logits = self.ChannelAct(seg_logits)
