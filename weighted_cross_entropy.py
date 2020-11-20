@@ -145,7 +145,7 @@ class WeightedSoftmaxCrossEntropyLoss(Loss):
         # loss = _apply_weighting(F, loss, self._weight, sample_weight)
         # if is_np_array():
         if F is mx.ndarray:
-            return loss.mean(axis=tuple(range(1, loss.ndim)))
+            return -1 * loss.mean(axis=tuple(range(1, loss.ndim)))
         else:
             return F.npx.batch_flatten(loss).mean(axis=1)
         # else:
