@@ -457,6 +457,7 @@ if __name__ == '__main__':
         print(weights.shape)
     else:
         weights = None
+        weights_elemwise = None
 
     Nfilters_init = 32
     if args.model == 'resuneta':
