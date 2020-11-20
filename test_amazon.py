@@ -105,14 +105,14 @@ def pred_recostruction(patch_size, pred_labels, binary_img_test_ref, img_type=1,
     if img_type == 1:
         stride = patch_size
 
-        height, width, _ = binary_img_test_ref.shape
+        height, width = binary_img_test_ref.shape
 
         num_patches_h = height // stride
         num_patches_w = width // stride
         #print(num_patches_h, num_patches_w)
 
         new_shape = (height, width)
-        img_reconstructed = np.full(new_shape, -1)
+        img_reconstructed = np.full(new_shape, -1, dtype=np.float32)
         # cont = 0
         # rows
         for h in range(num_patches_h):
@@ -459,16 +459,20 @@ for i in tqdm(range(len(input_patches))):
 
 print('='*40)
 print('[TEST]')
+print('aquiiiiiiiiiiiiii')
 
 if args.use_multitasking:
     seg_preds = gather_preds(seg_preds)
     print(f'seg shape: {seg_preds.shape}')
+    seg_preds_def = seg_preds[:, :, :, 1]
     seg_pred = np.argmax(seg_preds, axis=-1)
     print(f'seg shape argmax: {seg_pred.shape}')
     patches_pred = [seg_preds, gather_preds(bound_preds), gather_preds(dist_preds), gather_preds(color_preds)]
 else:
     seg_preds = gather_preds(seg_preds)
     print(f'seg shape: {seg_preds.shape}')
+    seg_preds_def = seg_preds[:, :, :, 1]
+    print(seg_preds_def.shape)
     seg_pred = np.argmax(seg_preds, axis=-1)
     print(f'seg shape argmax: {seg_pred.shape}')
 
@@ -537,6 +541,10 @@ if not os.path.exists(args.output_path):
 # print(tst_tiles)
 # tst_tiles.reverse()
 # print(tst_tiles)
+print(np.squeeze(final_mask, axis=-1).shape)
+print(seg_preds_def)
+img_reconstructed, _ = pred_recostruction(args.patch_size, seg_preds_def,
+                                       np.squeeze(final_mask, axis=-1))
 # img_reconstructed = reconstruct_patches2tiles(tst_tiles, mask_tiles, final_mask,
 #                                               args.patch_size, seg_pred)
 # img_reconstructed_rgb = convert_preds2rgb(img_reconstructed,
@@ -545,8 +553,23 @@ if not os.path.exists(args.output_path):
 #
 # plt.imsave(os.path.join(args.output_path, 'pred_seg_reconstructed.jpeg'),
 #            img_reconstructed_rgb)
-#
-# print('Image Saved!')
+print(img_reconstructed.shape)
+print(img_reconstructed)
+fig, axes = plt.subplots(nrows=1, ncols=2,
+                          figsize=(10, 5))
+axes[0].set_title('Reference')
+axes[1].set_title('Def pred')
+
+axes[0].imshow(final_mask[:, :, 0])
+im = axes[1].imshow(img_reconstructed, cmap='gray')
+colorbar(im, axes[1], fig)
+plt.show()
+plt.close()
+fig.savefig(os.path.join(args.output_path, 'seg_pred_def&ref.jpg'))
+
+plt.imsave('seg_pred_def2.jpeg', img_reconstructed)
+
+print('Image Saved!')
 
 print(f'Input patches: {type(input_patches)}')
 print(f'Input patches: {input_patches.dtype}')

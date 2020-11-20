@@ -131,13 +131,13 @@ class ResUNet_d6(HybridBlock):
                 # # This conv will be only used for non multitasking mode
                 # self.seg_pointwise = gluon.nn.Conv2D(self.NClasses, kernel_size=1, padding=0)
 
-            # if not self.from_logits:
-            #     # Last activation, customization for binary results
-            #     if (self.NClasses == 1):
-            #         self.ChannelAct = gluon.nn.HybridLambda(lambda F, x: F.sigmoid(x))
-            #     else:
-            #         self.ChannelAct = gluon.nn.HybridLambda(lambda F, x: F.log_softmax(x, axis=1))
-                    # self.ChannelAct = gluon.nn.HybridLambda(lambda F, x: F.softmax(x, axis=1))
+            if not self.from_logits:
+                # Last activation, customization for binary results
+                if (self.NClasses == 1):
+                    self.ChannelAct = gluon.nn.HybridLambda(lambda F, x: F.sigmoid(x))
+                else:
+                    self.ChannelAct = gluon.nn.HybridLambda(lambda F, x: F.log_softmax(x, axis=1))
+                    self.ChannelAct = gluon.nn.HybridLambda(lambda F, x: F.softmax(x, axis=1))
 
             # ones = mx.nd.ones((32, patch_size, patch_size, _NClasses))
             # w = mx.nd.array([1, 33.333, 0])
@@ -206,8 +206,8 @@ class ResUNet_d6(HybridBlock):
             #dist   = F.softmax(dist,axis=1)
             if not self.from_logits:
                 # TODO: Maybe the output not squeezed by softmax can affect other tasks
-                # dist = self.ChannelAct(dist)
-                dist = F.log_softmax(dist, axis=1)
+                dist = self.ChannelAct(dist)
+                # dist = F.log_softmax(dist, axis=1)
 
             # Then find boundaries
             bound = F.concat(conv, dist)
@@ -224,8 +224,8 @@ class ResUNet_d6(HybridBlock):
             #logits = F.softmax(logits,axis=1)
             if not self.from_logits:
                 # logits = F.broadcast_mul(logits, self.weights)
-                # logits = self.ChannelAct(logits)
-                logits = F.log_softmax(logits, axis=1)
+                logits = self.ChannelAct(logits)
+                # logits = F.log_softmax(logits, axis=1)
                 if self.weights is not None:
                     out = logits
                     print(out.shape)

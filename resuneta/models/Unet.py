@@ -162,7 +162,8 @@ class UNet(nn.HybridBlock):
         conv9_2 = F.relu(conv9_2)
 
         out = self.conv_pred(conv9_2)
-        out = F.log_softmax(out, axis=1)
+        # out = F.log_softmax(out, axis=1)
+        out = F.softmax(out, axis=1)
         # print(out)
         if self.weights is not None:
             wout = out.transpose((0, 2, 3, 1)) * self.weights.copyto(out.ctx)
