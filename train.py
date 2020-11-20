@@ -451,9 +451,9 @@ if __name__ == '__main__':
         from_logits = True
 
     if args.class_weights:
-        weights_ = mx.nd.array(np.array([0.2, 0.8, 0]))
+        weights = mx.nd.array(np.array([0.2, 0.8, 0]))
         ones = mx.ndarray.ones(shape=(args.batch_size, args.patch_size, args.patch_size, 3))
-        weights = (ones * weights_).transpose((0, 3, 1, 2))
+        weights_elemwise = (ones * weights).transpose((0, 3, 1, 2))
         print(weights.shape)
     else:
         weights = None
@@ -465,7 +465,7 @@ if __name__ == '__main__':
                          patch_size=args.patch_size, verbose=args.debug,
                          from_logits=from_logits,
                          multitasking=args.multitasking,
-                         weights=weights)
+                         weights=weights_elemwise)
     elif args.model == 'unet':
         net = UNet(args.num_classes, groups=args.groups, nfilter=64,
                    weights=weights)
