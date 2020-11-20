@@ -72,6 +72,7 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
         # weights = weights.copyto(devices)
         # weights = [1.1494, 33.3333, 0]
         print(f'New weights: {weights}')
+        print(f'Checking from logits: {from_logits}')
         loss_clss = WeightedSoftmaxCrossEntropyLoss(axis=1,
                                                     from_logits=from_logits,
                                                     sparse_label=False,
