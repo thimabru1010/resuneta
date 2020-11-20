@@ -164,11 +164,20 @@ class UNet(nn.HybridBlock):
         conv9_2 = self.conv9_2(conv9_1)
         conv9_2 = F.relu(conv9_2)
 
-        out_logits = self.conv_pred(conv9_2)
+        out = self.conv_pred(conv9_2)
         # out = F.log_softmax(out, axis=1)
-        out = F.softmax(out_logits, axis=1)
+        out_logits = F.softmax(out, axis=1)
         # print(out)
         if not self.from_logits:
+            if self.weights is not None:
+                out = out_logits
+                wout = out.transpose((0, 2, 3, 1)) * self.weights.copyto(out.ctx)
+                # get back to original shape
+                wout = wout.transpose((0, 3, 1, 2))
+                # wout = F.elemwise_mul(out, self.weights)
+                return wout
+            return out_logits
+        else:
             if self.weights is not None:
                 wout = out.transpose((0, 2, 3, 1)) * self.weights.copyto(out.ctx)
                 # get back to original shape
@@ -176,5 +185,3 @@ class UNet(nn.HybridBlock):
                 # wout = F.elemwise_mul(out, self.weights)
                 return wout
             return out
-        else:
-            return out_logits
