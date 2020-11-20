@@ -131,13 +131,13 @@ class ResUNet_d6(HybridBlock):
                 # # This conv will be only used for non multitasking mode
                 # self.seg_pointwise = gluon.nn.Conv2D(self.NClasses, kernel_size=1, padding=0)
 
-            if not self.from_logits:
-                # Last activation, customization for binary results
-                if (self.NClasses == 1):
-                    self.ChannelAct = gluon.nn.HybridLambda(lambda F, x: F.sigmoid(x))
-                else:
-                    self.ChannelAct = gluon.nn.HybridLambda(lambda F, x: F.log_softmax(x, axis=1))
-                    self.ChannelAct = gluon.nn.HybridLambda(lambda F, x: F.softmax(x, axis=1))
+            # if not self.from_logits:
+            # Last activation, customization for binary results
+            if (self.NClasses == 1):
+                self.ChannelAct = gluon.nn.HybridLambda(lambda F, x: F.sigmoid(x))
+            else:
+                self.ChannelAct = gluon.nn.HybridLambda(lambda F, x: F.log_softmax(x, axis=1))
+                self.ChannelAct = gluon.nn.HybridLambda(lambda F, x: F.softmax(x, axis=1))
 
             # ones = mx.nd.ones((32, patch_size, patch_size, _NClasses))
             # w = mx.nd.array([1, 33.333, 0])
