@@ -178,19 +178,19 @@ class ResUNet_d6(HybridBlock):
         middle = F.relu(middle) # Activation of middle layers
 
 
-        UpComb1 = self.UpComb1(middle,Dn5)
+        UpComb1 = self.UpComb1(middle, Dn5)
         UpConv1 = self.UpConv1(UpComb1)
 
-        UpComb2 = self.UpComb2(UpConv1,Dn4)
+        UpComb2 = self.UpComb2(UpConv1, Dn4)
         UpConv2 = self.UpConv2(UpComb2)
 
-        UpComb3 = self.UpComb3(UpConv2,Dn3)
+        UpComb3 = self.UpComb3(UpConv2, Dn3)
         UpConv3 = self.UpConv3(UpComb3)
 
-        UpComb4 = self.UpComb4(UpConv3,Dn2)
+        UpComb4 = self.UpComb4(UpConv3, Dn2)
         UpConv4 = self.UpConv4(UpComb4)
 
-        UpComb5 = self.UpComb5(UpConv4,Dn1)
+        UpComb5 = self.UpComb5(UpConv4, Dn1)
         UpConv5 = self.UpConv5(UpComb5)
 
          # second last layer
@@ -199,64 +199,48 @@ class ResUNet_d6(HybridBlock):
         conv = F.relu(conv)
         # print(conv)
 
-        if self.multitasking:
-            # logits
-            # 1st find distance map, skeleton like, topology info
-            dist = self.distance_logits(convl) # Modification here, do not use max pooling for distance
-            #dist   = F.softmax(dist,axis=1)
-            if not self.from_logits:
-                # TODO: Maybe the output not squeezed by softmax can affect other tasks
-                dist = self.ChannelAct(dist)
-                # dist = F.log_softmax(dist, axis=1)
+        # if self.multitasking:
+        # logits
+        # 1st find distance map, skeleton like, topology info
+        dist_logits = self.distance_logits(convl) # Modification here, do not use max pooling for distance
+        # TODO: Maybe the output not squeezed by softmax can affect other tasks
+        dist = self.ChannelAct(dist_logits)
+        # dist   = F.softmax(dist,axis=1)
+        # dist = F.log_softmax(dist, axis=1)
 
-            # Then find boundaries
-            bound = F.concat(conv, dist)
-            bound = self.bound_logits(bound)
-            bound  = F.sigmoid(bound) # Boundaries are not mutually exclusive the way I am creating them.
-            # Color prediction (HSV --> cv2)
-            convc = self.color_logits(convl)
-            # HSV (cv2) color prediction
-            convc = F.sigmoid(convc) # This will be for self-supervised as well
+        # Then find boundaries
+        bound = F.concat(conv, dist)
+        bound_logits = self.bound_logits(bound)
+        bound = F.sigmoid(bound_logits) # Boundaries are not mutually exclusive the way I am creating them.
+        # Color prediction (HSV --> cv2)
+        convc_logits = self.color_logits(convl)
+        # HSV (cv2) color prediction
+        convc = F.sigmoid(convc_logits) # This will be for self-supervised as well
 
-            # Finally, find segmentation mask
-            logits = F.concat(conv, bound, dist)
-            logits = self.logits(logits)
-            #logits = F.softmax(logits,axis=1)
-            if not self.from_logits:
-                # logits = F.broadcast_mul(logits, self.weights)
-                logits = self.ChannelAct(logits)
-                # logits = F.log_softmax(logits, axis=1)
-                if self.weights is not None:
-                    out = logits
-                    print(out.shape)
-                    print(self.weights.shape)
-                    # print(out)
-                    # print(out[0])
-                    # # res_ = self.res.bind(ctx=mx.cpu(), args={'w': self.weights, 'tensor': out})
-                    # wlogits = res_.forward()
-                    # wlogits = self.res(out, self.weights)
-                    # wout = out.transpose((0, 2, 3, 1)) * self.weights# .copyto(out.ctx)
-                    wout = F.elemwise_mul(out, self.weights)
-                    wlogits = wout
-                    # .transpose((0, 2, 3, 1))
-                    # wout = mx.ndarray.broadcast_mul(out.transpose((0, 2, 3, 1)), self.weights)
-                    # # # get back to original shape
-                    # wlogits = wout.transpose((0, 3, 1, 2))
+        # Finally, find segmentation mask
+        logits = F.concat(conv, bound, dist)
+        seg_logits = self.logits(logits)
+        #logits = F.softmax(logits,axis=1)
+        logits = self.ChannelAct(seg_logits)
+        if not self.from_logits:
+            # logits = F.broadcast_mul(logits, self.weights)
+            if self.weights is not None:
+                # print(out.shape)
+                # print(self.weights.shape)
+                wlogits = F.elemwise_mul(logits, self.weights)
 
-                    out = bound
-                    wout = out.transpose((0, 2, 3, 1)) * self.weights.copyto(out.ctx)
-                    # get back to original shape
-                    wbound = wout.transpose((0, 3, 1, 2))
+                wbound = F.elemwise_mul(bound, self.weights)
 
-                    out = dist
-                    wout = out.transpose((0, 2, 3, 1)) * self.weights.copyto(out.ctx)
-                    # get back to original shape
-                    wdist = wout.transpose((0, 3, 1, 2))
-                    return wlogits, wbound, wdist, convc
-                return logits, bound, dist, convc
-            else:
-                return logits, bound, dist, convc
+                # Should check if has to be applied before or after sigmoid
+                wdist = F.elemwise_mul(dist, self.weights)
+                return wlogits, wbound, wdist, convc
+
+            return logits, bound, dist, convc
         else:
-            seg_logits = self.seg_pointwise(conv)
-            seg_logits = self.ChannelAct(seg_logits)
-            return seg_logits
+            # Return without apply any sofmtax
+            # regressions are still returned after sigmoid
+            return seg_logits, bound_logits, dist, convc
+        # else:
+        #     seg_logits = self.seg_pointwise(conv)
+        #     seg_logits = self.ChannelAct(seg_logits)
+        #     return seg_logits

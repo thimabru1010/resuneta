@@ -592,7 +592,7 @@ if args.use_multitasking:
         image = input_patches[i]  # .astype(np.uint8)
         image_reshaped = image.reshape((image.shape[0] * image.shape[1]),
                                        image.shape[2])
-        image_unnormalized = scaler.reverse_transform(image_reshaped)
+        image_unnormalized = scaler.inverse_transform(image_reshaped)
         img = image_unnormalized.reshape(image.shape[0], image.shape[1], image.shape[2])
         img_t1 = img[:, :, 0:7]
         img_t2 = img[:, :, 7:]
