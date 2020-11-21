@@ -42,6 +42,8 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
         from_logits = True
     else:
         from_logits = False
+        
+    print(f'Checking from logits: {from_logits}')
 
     if args.loss == 'tanimoto':
         loss_clss = Tanimoto_with_dual()
@@ -70,7 +72,6 @@ def train_model(args, net, dataloader, devices, summary_writer, patience=10, del
         # weights = mx.nd.array(np.array([0.5, 1.0, 0]))
         # weights = mx.nd.array([1.1494, 33.3333, 0.0])
         print(f'New weights: {weights}')
-        print(f'Checking from logits: {from_logits}')
         loss_clss = WeightedSoftmaxCrossEntropyLoss(axis=1,
                                                     from_logits=from_logits,
                                                     sparse_label=False,
