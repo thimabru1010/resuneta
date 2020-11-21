@@ -23,7 +23,7 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 from tensorflow.keras.utils import to_categorical
 import itertools
-
+from metrics_amazon import compute_def_metrics
 
 def plot_confusion_matrix(cm, classes,
                           normalize=False,
@@ -561,7 +561,7 @@ axes[0].set_title('Reference')
 axes[1].set_title('Def pred')
 
 axes[0].imshow(final_mask[:, :, 0])
-im = axes[1].imshow(img_reconstructed, cmap='gray')
+im = axes[1].imshow(img_reconstructed)
 colorbar(im, axes[1], fig)
 plt.show()
 plt.close()
