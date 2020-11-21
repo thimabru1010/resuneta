@@ -457,10 +457,11 @@ if __name__ == '__main__':
     # all_tiles = [i for i in range(1, 16)]
     # tr_tiles = [tr2, tr3, tr4, tr6, tr8, tr9]
     # tr_tiles = [2, 8, 13, 7, 11, 1, 14, 13, 9, 6, 10]
-    tr_tiles = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+    tr_tiles = [1, 2, 3, 5, 6, 7, 8, 10, 11, 14]
     # val_tiles = [val3, val4]
     # val_tiles = [5, 4, 15, 12]
-    val_tiles = [12, 13, 14, 15]
+    # val_tiles = [12, 13, 14, 15]
+    val_tiles = [4, 9, 14]
     all_tiles = tr_tiles + val_tiles
     print(f'All tiles: {all_tiles}')
     # final_mask[img_mask_ref == -99] = -1
