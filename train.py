@@ -35,14 +35,18 @@ def add_tensorboard_scalars(summary_writer, result_path, epoch, task, loss, acc=
         summary_writer.add_scalar(tag=task+'/MCC', value=val_mcc, global_step=epoch)
 
 
-def train_model(args, net, dataloader, devices, summary_writer, patience=10, delta=0.001):
+def train_model(args, net, dataloader, devices, summary_writer, from_logits,
+                patience=10, delta=0.001):
     # [TODO] substitute args parsers for variables
     # softmax_cross_entropy = gluon.loss.SoftmaxCrossEntropyLoss()
-    if args.model == 'resuneta':
-        from_logits = True
-    else:
-        from_logits = False
-        
+    # if args.model == 'resuneta':
+    #     from_logits = True
+    # else:
+    #     if args.loss = 'tanimoto':
+    #         from_logits = F
+    #     else:
+
+
     print(f'Checking from logits: {from_logits}')
 
     if args.loss == 'tanimoto':
@@ -564,4 +568,4 @@ if __name__ == '__main__':
     log_path = os.path.join(args.results_path, 'logs')
     summary_writer = SummaryWriter(logdir=log_path, verbose=False)
 
-    train_model(args, net, dataloader, devices, summary_writer)
+    train_model(args, net, dataloader, devices, summary_writer, from_logits)
