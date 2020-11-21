@@ -1,5 +1,6 @@
 from resuneta.models.resunet_d6_causal_mtskcolor_ddist import ResUNet_d6
 from resuneta.models.Unet import UNet
+from resuneta.models.Unet_small import UNet_small
 from resuneta.src.NormalizeDataset import Normalize
 from resuneta.src.ISPRSDataset import ISPRSDataset
 from resuneta.src.semseg_aug_cv2 import SemSegAugmentor_CV, ParamsRange
@@ -425,6 +426,10 @@ if __name__ == '__main__':
     parser.add_argument("--class_weights",
                         help="Use class weights at the model after softmax",
                         action='store_true')
+
+    parser.add_argument("--data_aug",
+                        help="Use data augmentation or not",
+                        action='store_true')
     args = parser.parse_args()
 
     if not os.path.exists(os.path.join(args.results_path)):
@@ -455,7 +460,8 @@ if __name__ == '__main__':
         from_logits = False
 
     if args.class_weights:
-        weights = mx.nd.array(np.array([0.2, 0.8, 0]))
+        weights = mx.nd.array(np.array([1.0, 1.0, 0]))
+        # weights = mx.nd.array(np.array([0.2, 0.8, 0]))
         ones = mx.ndarray.ones(shape=(args.batch_size, args.patch_size, args.patch_size, 3))
         weights_elemwise = (ones * weights).transpose((0, 3, 1, 2))
         print(weights.shape)
@@ -472,10 +478,16 @@ if __name__ == '__main__':
                          multitasking=args.multitasking,
                          weights=weights_elemwise)
     elif args.model == 'unet':
-        net = UNet(args.num_classes, groups=args.groups, nfilter=64,
+        # Changed from 64 to 32
+        net = UNet(args.num_classes, groups=args.groups, nfilter=32,
                    weights=weights)
         args.multitasking = False
         # net = UNet(input_channels=14, output_channels=args.num_classes)
+    elif args.model == 'unet_small':
+        # Changed from 64 to 32
+        net = UNet_small(args.num_classes, groups=args.groups, nfilter=32,
+                   weights=weights)
+        args.multitasking = False
     net.initialize()
 
     if args.dataset_type == 'ISPRS':
@@ -514,18 +526,20 @@ if __name__ == '__main__':
         # tnorm = Normalize(mean=mean, std=std)
         tnorm = None
 
-    prob = 0.9
-    # aug = A.Compose([
-    #     A.OneOf([A.HorizontalFlip(p=prob), A.VerticalFlip(p=prob)], p=1),
-    #     A.RandomRotate90(p=prob),
-    #     A.RandomSizedCrop(min_max_height=(60, 100),
-    #                       height=args.patch_size, width=args.patch_size, p=prob)
-    #     # A.OneOf([
-    #     #     A.ElasticTransform(p=0.5, alpha=120, sigma=120 * 0.05, alpha_affine=120 * 0.03),
-    #     #     A.GridDistortion(p=0.5),
-    #     #     A.OpticalDistortion(distort_limit=1, shift_limit=0.5, p=1),], p=0.8),
-    #     ])
-    aug = None
+    if args.data_aug:
+        prob = 0.7
+        aug = A.Compose([
+            A.OneOf([A.HorizontalFlip(p=prob), A.VerticalFlip(p=prob)], p=1),
+            A.RandomRotate90(p=prob),
+            A.RandomSizedCrop(min_max_height=(60, 100),
+                              height=args.patch_size, width=args.patch_size, p=prob)
+            # A.OneOf([
+            #     A.ElasticTransform(p=0.5, alpha=120, sigma=120 * 0.05, alpha_affine=120 * 0.03),
+            #     A.GridDistortion(p=0.5),
+            #     A.OpticalDistortion(distort_limit=1, shift_limit=0.5, p=1),], p=0.8),
+            ])
+    else:
+        aug = None
 
     train_dataset = ISPRSDataset(root=args.dataset_path,
                                  mode='train', color=True,
