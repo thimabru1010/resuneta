@@ -18,7 +18,7 @@ def compute_def_metrics(thresholds, img_predicted, img_labels,
     metrics_all = []
 
     for thr in thresholds:
-        print(thr)
+        print(f'Threshold: {thr}')
 
         img_predicted_ = img_predicted.copy()
         img_predicted_[img_predicted_ >= thr] = 1

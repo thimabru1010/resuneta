@@ -461,8 +461,8 @@ if __name__ == '__main__':
         from_logits = False
 
     if args.class_weights:
-        weights = mx.nd.array(np.array([1.0, 1.0, 0]))
-        # weights = mx.nd.array(np.array([0.2, 0.8, 0]))
+        # weights = mx.nd.array(np.array([1.0, 1.0, 0]))
+        weights = mx.nd.array(np.array([0.3, 0.7, 0]))
         ones = mx.ndarray.ones(shape=(args.batch_size, args.patch_size, args.patch_size, 3))
         weights_elemwise = (ones * weights).transpose((0, 3, 1, 2))
         print(weights.shape)

@@ -223,31 +223,9 @@ class ResUNet_d6(HybridBlock):
         #logits = F.softmax(logits,axis=1)
         seg_logits = self.ChannelAct(seg)
         if not self.from_logits:
-            if self.weights is not None:
-                # print(out.shape)
-                # print(self.weights.shape)
-                wseg = F.elemwise_mul(seg, self.weights)
-
-                # Should check if has to be applied before or after sigmoid
-                wbound = F.elemwise_mul(bound, self.weights)
-
-                wdist = F.elemwise_mul(dist, self.weights)
-                return wseg, wbound, wdist, convc
-
 
             return seg, bound, dist, convc
         else:
-            # logits = F.broadcast_mul(logits, self.weights)
-            if self.weights is not None:
-                # print(out.shape)
-                # print(self.weights.shape)
-                wlogits = F.elemwise_mul(seg_logits, self.weights)
-
-                # Should check if has to be applied before or after sigmoid
-                wbound_logits = F.elemwise_mul(bound_logits, self.weights)
-
-                wdist_logits = F.elemwise_mul(dist_logits, self.weights)
-                return wlogits, wbound_logits, wdist_logits, convc
             # Return without apply any sofmtax
             # regressions are still returned after sigmoid
             return seg_logits, bound_logits, dist_logits, convc

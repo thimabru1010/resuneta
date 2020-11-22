@@ -177,19 +177,6 @@ class UNet_small(nn.HybridBlock):
         out_logits = F.softmax(out, axis=1)
         # print(out)
         if not self.from_logits:
-            if self.weights is not None:
-                wout = out.transpose((0, 2, 3, 1)) * self.weights.copyto(out.ctx)
-                # get back to original shape
-                wout = wout.transpose((0, 3, 1, 2))
-                # wout = F.elemwise_mul(out, self.weights)
-                return wout
             return out
         else:
-            if self.weights is not None:
-                out = out_logits
-                wout = out.transpose((0, 2, 3, 1)) * self.weights.copyto(out.ctx)
-                # get back to original shape
-                wout = wout.transpose((0, 3, 1, 2))
-                # wout = F.elemwise_mul(out, self.weights)
-                return wout
             return out_logits

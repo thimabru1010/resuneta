@@ -569,19 +569,21 @@ fig.savefig(os.path.join(args.output_path, 'seg_pred_def&ref.jpg'))
 plt.imsave('seg_pred_def2.jpeg', img_reconstructed)
 
 # Metrics
-# ref1 = np.ones_like(final_mask).astype(np.float32)
-# ref1[final_mask == 2] = 0
-# # TileMask = mask_amazon_ts * ref1
-# TileMask = ref1
-# GTTruePositives = (final_mask == 1)
-#
-# Npoints = 100
-# Pmax = np.max(mean_prob[GTTruePositives * TileMask ==1])
-# ProbList = np.linspace(Pmax, 0, Npoints)
+final_mask = np.squeeze(final_mask, axis=-1)
+ref1 = np.ones_like(final_mask).astype(np.float32)
+ref1[final_mask == 2] = 0
+# TileMask = mask_amazon_ts * ref1
+TileMask = ref1
+GTTruePositives = (final_mask == 1)
 
-print(final_mask.shape)
+Npoints = 100
+Pmax = np.max(img_reconstructed[GTTruePositives * TileMask == 1])
+ProbList = np.linspace(Pmax, 0, Npoints)
+
+# print(final_mask.shape)
+# print(ProbList)
 ProbList = [0.2, 0.5, 0.8]
-compute_def_metrics(ProbList, img_reconstructed, np.squeeze(final_mask, axis=-1))
+compute_def_metrics(ProbList, img_reconstructed, final_mask)
 
 print('Image Saved!')
 
