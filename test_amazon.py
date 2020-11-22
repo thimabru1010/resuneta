@@ -459,7 +459,6 @@ for i in tqdm(range(len(input_patches))):
 
 print('='*40)
 print('[TEST]')
-print('aquiiiiiiiiiiiiii')
 
 if args.use_multitasking:
     seg_preds = gather_preds(seg_preds)
@@ -487,7 +486,7 @@ predicted_labels = np.reshape(seg_pred, (seg_pred.shape[0] *
                                          seg_pred.shape[1] *
                                          seg_pred.shape[2]))
 
-# Metrics
+
 metrics = compute_metrics(true_labels, predicted_labels)
 confusion_matrix = confusion_matrix(true_labels, predicted_labels)
 np.set_printoptions(precision=2)
@@ -568,6 +567,21 @@ plt.close()
 fig.savefig(os.path.join(args.output_path, 'seg_pred_def&ref.jpg'))
 
 plt.imsave('seg_pred_def2.jpeg', img_reconstructed)
+
+# Metrics
+# ref1 = np.ones_like(final_mask).astype(np.float32)
+# ref1[final_mask == 2] = 0
+# # TileMask = mask_amazon_ts * ref1
+# TileMask = ref1
+# GTTruePositives = (final_mask == 1)
+#
+# Npoints = 100
+# Pmax = np.max(mean_prob[GTTruePositives * TileMask ==1])
+# ProbList = np.linspace(Pmax, 0, Npoints)
+
+print(final_mask.shape)
+ProbList = [0.2, 0.5, 0.8]
+compute_def_metrics(ProbList, img_reconstructed, np.squeeze(final_mask, axis=-1))
 
 print('Image Saved!')
 
