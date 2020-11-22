@@ -46,13 +46,16 @@ class Tanimoto(Loss):
         _preds = _preds.transpose((0, 3, 1, 2))
 
         rl_x_pl = F.sum(F.broadcast_mul(_label, _preds), axis=self.axis)
+        print(f'rl_x_pl: {rl_x_pl.shape}')
         # This is sum of squares
         l = F.sum(F.broadcast_mul(_label, _label), axis=self.axis)
         r = F.sum(F.broadcast_mul(_preds, _preds), axis=self.axis)
+        print(f'{l.shape}')
+        print(f'{r.shape}')
 
         rl_p_pl = l + r - rl_x_pl
 
-        tnmt = (F.sum(F.broadcast_mul(wli, rl_x_pl), axis=1) + self.smooth) / (F.sum(F.broadcast_mul(wli, (rl_p_pl)), axis=1) + self.smooth)
+        tnmt = (F.sum(F.broadcast_mul(wli, rl_x_pl)[:, :2], axis=1) + self.smooth) / (F.sum(F.broadcast_mul(wli, (rl_p_pl))[:, :2], axis=1) + self.smooth)
 
         return tnmt # This returns the tnmt for EACH data point, i.e. a vector of values equal to the batch size
 
