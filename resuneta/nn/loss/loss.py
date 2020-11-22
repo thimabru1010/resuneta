@@ -35,11 +35,11 @@ class Tanimoto(Loss):
         # ************************************************************************************************
 
         # print(wli.shape)
-        print(f'Actual: {wli}')
+        # print(f'Actual: {wli}')
         if self.no_past_def:
             no_consider = mx.nd.array([1.0, 1.0, 0.0], ctx=wli.ctx)
             wli = wli * no_consider
-        print(f'New: {wli}')
+        # print(f'New: {wli}')
 
 
         rl_x_pl = F.sum( F.broadcast_mul(_label , _preds), axis=self.axis)
