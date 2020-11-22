@@ -19,8 +19,8 @@ class Tanimoto(Loss):
 
         # Evaluate the mean volume of class per batch
         Vli = F.mean(F.sum(_label, axis=self.axis), axis=0)
-        #wli =  1.0/Vli**2 # weighting scheme
-        wli = F.reciprocal(Vli**2) # weighting scheme
+        # wli =  1.0/Vli**2 # weighting scheme
+        wli = F.reciprocal(Vli**2)  # weighting scheme
 
         # ---------------------This line is taken from niftyNet package --------------
         # ref: https://github.com/NifTK/NiftyNet/blob/dev/niftynet/layer/loss_segmentation.py, lines:170 -- 172
@@ -30,8 +30,8 @@ class Tanimoto(Loss):
 
         # ***********************************************************************************************
         # First turn inf elements to zero, then replace that with the maximum weight value
-        new_weights = F.where(wli == np.float('inf'), F.zeros_like(wli), wli )
-        wli = F.where( wli == np.float('inf'), F.broadcast_mul(F.ones_like(wli),F.max(new_weights)), wli)
+        new_weights = F.where(wli == np.float('inf'), F.zeros_like(wli), wli)
+        wli = F.where(wli == np.float('inf'), F.broadcast_mul(F.ones_like(wli), F.max(new_weights)), wli)
         # ************************************************************************************************
 
         # print(wli.shape)
@@ -45,12 +45,10 @@ class Tanimoto(Loss):
         _preds = no_consider * _preds.transpose((0, 2, 3, 1))
         _preds = _preds.transpose((0, 3, 1, 2))
 
-
-
-        rl_x_pl = F.sum( F.broadcast_mul(_label , _preds), axis=self.axis)
+        rl_x_pl = F.sum(F.broadcast_mul(_label, _preds), axis=self.axis)
         # This is sum of squares
-        l = F.sum(  F.broadcast_mul(_label , _label), axis=self.axis)
-        r = F.sum( F.broadcast_mul( _preds , _preds ) , axis=self.axis)
+        l = F.sum(F.broadcast_mul(_label, _label), axis=self.axis)
+        r = F.sum(F.broadcast_mul(_preds, _preds), axis=self.axis)
 
         rl_p_pl = l + r - rl_x_pl
 
