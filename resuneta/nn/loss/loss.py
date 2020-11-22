@@ -1,16 +1,21 @@
 import numpy as np
 from mxnet.gluon.loss import Loss
+import mxnet as mx
 
 
 class Tanimoto(Loss):
-    def __init__(self, _smooth=1.0e-5, _axis=[2,3], _weight = None, _batch_axis= 0, **kwards):
-        Loss.__init__(self, weight=_weight, batch_axis = _batch_axis, **kwards)
+    def __init__(self, _smooth=1.0e-5, _axis=[2,3], _weight=None, _batch_axis=0,
+                 no_past_def=False, **kwards):
+        Loss.__init__(self, weight=_weight, batch_axis=_batch_axis, **kwards)
 
         self.axis = _axis
         self.smooth = _smooth
         self.weight = _weight
 
-    def hybrid_forward(self,F,_preds, _label):
+        # self.class_weights = class_weights
+        self.no_past_def = True
+
+    def hybrid_forward(self, F,_preds, _label):
 
         # Evaluate the mean volume of class per batch
         Vli = F.mean(F.sum(_label,axis=self.axis),axis=0)
@@ -29,7 +34,12 @@ class Tanimoto(Loss):
         wli = F.where( wli == np.float('inf'), F.broadcast_mul(F.ones_like(wli),F.max(new_weights)), wli)
         # ************************************************************************************************
 
-
+        # print(wli.shape)
+        # print(f'Actual: {wli}')
+        if self.no_past_def:
+            no_consider = mx.nd.array([1.0, 1.0, 0.0], ctx=wli.ctx)
+            wli = wli * no_consider
+        # print(f'New: {wli}')
 
 
         rl_x_pl = F.sum( F.broadcast_mul(_label , _preds), axis=self.axis)

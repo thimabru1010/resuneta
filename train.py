@@ -73,7 +73,8 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
     elif args.loss == 'wce':
         # weights = mx.nd.array(np.array([1.1060, 238.8582, 0]))
         # weights = weights / mx.nd.norm(weights)
-        weights = mx.nd.array(np.array([0.2, 0.8, 0]))
+        # weights = mx.nd.array(np.array([0.2, 0.8, 0]))
+        weights = mx.nd.array(np.array([1.0, 1.0, 0]))
         # weights = mx.nd.array(np.array([0.5, 1.0, 0]))
         # weights = mx.nd.array([1.1494, 33.3333, 0.0])
         print(f'New weights: {weights}')
