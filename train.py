@@ -44,7 +44,7 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
     if args.loss == 'tanimoto':
         loss_clss = Tanimoto_with_dual()
         loss_dist = Tanimoto_with_dual()
-        loss_color = Tanimoto_with_dual()
+        loss_color = Tanimoto_with_dual(no_past_def=False)
     elif args.loss == 'ce':
         # weights = mx.nd.array(np.array([1.1494, 33.3333, 0]), ctx=devices)
         loss_clss = gluon.loss.SoftmaxCrossEntropyLoss(axis=1,

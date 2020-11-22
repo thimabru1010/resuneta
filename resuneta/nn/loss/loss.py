@@ -4,8 +4,8 @@ import mxnet as mx
 
 
 class Tanimoto(Loss):
-    def __init__(self, _smooth=1.0e-5, _axis=[2,3], _weight=None, _batch_axis=0,
-                 no_past_def=False, **kwards):
+    def __init__(self, no_past_def, _smooth=1.0e-5, _axis=[2,3], _weight=None, _batch_axis=0,
+                 **kwards):
         Loss.__init__(self, weight=_weight, batch_axis=_batch_axis, **kwards)
 
         self.axis = _axis
@@ -13,7 +13,7 @@ class Tanimoto(Loss):
         self.weight = _weight
 
         # self.class_weights = class_weights
-        self.no_past_def = True
+        self.no_past_def = no_past_def
 
     def hybrid_forward(self, F, _preds, _label):
 
@@ -41,9 +41,9 @@ class Tanimoto(Loss):
             wli = wli * no_consider
         # print(f'New: {wli}')
 
-        no_consider = mx.nd.array([1.0, 1.0, 0.0], ctx=_preds.ctx)
-        _preds = no_consider * _preds.transpose((0, 2, 3, 1))
-        _preds = _preds.transpose((0, 3, 1, 2))
+            no_consider = mx.nd.array([1.0, 1.0, 0.0], ctx=_preds.ctx)
+            _preds = no_consider * _preds.transpose((0, 2, 3, 1))
+            _preds = _preds.transpose((0, 3, 1, 2))
 
         rl_x_pl = F.sum(F.broadcast_mul(_label, _preds), axis=self.axis)
         # print(f'rl_x_pl: {rl_x_pl.shape}')
@@ -55,9 +55,14 @@ class Tanimoto(Loss):
 
         rl_p_pl = l + r - rl_x_pl
 
-        tnmt = (F.sum(F.broadcast_mul(wli, rl_x_pl)[:, :2], axis=1) + self.smooth) / (F.sum(F.broadcast_mul(wli, (rl_p_pl))[:, :2], axis=1) + self.smooth)
+        if self.no_past_def:
+            tnmt = (F.sum(F.broadcast_mul(wli, rl_x_pl)[:, :2], axis=1) + self.smooth) / (F.sum(F.broadcast_mul(wli, (rl_p_pl))[:, :2], axis=1) + self.smooth)
 
-        return tnmt # This returns the tnmt for EACH data point, i.e. a vector of values equal to the batch size
+            return tnmt # This returns the tnmt for EACH data point, i.e. a vector of values equal to the batch size
+        else:
+            tnmt = (F.sum(F.broadcast_mul(wli, rl_x_pl), axis=1) + self.smooth) / (F.sum(F.broadcast_mul(wli, (rl_p_pl)), axis=1) + self.smooth)
+
+            return tnmt # This returns the tnmt for EACH data point, i.e. a vector of values equal to the batch size
 
 # This is the loss used in the manuscript of resuneta
 
@@ -68,11 +73,12 @@ class Tanimoto_with_dual(Loss):
     Note: to use it in deep learning training use: return 1. - 0.5*(loss1+loss2)
     """
     def __init__(self, _smooth=1.0e-5, _axis=[2, 3], _weight=None, _batch_axis=0
-                 , **kwards):
+                 , no_past_def=True, **kwards):
         Loss.__init__(self, weight=_weight, batch_axis=_batch_axis, **kwards)
 
         with self.name_scope():
-            self.Loss = Tanimoto(_smooth=_smooth, _axis=_axis)
+            self.Loss = Tanimoto(no_past_def=no_past_def,
+                                 _smooth=_smooth, _axis=_axis)
 
     def hybrid_forward(self, F, _preds, _label):
 
