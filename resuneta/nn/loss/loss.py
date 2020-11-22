@@ -15,7 +15,7 @@ class Tanimoto(Loss):
         # self.class_weights = class_weights
         self.no_past_def = True
 
-    def hybrid_forward(self, F,_preds, _label):
+    def hybrid_forward(self, F, _preds, _label):
 
         # Evaluate the mean volume of class per batch
         Vli = F.mean(F.sum(_label, axis=self.axis), axis=0)
@@ -40,6 +40,11 @@ class Tanimoto(Loss):
             no_consider = mx.nd.array([1.0, 1.0, 0.0], ctx=wli.ctx)
             wli = wli * no_consider
         # print(f'New: {wli}')
+
+        no_consider = mx.nd.array([1.0, 1.0, 0.0], ctx=_preds.ctx)
+        _preds = no_consider * _preds.transpose((0, 2, 3, 1))
+        _preds = _preds.transpose((0, 3, 1, 2))
+
 
 
         rl_x_pl = F.sum( F.broadcast_mul(_label , _preds), axis=self.axis)
