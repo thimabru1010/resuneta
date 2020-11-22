@@ -18,7 +18,7 @@ class Tanimoto(Loss):
     def hybrid_forward(self, F,_preds, _label):
 
         # Evaluate the mean volume of class per batch
-        Vli = F.mean(F.sum(_label,axis=self.axis),axis=0)
+        Vli = F.mean(F.sum(_label, axis=self.axis),axis=0)
         #wli =  1.0/Vli**2 # weighting scheme
         wli = F.reciprocal(Vli**2) # weighting scheme
 

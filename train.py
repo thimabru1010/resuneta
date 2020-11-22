@@ -480,7 +480,7 @@ if __name__ == '__main__':
                          weights=weights_elemwise)
     elif args.model == 'unet':
         # Changed from 64 to 32
-        net = UNet(args.num_classes, groups=args.groups, nfilter=32,
+        net = UNet(args.num_classes, groups=args.groups, nfilter=64,
                    weights=weights)
         args.multitasking = False
         # net = UNet(input_channels=14, output_channels=args.num_classes)
