@@ -476,8 +476,8 @@ else:
     print(f'seg shape argmax: {seg_pred.shape}')
 
 # Metrics
-print(ref_patches.shape)
-print(seg_pred.shape)
+# print(ref_patches.shape)
+# print(seg_pred.shape)
 true_labels = np.reshape(ref_patches, (ref_patches.shape[0] *
                                             ref_patches.shape[1] *
                                             ref_patches.shape[2]))
@@ -541,7 +541,7 @@ if not os.path.exists(args.output_path):
 # tst_tiles.reverse()
 # print(tst_tiles)
 print(np.squeeze(final_mask, axis=-1).shape)
-print(seg_preds_def)
+# print(seg_preds_def)
 img_reconstructed, _ = pred_recostruction(args.patch_size, seg_preds_def,
                                        np.squeeze(final_mask, axis=-1))
 # img_reconstructed = reconstruct_patches2tiles(tst_tiles, mask_tiles, final_mask,
@@ -553,7 +553,7 @@ img_reconstructed, _ = pred_recostruction(args.patch_size, seg_preds_def,
 # plt.imsave(os.path.join(args.output_path, 'pred_seg_reconstructed.jpeg'),
 #            img_reconstructed_rgb)
 print(img_reconstructed.shape)
-print(img_reconstructed)
+# print(img_reconstructed)
 fig, axes = plt.subplots(nrows=1, ncols=2,
                           figsize=(10, 5))
 axes[0].set_title('Reference')

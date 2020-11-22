@@ -18,7 +18,7 @@ class Tanimoto(Loss):
     def hybrid_forward(self, F,_preds, _label):
 
         # Evaluate the mean volume of class per batch
-        Vli = F.mean(F.sum(_label, axis=self.axis),axis=0)
+        Vli = F.mean(F.sum(_label, axis=self.axis), axis=0)
         #wli =  1.0/Vli**2 # weighting scheme
         wli = F.reciprocal(Vli**2) # weighting scheme
 
@@ -35,11 +35,11 @@ class Tanimoto(Loss):
         # ************************************************************************************************
 
         # print(wli.shape)
-        # print(f'Actual: {wli}')
+        print(f'Actual: {wli}')
         if self.no_past_def:
             no_consider = mx.nd.array([1.0, 1.0, 0.0], ctx=wli.ctx)
             wli = wli * no_consider
-        # print(f'New: {wli}')
+        print(f'New: {wli}')
 
 
         rl_x_pl = F.sum( F.broadcast_mul(_label , _preds), axis=self.axis)
@@ -49,7 +49,7 @@ class Tanimoto(Loss):
 
         rl_p_pl = l + r - rl_x_pl
 
-        tnmt = (F.sum( F.broadcast_mul(wli , rl_x_pl),axis=1) + self.smooth)/ ( F.sum( F.broadcast_mul(wli,(rl_p_pl)),axis=1) + self.smooth)
+        tnmt = (F.sum(F.broadcast_mul(wli, rl_x_pl), axis=1) + self.smooth) / (F.sum(F.broadcast_mul(wli, (rl_p_pl)), axis=1) + self.smooth)
 
         return tnmt # This returns the tnmt for EACH data point, i.e. a vector of values equal to the batch size
 

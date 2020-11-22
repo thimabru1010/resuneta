@@ -30,8 +30,8 @@ def compute_def_metrics(thresholds, img_predicted, img_labels,
                                                      area_threshold=px_area,
                                                      connectivity=1)
         area_no_consider = img_predicted_ - small_area
-        print(mask_areas_pred.shape)
-        print(area_no_consider.shape)
+        # print(mask_areas_pred.shape)
+        # print(area_no_consider.shape)
         mask_areas_pred[area_no_consider == 1] = 0
 
         # Mask areas no considered reference (borders and buffer)
@@ -50,16 +50,16 @@ def compute_def_metrics(thresholds, img_predicted, img_labels,
 
         ref_final = ref_consider
         pre_final = pred_consider
-        print(ref_final.shape)
-
-        unique, counts = np.unique(ref_final, return_counts=True)
-        counts_dict = dict(zip(unique, counts))
-        print(f'Ref final: {counts_dict}')
-
-        print(pre_final.shape)
-        unique, counts = np.unique(pre_final, return_counts=True)
-        counts_dict = dict(zip(unique, counts))
-        print(f'Pre final: {counts_dict}')
+        # print(ref_final.shape)
+        #
+        # unique, counts = np.unique(ref_final, return_counts=True)
+        # counts_dict = dict(zip(unique, counts))
+        # print(f'Ref final: {counts_dict}')
+        #
+        # print(pre_final.shape)
+        # unique, counts = np.unique(pre_final, return_counts=True)
+        # counts_dict = dict(zip(unique, counts))
+        # print(f'Pre final: {counts_dict}')
 
         ref_final = np.reshape(ref_final, (ref_final.shape[0] *
                                                     ref_final.shape[1]))
@@ -78,8 +78,8 @@ def compute_def_metrics(thresholds, img_predicted, img_labels,
         precision_ = TP/(TP+FP)
         recall_ = TP/(TP+FN)
 
-        print(precision_)
-        print(recall_)
+        print(f' Precision: {precision_}')
+        print(f' Recall: {recall_}')
 
         mm = np.hstack((recall_, precision_))
         metrics_all.append(mm)
