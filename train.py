@@ -38,15 +38,6 @@ def add_tensorboard_scalars(summary_writer, result_path, epoch, task, loss, acc=
 
 def train_model(args, net, dataloader, devices, summary_writer, from_logits,
                 patience=10, delta=0.001):
-    # [TODO] substitute args parsers for variables
-    # softmax_cross_entropy = gluon.loss.SoftmaxCrossEntropyLoss()
-    # if args.model == 'resuneta':
-    #     from_logits = True
-    # else:
-    #     if args.loss = 'tanimoto':
-    #         from_logits = F
-    #     else:
-
 
     print(f'Checking from logits: {from_logits}')
 
@@ -74,7 +65,7 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
         # weights = mx.nd.array(np.array([1.1060, 238.8582, 0]))
         # weights = weights / mx.nd.norm(weights)
         # weights = mx.nd.array(np.array([0.2, 0.8, 0]))
-        weights = mx.nd.array(np.array([1.0, 1.0, 0]))
+        weights = mx.nd.array(np.array([0.3, 0.7, 0]))
         # weights = mx.nd.array(np.array([0.5, 1.0, 0]))
         # weights = mx.nd.array([1.1494, 33.3333, 0.0])
         print(f'New weights: {weights}')
@@ -460,15 +451,15 @@ if __name__ == '__main__':
     else:
         from_logits = False
 
-    if args.class_weights:
-        # weights = mx.nd.array(np.array([1.0, 1.0, 0]))
-        weights = mx.nd.array(np.array([0.3, 0.7, 0]))
-        ones = mx.ndarray.ones(shape=(args.batch_size, args.patch_size, args.patch_size, 3))
-        weights_elemwise = (ones * weights).transpose((0, 3, 1, 2))
-        print(weights.shape)
-    else:
-        weights = None
-        weights_elemwise = None
+    # if args.class_weights:
+    #     # weights = mx.nd.array(np.array([1.0, 1.0, 0]))
+    #     weights = mx.nd.array(np.array([0.3, 0.7, 0]))
+    #     ones = mx.ndarray.ones(shape=(args.batch_size, args.patch_size, args.patch_size, 3))
+    #     weights_elemwise = (ones * weights).transpose((0, 3, 1, 2))
+    #     print(weights.shape)
+    # else:
+    weights = None
+    weights_elemwise = None
 
     Nfilters_init = 32
     if args.model == 'resuneta':
