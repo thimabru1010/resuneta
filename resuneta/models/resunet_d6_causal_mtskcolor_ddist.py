@@ -18,7 +18,7 @@ class ResUNet_d6(HybridBlock):
     """
 
     def __init__(self, dataset_type, _nfilters_init,  _NClasses,
-                 patch_size=256, verbose=True, from_logits=False,
+                 patch_size=256, verbose=True, from_logits=True,
                  _norm_type='BatchNorm', multitasking=True, weights=None,
                  **kwards):
         HybridBlock.__init__(self,**kwards)
@@ -44,6 +44,8 @@ class ResUNet_d6(HybridBlock):
 
         self.dataset_type = dataset_type
 
+        dilat_rates = [3]
+
 
         with self.name_scope():
 
@@ -57,13 +59,16 @@ class ResUNet_d6(HybridBlock):
             if verbose:
                 print ("depth:= {0}, nfilters: {1}".format(6,nfilters))
             self.UpComb1 = combine_layers(nfilters)
-            self.UpConv1 = ResNet_atrous_2_unit(nfilters,_dilation_rates=[3,5])
+            # self.UpConv1 = ResNet_atrous_2_unit(nfilters,_dilation_rates=[3,5])
+            self.UpConv1 = ResNet_atrous_2_unit(nfilters,
+                                                _dilation_rates=dilat_rates)
 
             nfilters  = self.nfilters * 2 ** (self.depth - 1 -2)
             if verbose:
                 print ("depth:= {0}, nfilters: {1}".format(7,nfilters))
             self.UpComb2 = combine_layers(nfilters)
-            self.UpConv2 = ResNet_atrous_2_unit(nfilters)
+            self.UpConv2 = ResNet_atrous_2_unit(nfilters,
+                                                _dilation_rates=dilat_rates)
 
             nfilters  = self.nfilters * 2 ** (self.depth - 1 -3)
             if verbose:
@@ -71,7 +76,8 @@ class ResUNet_d6(HybridBlock):
             self.UpComb3 = combine_layers(nfilters)
             # Change this to lower parameters
             # self.UpConv3 = ResNet_atrous_unit(nfilters)
-            self.UpConv3 = ResNet_atrous_2_unit(nfilters)
+            self.UpConv3 = ResNet_atrous_2_unit(nfilters,
+                                                _dilation_rates=dilat_rates)
 
             nfilters  = self.nfilters * 2 ** (self.depth - 1 -4)
             if verbose:
@@ -79,7 +85,8 @@ class ResUNet_d6(HybridBlock):
             self.UpComb4 = combine_layers(nfilters)
             # Change this to lower parameters
             # self.UpConv4 = ResNet_atrous_unit(nfilters)
-            self.UpConv4 = ResNet_atrous_2_unit(nfilters)
+            self.UpConv4 = ResNet_atrous_2_unit(nfilters,
+                                                _dilation_rates=dilat_rates)
 
 
             nfilters  = self.nfilters * 2 ** (self.depth - 1 -5)
@@ -88,7 +95,8 @@ class ResUNet_d6(HybridBlock):
             self.UpComb5 = combine_layers(nfilters)
             # Change this to lower parameters
             # self.UpConv5 = ResNet_atrous_unit(nfilters)
-            self.UpConv5 = ResNet_atrous_2_unit(nfilters)
+            self.UpConv5 = ResNet_atrous_2_unit(nfilters,
+                                                _dilation_rates=dilat_rates)
 
 
             self.psp_2ndlast = PSP_Pooling(self.nfilters, _norm_type=_norm_type, depth=self.psp_depth)

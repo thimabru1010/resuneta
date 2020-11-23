@@ -4,7 +4,7 @@ import mxnet.gluon.nn as nn
 
 class UNet(nn.HybridBlock):
     def __init__(self, num_classes, nfilter=64, groups=1, weights=None,
-                 from_logits=False, **kwargs):
+                 from_logits=True, **kwargs):
         # nn.HybridBlock.__init__(self, **kwargs)
         super(UNet, self).__init__(**kwargs)
         with self.name_scope():

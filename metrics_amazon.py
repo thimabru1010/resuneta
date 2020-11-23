@@ -17,6 +17,9 @@ def compute_def_metrics(thresholds, img_predicted, img_labels,
     '''
     metrics_all = []
 
+    prec = []
+    recall = []
+
     for thr in thresholds:
         print(f'Threshold: {thr}')
 
@@ -81,10 +84,13 @@ def compute_def_metrics(thresholds, img_predicted, img_labels,
         print(f' Precision: {precision_}')
         print(f' Recall: {recall_}')
 
+        prec.append(precision_)
+        recall.append(recall_)
+
         mm = np.hstack((recall_, precision_))
         metrics_all.append(mm)
     metrics_ = np.asarray(metrics_all)
-    return metrics_
+    return metrics_, prec, recall
 
 #%% **** Example ****
 #

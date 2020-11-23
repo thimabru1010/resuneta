@@ -46,13 +46,17 @@ class ResUNet_d6_encoder(HybridBlock):
 
             # Progressively reducing the dilation_rate of Atrous convolutions (the deeper the smaller).
 
+            # dilat_rates = [3, 15]
+            dilat_rates = [3]
+
             # Usually 32
             nfilters = self.nfilters * 2**(0)
             if verbose:
                 print ("depth:= {0}, nfilters: {1}".format(0,nfilters))
             # Change this to lower parameters
             # self.Dn1 = ResNet_atrous_unit(nfilters, _norm_type = _norm_type)
-            self.Dn1 = ResNet_atrous_2_unit(nfilters, _norm_type = _norm_type)
+            self.Dn1 = ResNet_atrous_2_unit(nfilters, _norm_type = _norm_type,
+                                            _dilation_rates=dilat_rates)
             self.pool1 = DownSample(nfilters, _norm_type = _norm_type)
 
             # Usually 64
@@ -61,21 +65,26 @@ class ResUNet_d6_encoder(HybridBlock):
                 print ("depth:= {0}, nfilters: {1}".format(1,nfilters))
             # Change this to lower parameters
             # self.Dn2 = ResNet_atrous_unit(nfilters, _norm_type = _norm_type)
-            self.Dn2 = ResNet_atrous_2_unit(nfilters, _norm_type = _norm_type)
+            self.Dn2 = ResNet_atrous_2_unit(nfilters, _norm_type = _norm_type,
+                                            _dilation_rates=dilat_rates)
             self.pool2 = DownSample(nfilters, _norm_type = _norm_type)
 
             # Usually 128
             nfilters = self.nfilters * 2**(2)
             if verbose:
                 print ("depth:= {0}, nfilters: {1}".format(2,nfilters))
-            self.Dn3 = ResNet_atrous_2_unit(nfilters, _norm_type = _norm_type)
+            self.Dn3 = ResNet_atrous_2_unit(nfilters, _norm_type = _norm_type,
+                                            _dilation_rates=dilat_rates)
             self.pool3 = DownSample(nfilters, _norm_type = _norm_type)
 
             # Usually 256
             nfilters = self.nfilters * 2**(3)
             if verbose:
                 print ("depth:= {0}, nfilters: {1}".format(3,nfilters))
-            self.Dn4 = ResNet_atrous_2_unit(nfilters,_dilation_rates=[3,5], _norm_type = _norm_type)
+            # self.Dn4 = ResNet_atrous_2_unit(nfilters,_dilation_rates=[3,5], _norm_type = _norm_type)
+            self.Dn4 = ResNet_atrous_2_unit(nfilters,
+                                            _dilation_rates=dilat_rates,
+                                            _norm_type = _norm_type)
             self.pool4 = DownSample(nfilters, _norm_type = _norm_type)
 
             # Usually 512

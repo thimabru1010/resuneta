@@ -316,7 +316,7 @@ print(img_t2.shape)
 # Concatenation of images
 input_image = np.concatenate((img_t1, img_t2), axis=-1)
 # input_image = input_image[:6100, :6600]
-input_image = input_image[:5200, :5040]
+input_image = input_image[:3328, :5248]
 h_, w_, channels = input_image.shape
 print(f"Input image shape: {input_image.shape}")
 check_memory()
@@ -333,7 +333,7 @@ image_ref = load_npy_image(os.path.join(root_path,
                                         'labels', img_ref_path)).astype(np.float32)
 # Clip to fit tiles of your specific image
 # image_ref = image_ref[:6100, :6600]
-image_ref = image_ref[:5200, :5040]
+image_ref = image_ref[:3328, :5248]
 # image_ref[img_mask_ref == -99] = -1
 print(f"Image reference shape: {image_ref.shape}")
 
@@ -349,7 +349,7 @@ past_ref2 = load_npy_image(os.path.join(root_path,
 past_ref_sum = past_ref1 + past_ref2
 # Clip to fit tiles of your specific image
 # past_ref_sum = past_ref_sum[:6100, :6600]
-past_ref_sum = past_ref_sum[:5200, :5040]
+past_ref_sum = past_ref_sum[:3328, :5248]
 print(f"Past reference shape: {past_ref_sum.shape}")
 
 #  Creation of buffer
@@ -363,7 +363,7 @@ buffer = 2
 final_mask = mask_no_considered(image_ref, buffer, past_ref_sum)
 
 check_memory()
-del img_t1, img_t2, image_ref, past_ref1, past_ref2
+del img_t1, img_t2, past_ref1, past_ref2 #  , image_ref
 print('Images deleted!')
 check_memory()
 
@@ -552,6 +552,8 @@ img_reconstructed, _ = pred_recostruction(args.patch_size, seg_preds_def,
 #
 # plt.imsave(os.path.join(args.output_path, 'pred_seg_reconstructed.jpeg'),
 #            img_reconstructed_rgb)
+
+print('Shapes')
 print(img_reconstructed.shape)
 # print(img_reconstructed)
 fig, axes = plt.subplots(nrows=1, ncols=2,
@@ -559,7 +561,9 @@ fig, axes = plt.subplots(nrows=1, ncols=2,
 axes[0].set_title('Reference')
 axes[1].set_title('Def pred')
 
-axes[0].imshow(final_mask[:, :, 0])
+print(final_mask.shape)
+# axes[0].imshow(final_mask[:, :, 0])
+axes[0].imshow(image_ref)
 im = axes[1].imshow(img_reconstructed)
 colorbar(im, axes[1], fig)
 plt.show()
@@ -581,14 +585,32 @@ Pmax = np.max(img_reconstructed[GTTruePositives * TileMask == 1])
 ProbList = np.linspace(Pmax, 0, Npoints)
 
 # print(final_mask.shape)
-# print(ProbList)
-ProbList = [0.2, 0.5, 0.8]
-compute_def_metrics(ProbList, img_reconstructed, final_mask)
-
+print(ProbList)
+# ProbList = [0.2, 0.5, 0.8]
+def_metrics, prec, recall = compute_def_metrics(ProbList, img_reconstructed, final_mask)
+print(def_metrics)
 print('Image Saved!')
 
-print(f'Input patches: {type(input_patches)}')
-print(f'Input patches: {input_patches.dtype}')
+fig = plt.figure()
+lw = 2
+# plt.plot(fpr, tpr, color='darkorange',
+#         lw=lw, label=f'ROC curve (area = {auc*100:.2f}%)')
+
+plt.plot(recall, prec, color='darkorange', lw=lw)
+plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+# plt.title(f'ROC curve (mAP: {ap*100:.2f})%')
+plt.title(f'ROC curve')
+plt.legend(loc="lower right")
+
+plt.show()
+plt.close()
+
+# print(f'Input patches: {type(input_patches)}')
+# print(f'Input patches: {input_patches.dtype}')
 
 label_name = {0: 'No def', 1: 'Actual def', 2: 'Past def'}
 

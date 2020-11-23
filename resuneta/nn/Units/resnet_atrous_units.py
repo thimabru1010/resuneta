@@ -15,14 +15,17 @@ class ResNet_atrous_unit(HybridBlock):
 
             self.ResBlock1 = resnet_blocks.ResNet_v2_block(_nfilters,_kernel_size,_dilation_rate=(1,1), _norm_type = _norm_type, prefix="_ResNetv2block_1_")
 
-            d = _dilation_rates[0]
-            self.ResBlock2 = resnet_blocks.ResNet_v2_block(_nfilters,_kernel_size,_dilation_rate=(d,d), _norm_type = _norm_type, prefix="_ResNetv2block_2_")
+            if len(self.dilatation_rates) > 0:
+                d = _dilation_rates[0]
+                self.ResBlock2 = resnet_blocks.ResNet_v2_block(_nfilters,_kernel_size,_dilation_rate=(d,d), _norm_type = _norm_type, prefix="_ResNetv2block_2_")
 
-            d = _dilation_rates[1]
-            self.ResBlock3 = resnet_blocks.ResNet_v2_block(_nfilters,_kernel_size,_dilation_rate=(d,d), _norm_type = _norm_type, prefix="_ResNetv2block_3_")
+            if len(self.dilatation_rates) > 1:
+                d = _dilation_rates[1]
+                self.ResBlock3 = resnet_blocks.ResNet_v2_block(_nfilters,_kernel_size,_dilation_rate=(d,d), _norm_type = _norm_type, prefix="_ResNetv2block_3_")
 
-            d = _dilation_rates[2]
-            self.ResBlock4 = resnet_blocks.ResNet_v2_block(_nfilters,_kernel_size,_dilation_rate=(d,d), _norm_type = _norm_type, prefix="_ResNetv2block_4_")
+            if len(self.dilatation_rates) > 2:
+                d = _dilation_rates[2]
+                self.ResBlock4 = resnet_blocks.ResNet_v2_block(_nfilters,_kernel_size,_dilation_rate=(d,d), _norm_type = _norm_type, prefix="_ResNetv2block_4_")
 
 
 
@@ -42,9 +45,12 @@ class ResNet_atrous_unit(HybridBlock):
 
         # Uniform description for both Symbol and NDArray
         x = F.broadcast_add( x , self.ResBlock1(_xl) )
-        x = F.broadcast_add( x , self.ResBlock2(_xl) )
-        x = F.broadcast_add( x , self.ResBlock3(_xl) )
-        x = F.broadcast_add( x , self.ResBlock4(_xl) )
+        if len(self.dilatation_rates) > 0:
+            x = F.broadcast_add( x , self.ResBlock2(_xl) )
+        if len(self.dilatation_rates) > 1:
+            x = F.broadcast_add( x , self.ResBlock3(_xl) )
+        if len(self.dilatation_rates) > 2:
+            x = F.broadcast_add( x , self.ResBlock4(_xl) )
 
         return x
 
@@ -54,24 +60,27 @@ class ResNet_atrous_unit(HybridBlock):
 
 # Two atrous in parallel
 class ResNet_atrous_2_unit(HybridBlock):
-    def __init__(self, _nfilters, _kernel_size=(3,3), _dilation_rates=[3,15], _norm_type = 'BatchNorm', **kwards):
+    def __init__(self, _nfilters, _kernel_size=(3,3), _dilation_rates=[3, 15], _norm_type = 'BatchNorm', **kwards):
         super(ResNet_atrous_2_unit,self).__init__(**kwards)
 
+        self.dilatation_rates = _dilation_rates
 
         # mxnet doesn't like wrapping things inside a list: it shadows the HybridBlock, remove list
         with self.name_scope():
 
             self.ResBlock1 = resnet_blocks.ResNet_v2_block(_nfilters,_kernel_size,_dilation_rate=(1,1), _norm_type = _norm_type, prefix="_ResNetv2block_1_")
 
-            d = _dilation_rates[0]
-            self.ResBlock2 = resnet_blocks.ResNet_v2_block(_nfilters,_kernel_size,_dilation_rate=(d,d), _norm_type = _norm_type, prefix="_ResNetv2block_2_")
+            if len(self.dilatation_rates) > 0:
+                d = _dilation_rates[0]
+                self.ResBlock2 = resnet_blocks.ResNet_v2_block(_nfilters,_kernel_size,_dilation_rate=(d,d), _norm_type = _norm_type, prefix="_ResNetv2block_2_")
 
-            d = _dilation_rates[1]
-            self.ResBlock3 = resnet_blocks.ResNet_v2_block(_nfilters,_kernel_size,_dilation_rate=(d,d), _norm_type = _norm_type, prefix="_ResNetv2block_3_")
+            if len(self.dilatation_rates) > 1:
+                d = _dilation_rates[1]
+                self.ResBlock3 = resnet_blocks.ResNet_v2_block(_nfilters,_kernel_size,_dilation_rate=(d,d), _norm_type = _norm_type, prefix="_ResNetv2block_3_")
 
 
 
-    def hybrid_forward(self,F,_xl):
+    def hybrid_forward(self, F, _xl):
 
         # First perform a standard ResNet block with dilation_rate = 1
         x = _xl
@@ -85,8 +94,10 @@ class ResNet_atrous_2_unit(HybridBlock):
 
         # Uniform description for both Symbol and NDArray
         x = F.broadcast_add( x , self.ResBlock1(_xl) )
-        x = F.broadcast_add( x , self.ResBlock2(_xl) )
-        x = F.broadcast_add( x , self.ResBlock3(_xl) )
+        if len(self.dilatation_rates) > 0:
+            x = F.broadcast_add( x , self.ResBlock2(_xl) )
+        if len(self.dilatation_rates) > 1:
+            x = F.broadcast_add( x , self.ResBlock3(_xl) )
 
         return x
 
