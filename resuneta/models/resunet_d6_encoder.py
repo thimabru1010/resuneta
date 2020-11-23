@@ -47,7 +47,8 @@ class ResUNet_d6_encoder(HybridBlock):
             # Progressively reducing the dilation_rate of Atrous convolutions (the deeper the smaller).
 
             # dilat_rates = [3, 15]
-            dilat_rates = [3]
+            # dilat_rates = [3]
+            dilat_rates = []
 
             # Usually 32
             nfilters = self.nfilters * 2**(0)

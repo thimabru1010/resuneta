@@ -44,7 +44,8 @@ class ResUNet_d6(HybridBlock):
 
         self.dataset_type = dataset_type
 
-        dilat_rates = [3]
+        # dilat_rates = [3]
+        dilat_rates = []
 
 
         with self.name_scope():
