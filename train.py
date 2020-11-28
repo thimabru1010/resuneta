@@ -18,20 +18,6 @@ import numpy as np
 import gluoncv
 import albumentations as A
 import pandas as pd
-from bokeh.io import export_png
-from bokeh.models import ColumnDataSource, DataTable, TableColumn
-
-
-def save_df_as_image(df, path):
-    source = ColumnDataSource(df)
-    df_columns = [df.index.name]
-    df_columns.extend(df.columns.values)
-    columns_for_table=[]
-    for column in df_columns:
-        columns_for_table.append(TableColumn(field=column, title=column))
-
-    data_table = DataTable(source=source, columns=columns_for_table,height_policy="auto",width_policy="auto",index_position=None)
-    export_png(data_table, filename=path)
 
 
 def add_tensorboard_scalars(summary_writer, result_path, epoch, task, loss, acc=None, val_mcc=None):
@@ -375,7 +361,9 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
 
     df = pd.DataFrame(data_main, columns=data_main.keys())
 
-    save_df_as_image(df, os.path.join(args.results_path, 'hyperparamters.jpg'))
+    ax = df.plot()
+    fig = ax.get_figure()
+    fig.savefig(os.path.join(args.results_path, 'hyperparamters.jpg'))
 
 
 
