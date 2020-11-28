@@ -360,7 +360,7 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
     # Save hyperparamters
 
     data = {'Model': args.model, 'Dataset': args.dataset_type,
-            'Epochs': epoch, 'Optimizer': args.optmizer,
+            'Epochs': epoch, 'Optimizer': args.optimizer,
             'Learning Rate': args.learning_rate,
             'Weight decay': args.weight_decay, 'Patch size': args.patch_size,
             'Batch size': args.batch_size, 'Loss': args.loss,
