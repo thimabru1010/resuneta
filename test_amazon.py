@@ -419,6 +419,8 @@ elif args.model == 'unet_small':
 net.initialize()
 net.collect_params().initialize(force_reinit=True, ctx=ctx)
 net.load_parameters(args.model_path, ctx=ctx)
+
+
 # net.summary(mx.nd.random.uniform(shape=(Nbatch, 3, 256, 256)))
 net.hybridize()
 
