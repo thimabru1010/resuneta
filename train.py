@@ -18,6 +18,8 @@ import numpy as np
 import gluoncv
 import albumentations as A
 import pandas as pd
+from pandas.plotting import table
+import matplotlib.pyplot as plt
 
 
 def add_tensorboard_scalars(summary_writer, result_path, epoch, task, loss, acc=None, val_mcc=None):
@@ -361,9 +363,14 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
 
     df = pd.DataFrame(data_main, columns=data_main.keys())
 
-    ax = df.plot()
-    fig = ax.get_figure()
-    fig.savefig(os.path.join(args.results_path, 'hyperparamters.jpg'))
+    ax = plt.subplot(111, frame_on=False)  # no visible frame
+    ax.xaxis.set_visible(False)  # hide the x axis
+    ax.yaxis.set_visible(False)  # hide the y axis
+
+    table(ax, df, loc='center')  # where df is your data frame
+
+    plt.savefig(os.path.join(args.results_path, 'hyperparamters.jpg'), dpi=200,
+                bbox_inches='tight')
 
 
 
