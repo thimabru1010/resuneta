@@ -375,7 +375,7 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
 
     df = pd.DataFrame(data_main, columns=data_main.keys())
 
-    save_df_as_image(df)
+    save_df_as_image(df, os.path.join(args.results_path, 'hyperparamters.jpg'))
 
 
 
