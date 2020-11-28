@@ -3,7 +3,6 @@ from resuneta.models.Unet import UNet
 from resuneta.models.Unet_small import UNet_small
 from resuneta.src.NormalizeDataset import Normalize
 from resuneta.src.ISPRSDataset import ISPRSDataset
-from resuneta.src.semseg_aug_cv2 import SemSegAugmentor_CV, ParamsRange
 from resuneta.nn.loss.loss import Tanimoto_with_dual
 from weighted_cross_entropy import WeightedSoftmaxCrossEntropyLoss
 import mxnet as mx
@@ -18,7 +17,21 @@ import numpy as np
 # from gluoncv.loss import ICNetLoss
 import gluoncv
 import albumentations as A
+import pandas as pd
+from bokeh.io import export_png
+from bokeh.models import ColumnDataSource, DataTable, TableColumn
 
+
+def save_df_as_image(df, path):
+    source = ColumnDataSource(df)
+    df_columns = [df.index.name]
+    df_columns.extend(df.columns.values)
+    columns_for_table=[]
+    for column in df_columns:
+        columns_for_table.append(TableColumn(field=column, title=column))
+
+    data_table = DataTable(source=source, columns=columns_for_table,height_policy="auto",width_policy="auto",index_position=None)
+    export_png(data_table, filename=path)
 
 
 def add_tensorboard_scalars(summary_writer, result_path, epoch, task, loss, acc=None, val_mcc=None):
@@ -62,7 +75,7 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
         loss_dist = gluon.loss.L2Loss() #  TODO: Maybe should put weights for distance transform
         loss_color = gluon.loss.L2Loss()
     elif args.loss == 'wce':
-        weights = mx.nd.array(np.array([1.1060, 238.8582, 0]))
+        weights = mx.nd.array(np.array([1.1, 238, 0]))
         # weights = weights / mx.nd.norm(weights)
         # weights = mx.nd.array(np.array([0.2, 0.8, 0]))
         # weights = mx.nd.array(np.array([0.3, 0.7, 0]))
@@ -343,6 +356,27 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
             net.save_parameters(os.path.join(args.results_path,
                                              'best_model.params'))
     summary_writer.close()
+
+    # Save hyperparamters
+
+    data = {'Model': args.model, 'Dataset': args.dataset_type,
+            'Epochs': epoch, 'Optimizer': args.optm,
+            'Learning Rate': args.learning_rate,
+            'Weight decay': args.weight_decay, 'Patch size': args.patch_size,
+            'Batch size': args.batch_size, 'Loss': args.loss,
+            'Data aug': args.data_aug}
+
+    if args.model == 'resuneta':
+        data['Bound weight'] = args.wbound
+        data['Dist weight'] = args.wdist
+        data['Color weight'] = args.wcolor
+
+    data_main = {'Hyperparameter': data.keys(), 'Value': data.values()}
+
+    df = pd.DataFrame(data_main, columns=data_main.keys())
+
+    save_df_as_image(df)
+
 
 
 # End functions definition -----------------------------------------------------

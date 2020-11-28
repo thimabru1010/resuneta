@@ -3,6 +3,36 @@ import skimage
 from sklearn.metrics import confusion_matrix
 
 
+def prepare4metrics(img_predicted_, img_labels, px_area=69):
+    # Mask of the small regions (<69 px)
+    mask_areas_pred = np.ones_like(img_labels)
+    small_area = skimage.morphology.area_opening(img_predicted_,
+                                                 area_threshold=px_area,
+                                                 connectivity=1)
+    area_no_consider = img_predicted_ - small_area
+    # print(mask_areas_pred.shape)
+    # print(area_no_consider.shape)
+    mask_areas_pred[area_no_consider == 1] = 0
+
+    # Mask areas no considered reference (borders and buffer)
+    mask_borders = np.ones_like(img_predicted_)
+    #ref_no_consid = np.zeros((img_labels.shape))
+    mask_borders[img_labels == 2] = 0
+
+    # Final mask of no-considered regions
+    mask_no_consider = mask_areas_pred * mask_borders
+    ref_consider = mask_no_consider * img_labels
+    pred_consider = mask_no_consider * img_predicted_
+
+    ref_final = np.reshape(ref_consider, (ref_consider.shape[0] *
+                                                ref_consider.shape[1]))
+
+    ref_final = ref_final.astype(int)
+    pred_final = np.reshape(pred_consider, (pred_consider.shape[0] *
+                                             pred_consider.shape[1]))
+
+    return ref_final, pred_final
+
 def compute_def_metrics(thresholds, img_predicted, img_labels,
                         mask_amazon_ts=None, px_area=69):
     ''' INPUTS:
@@ -19,8 +49,11 @@ def compute_def_metrics(thresholds, img_predicted, img_labels,
 
     prec = []
     recall = []
+    tpr = []
+    fpr = []
 
     for thr in thresholds:
+        print('-'*60)
         print(f'Threshold: {thr}')
 
         img_predicted_ = img_predicted.copy()
@@ -45,7 +78,7 @@ def compute_def_metrics(thresholds, img_predicted, img_labels,
         # Final mask of no-considered regions
         mask_no_consider = mask_areas_pred * mask_borders
         ref_consider = mask_no_consider * img_labels
-        pred_consider = mask_no_consider*img_predicted_
+        pred_consider = mask_no_consider * img_predicted_
 
         # Pixels filtered
         # ref_final = ref_consider[mask_amazon_ts==1]
@@ -73,24 +106,32 @@ def compute_def_metrics(thresholds, img_predicted, img_labels,
         # Metrics
         cm = confusion_matrix(ref_final, pre_final)
 
-        print(cm)
-        #TN = cm[0,0]
+        TN = cm[0, 0]
         FN = cm[1, 0]
         TP = cm[1, 1]
         FP = cm[0, 1]
         precision_ = TP/(TP+FP)
         recall_ = TP/(TP+FN)
 
+        # TruePositiveRate = TruePositives / (TruePositives + False Negatives)
+        TPR = TP / (TP + FN)
+        # FalsePositiveRate = FalsePositives / (FalsePositives + TrueNegatives)
+        FPR = FP / (FP + TN)
+
         print(f' Precision: {precision_}')
         print(f' Recall: {recall_}')
 
+        tpr.append(TPR)
+        fpr.append(FPR)
         prec.append(precision_)
         recall.append(recall_)
 
-        mm = np.hstack((recall_, precision_))
-        metrics_all.append(mm)
-    metrics_ = np.asarray(metrics_all)
-    return metrics_, prec, recall
+        # mm = np.hstack((recall_, precision_))
+        # metrics_all.append(mm)
+    print('-'*60)
+    # metrics_ = np.asarray(metrics_all)
+    metrics_ = None
+    return metrics_, prec, recall, tpr, fpr
 
 #%% **** Example ****
 #

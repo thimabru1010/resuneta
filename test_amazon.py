@@ -4,7 +4,9 @@ import numpy as np
 import argparse
 import os
 
-from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score, accuracy_score
+from sklearn.metrics import confusion_matrix, f1_score, precision_score, \
+    recall_score, accuracy_score, roc_auc_score, precision_recall_curve, \
+    average_precision_score
 
 import ast
 import cv2
@@ -17,13 +19,15 @@ from resuneta.src.NormalizeDataset import Normalize
 # from resuneta.models.resunet_d7_causal_mtskcolor_ddist import *
 from resuneta.models.resunet_d6_causal_mtskcolor_ddist import ResUNet_d6
 from resuneta.models.Unet import UNet
+from resuneta.models.Unet_small import UNet_small
 from utils import load_npy_image, get_boundary_label, get_distance_label, \
     check_memory, normalization, mask_no_considered
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 from tensorflow.keras.utils import to_categorical
 import itertools
-from metrics_amazon import compute_def_metrics
+from metrics_amazon import compute_def_metrics, prepare4metrics
+
 
 def plot_confusion_matrix(cm, classes,
                           normalize=False,
@@ -52,8 +56,6 @@ def plot_confusion_matrix(cm, classes,
         print("Normalized confusion matrix")
     else:
         print('Confusion matrix, without normalization')
-
-    print(cm)
 
     thresh = cm.max() / 2.
     if title == 'Metrics':
@@ -292,7 +294,7 @@ parser.add_argument("--output_path",
                     help="Path to where save predictions",
                     type=str, default='results/preds_run')
 parser.add_argument("--model", help="Path to where save predictions",
-                    type=str, default='resuneta', choices=['resuneta', 'unet'])
+                    type=str, default='resuneta', choices=['resuneta', 'unet', 'unet_small'])
 parser.add_argument("--groups", help="Groups to be used in convolutions",
                     type=int, default=1)
 args = parser.parse_args()
@@ -407,8 +409,11 @@ if args.model == 'resuneta':
     net = ResUNet_d6('amazon', nfilters_init, args.num_classes,
                      patch_size=args.patch_size,
                      multitasking=args.use_multitasking)
-else:
+elif args.model == 'unet':
     net = UNet(args.num_classes, groups=args.groups, nfilter=64)
+    args.use_multitasking = False
+elif args.model == 'unet_small':
+    net = UNet_small(args.num_classes, groups=args.groups, nfilter=32)
     args.use_multitasking = False
 
 net.initialize()
@@ -582,39 +587,57 @@ GTTruePositives = (final_mask == 1)
 
 Npoints = 100
 Pmax = np.max(img_reconstructed[GTTruePositives * TileMask == 1])
-ProbList = np.linspace(Pmax, 0, Npoints)
-
+# ProbList = np.linspace(Pmax, 0, Npoints)
+ProbList = np.arange(start=0, stop=1, step=0.02).tolist()
+ProbList.reverse()
 # print(final_mask.shape)
 print(ProbList)
 # ProbList = [0.2, 0.5, 0.8]
-def_metrics, prec, recall = compute_def_metrics(ProbList, img_reconstructed, final_mask)
-print(def_metrics)
+def_metrics, prec, recall, tpr, fpr = compute_def_metrics(ProbList, img_reconstructed, final_mask)
 print('Image Saved!')
 
-fig = plt.figure()
-lw = 2
+# Calculates AUC ROC and AP for precisionXrecall
+
+refs, probs = prepare4metrics(img_reconstructed, final_mask)
+
+roc_auc = roc_auc_score(refs, probs)
+ap = average_precision_score(refs, probs)
+
+fig_pr = plt.figure()
 # plt.plot(fpr, tpr, color='darkorange',
 #         lw=lw, label=f'ROC curve (area = {auc*100:.2f}%)')
 
-plt.plot(recall, prec, color='darkorange', lw=lw)
-plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+# Precision x Recall curve
+plt.plot(recall, prec, color='darkorange', lw=2)
+# plt.plot([0, 0], [1, 0], color='navy', lw=2, linestyle='--')
 plt.xlim([0.0, 1.0])
-plt.ylim([0.0, 1.05])
+plt.ylim([0.0, 1.0])
+plt.xlabel('Recall')
+plt.ylabel('Precision')
+plt.title(f'Precision x Recall (mAP: {ap:.2f})')
+# plt.legend(loc="lower right")
+
+fig_roc = plt.figure()
+# ROC curve
+plt.plot(fpr, tpr, color='darkorange', lw=2)
+plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.0])
 plt.xlabel('False Positive Rate')
 plt.ylabel('True Positive Rate')
-# plt.title(f'ROC curve (mAP: {ap*100:.2f})%')
-plt.title(f'ROC curve')
+plt.title(f'ROC curve (AUC: {roc_auc:.2f})%')
 plt.legend(loc="lower right")
 
 plt.show()
 plt.close()
 
-# print(f'Input patches: {type(input_patches)}')
-# print(f'Input patches: {input_patches.dtype}')
+fig_pr.savefig(os.path.join(args.output_path, 'precisionXrecall.jpg'),
+               dpi=300)
+
+fig_roc.savefig(os.path.join(args.output_path, 'ROC.jpg'),
+                dpi=300)
 
 label_name = {0: 'No def', 1: 'Actual def', 2: 'Past def'}
-
-import matplotlib
 
 # Visualize inference per class
 if args.use_multitasking:
