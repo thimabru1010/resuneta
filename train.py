@@ -63,10 +63,10 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
         loss_dist = gluon.loss.L2Loss() #  TODO: Maybe should put weights for distance transform
         loss_color = gluon.loss.L2Loss()
     elif args.loss == 'wce':
-        weights = mx.nd.array(np.array([1.1, 238, 0]))
+        # weights = mx.nd.array(np.array([1.1, 238, 0]))
         # weights = weights / mx.nd.norm(weights)
         # weights = mx.nd.array(np.array([0.2, 0.8, 0]))
-        # weights = mx.nd.array(np.array([0.3, 0.7, 0]))
+        weights = mx.nd.array(np.array([0.3, 0.7, 0]))
         print(f'New weights: {weights}')
         loss_clss = WeightedSoftmaxCrossEntropyLoss(axis=1,
                                                     from_logits=from_logits,
