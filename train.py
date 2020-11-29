@@ -110,19 +110,18 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
             # print(label.shape)
             logger.debug(f'Train data shape: {data.shape}')
             data_list = gluon.utils.split_and_load(data, devices)
-            # seg_label_list = gluon.utils.split_and_load(label[:, 0:5, :, :], devices)
             logger.debug(f'Seg label shape: {label[:, 0:nclasses, :, :].shape}')
             seg_label_list = gluon.utils.split_and_load(label[:, 0:nclasses, :, :], devices)
             if args.multitasking:
-                # bound_label_list = gluon.utils.split_and_load(label[:, 5:10, :, :], devices)
-                # dist_label_list = gluon.utils.split_and_load(label[:, 10:15, :, :], devices)
-                # color_label_list = gluon.utils.split_and_load(label[:, 15:18, :, :], devices)
                 bound_label_list = gluon.utils.split_and_load(label[:, nclasses:2*nclasses, :, :], devices)
                 dist_label_list = gluon.utils.split_and_load(label[:, 2*nclasses:3*nclasses, :, :], devices)
-                if args.dataset_type == 'amazon':
-                    color_label_list = gluon.utils.split_and_load(label[:, 3*nclasses:(3*nclasses+6), :, :], devices)
+                if args.no_color:
+                    color_label_list = data_list
                 else:
-                    color_label_list = gluon.utils.split_and_load(label[:, 3*nclasses:(3*nclasses+3), :, :], devices)
+                    if args.dataset_type == 'amazon':
+                        color_label_list = gluon.utils.split_and_load(label[:, 3*nclasses:(3*nclasses+6), :, :], devices)
+                    else:
+                        color_label_list = gluon.utils.split_and_load(label[:, 3*nclasses:(3*nclasses+3), :, :], devices)
             else:
                 bound_label_list = seg_label_list
                 dist_label_list = seg_label_list
@@ -152,7 +151,11 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
                     if args.multitasking:
                         bound_losses.append(args.wbound*loss_clss(bound_logits, y_bound))
                         dist_losses.append(args.wdist*loss_dist(dist_logits, y_dist))
-                        color_losses.append(args.wcolor*loss_color(color_logits, y_color))
+                        if args.no_color:
+                            color_losses.append(0.0)
+                        else:
+                            color_losses.append(args.wcolor*loss_color(color_logits, y_color))
+
                         total_losses.append(seg_losses[i] + bound_losses[i] + dist_losses[i] + color_losses[i])
                     else:
                         bound_losses.append(0.0)
@@ -208,10 +211,13 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
             if args.multitasking:
                 bound_label_list = gluon.utils.split_and_load(label[:, nclasses:2*nclasses, :, :], devices)
                 dist_label_list = gluon.utils.split_and_load(label[:, 2*nclasses:3*nclasses, :, :], devices)
-                if args.dataset_type == 'amazon':
-                    color_label_list = gluon.utils.split_and_load(label[:, 3*nclasses:(3*nclasses+6), :, :], devices)
+                if args.no_color:
+                    color_label_list = data_list
                 else:
-                    color_label_list = gluon.utils.split_and_load(label[:, 3*nclasses:(3*nclasses+3), :, :], devices)
+                    if args.dataset_type == 'amazon':
+                        color_label_list = gluon.utils.split_and_load(label[:, 3*nclasses:(3*nclasses+6), :, :], devices)
+                    else:
+                        color_label_list = gluon.utils.split_and_load(label[:, 3*nclasses:(3*nclasses+3), :, :], devices)
             else:
                 bound_label_list = seg_label_list
                 dist_label_list = seg_label_list
@@ -239,7 +245,10 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
                 if args.multitasking:
                     bound_losses.append(args.wbound*loss_clss(bound_logits, y_bound))
                     dist_losses.append(args.wdist*loss_dist(dist_logits, y_dist))
-                    color_losses.append(args.wcolor*loss_color(color_logits, y_color))
+                    if args.no_color:
+                        color_losses.append(0.0)
+                    else:
+                        color_losses.append(args.wcolor*loss_color(color_logits, y_color))
                     total_losses.append(seg_losses[i] + bound_losses[i] + dist_losses[i] + color_losses[i])
                 else:
                     bound_losses.append(0.0)
@@ -563,11 +572,11 @@ if __name__ == '__main__':
         aug = None
 
     train_dataset = ISPRSDataset(root=args.dataset_path,
-                                 mode='train', color=True,
+                                 mode='train', color=args.no_color,
                                  mtsk=args.multitasking, norm=tnorm,
                                  transform=aug)
     val_dataset = ISPRSDataset(root=args.dataset_path,
-                               mode='val', color=True,
+                               mode='val', color=args.no_color,
                                mtsk=args.multitasking, norm=tnorm,
                                transform=None)
 

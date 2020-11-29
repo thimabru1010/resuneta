@@ -19,7 +19,7 @@ class ResUNet_d6(HybridBlock):
 
     def __init__(self, dataset_type, _nfilters_init,  _NClasses,
                  patch_size=256, verbose=True, from_logits=True,
-                 _norm_type='BatchNorm', no_color=True, weights=None,
+                 _norm_type='BatchNorm', color=True, weights=None,
                  **kwards):
         HybridBlock.__init__(self,**kwards)
 
@@ -46,7 +46,7 @@ class ResUNet_d6(HybridBlock):
         # dilat_rates = [3]
         dilat_rates = []
 
-        self.no_color = no_color
+        self.color = color
 
 
         with self.name_scope():
@@ -127,11 +127,12 @@ class ResUNet_d6(HybridBlock):
             self.distance_logits.add( gluon.nn.Conv2D(self.NClasses,kernel_size=1,padding=0))
 
 
-            # This layer is trying to identify the exact coloration on HSV scale (cv2 devined)
-            if self.dataset_type == 'ISPRS':
-                self.color_logits = gluon.nn.Conv2D(3, kernel_size=1, padding=0)
-            elif self.dataset_type == 'amazon':
-                self.color_logits = gluon.nn.Conv2D(6, kernel_size=1, padding=0)
+            if self.color:
+                # This layer is trying to identify the exact coloration on HSV scale (cv2 devined)
+                if self.dataset_type == 'ISPRS':
+                    self.color_logits = gluon.nn.Conv2D(3, kernel_size=1, padding=0)
+                elif self.dataset_type == 'amazon':
+                    self.color_logits = gluon.nn.Conv2D(6, kernel_size=1, padding=0)
 
 
             # if not self.from_logits:
@@ -214,10 +215,14 @@ class ResUNet_d6(HybridBlock):
         bound = F.concat(conv, dist)
         bound = self.bound_logits(bound)
         bound_logits = F.sigmoid(bound) # Boundaries are not mutually exclusive the way I am creating them.
-        # Color prediction (HSV --> cv2)
-        convc_logits = self.color_logits(convl)
-        # HSV (cv2) color prediction
-        convc = F.sigmoid(convc_logits) # This will be for self-supervised as well
+
+        if self.color:
+            # Color prediction (HSV --> cv2)
+            convc_logits = self.color_logits(convl)
+            # HSV (cv2) color prediction
+            convc = F.sigmoid(convc_logits) # This will be for self-supervised as well
+        else:
+            convc = _input
 
         # Finally, find segmentation mask
         seg = F.concat(conv, bound, dist)

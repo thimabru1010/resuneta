@@ -20,8 +20,10 @@ import mxnet as mx
 
 import matplotlib.pyplot as plt
 
+
 class ISPRSDataset(dataset.Dataset):
-    def __init__(self, root, mode='train', mtsk=True, color=True, transform=None, norm=None):
+    def __init__(self, root, mode='train', mtsk=True, color=True,
+                 transform=None, norm=None):
 
         self._mode = mode
         self.mtsk = mtsk
@@ -97,27 +99,18 @@ class ISPRSDataset(dataset.Dataset):
         if self.mtsk:
             mask_bound = np.load(mask_bound_filepath).astype(np.float32)
             mask_dist = np.load(mask_dist_filepath).astype(np.float32)
-            mask_color = np.load(mask_color_filepath).astype(np.float32)
-            # print(f'Bound shape: {mask_bound.shape}')
-            # print(f'Dist shape: {mask_dist.shape}')
-            # print(f'Color shape: {mask_color.shape}')
-            # Maybe mask_color will fucked up
-            # H x W x 18
-            masks = np.concatenate([mask_seg, mask_bound, mask_dist, mask_color], axis=-1)
+            if self.color:
+                mask_color = np.load(mask_color_filepath).astype(np.float32)
+                # Maybe mask_color will fucked up
+                # H x W x 18
+                masks = np.concatenate([mask_seg, mask_bound, mask_dist, mask_color], axis=-1)
+            else:
+                mask_color = base
+                masks = np.concatenate([mask_seg, mask_bound, mask_dist, mask_color], axis=-1)
         else:
             masks = mask_seg
 
 
-        # if self.color:
-        #     mask = np.concatenate([mask,base_hsv],axis=0)
-
-        # Maybe there is an error here
-        # if self.mtsk == False:
-        #     mask = mask[:6,:,:]
-
-        # Maybe there is an error here
-        # print(base.shape)
-        # print(masks.shape)
         if self._transform is not None:
             augmented = self._transform(image=base, mask=masks)
             base = augmented['image']
@@ -135,15 +128,6 @@ class ISPRSDataset(dataset.Dataset):
                     masks[:, :, -3:] = masks[:, :, -3:] * self.colornorm
                 # mask_color = (mask_color.transpose([1, 2, 0]) * self.colornorm).transpose([2,0,1])
 
-        # if self.mtsk:
-        #     # Don't need to cast to Mxnet tensor. Dataset does this alone
-        #     # Beware of casting with transforms. Zero the image. Leads to an error.
-        #     # print('Retornando')
-        #     # print(base.shape)
-        #     # print(masks.shape)
-        #     return base.astype(np.float32).transpose((2, 0, 1)), masks.astype(np.float32).transpose((2, 0, 1))
-        # else:
-        #     return base.astype(np.float32).transpose((2, 0, 1)), mask_seg.astype(np.float32).transpose((2, 0, 1))
         return base.astype(np.float32).transpose((2, 0, 1)), masks.astype(np.float32).transpose((2, 0, 1))
 
     def __len__(self):
