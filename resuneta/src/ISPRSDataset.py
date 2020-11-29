@@ -27,9 +27,9 @@ class ISPRSDataset(dataset.Dataset):
 
         self._mode = mode
         self.mtsk = mtsk
-        self.color = color
-        if color:
-            self.colornorm = np.array([1./179, 1./255, 1./255])
+        # self.color = color
+        #if color:
+        self.colornorm = np.array([1./179, 1./255, 1./255])
 
         self._transform = transform
         self._norm = norm # Normalization of img
@@ -99,14 +99,10 @@ class ISPRSDataset(dataset.Dataset):
         if self.mtsk:
             mask_bound = np.load(mask_bound_filepath).astype(np.float32)
             mask_dist = np.load(mask_dist_filepath).astype(np.float32)
-            if self.color:
-                mask_color = np.load(mask_color_filepath).astype(np.float32)
-                # Maybe mask_color will fucked up
-                # H x W x 18
-                masks = np.concatenate([mask_seg, mask_bound, mask_dist, mask_color], axis=-1)
-            else:
-                mask_color = base
-                masks = np.concatenate([mask_seg, mask_bound, mask_dist, mask_color], axis=-1)
+            mask_color = np.load(mask_color_filepath).astype(np.float32)
+            # Maybe mask_color will fucked up
+            # H x W x 18
+            masks = np.concatenate([mask_seg, mask_bound, mask_dist, mask_color], axis=-1)
         else:
             masks = mask_seg
 
