@@ -19,7 +19,7 @@ class ResUNet_d6(HybridBlock):
 
     def __init__(self, dataset_type, _nfilters_init,  _NClasses,
                  patch_size=256, verbose=True, from_logits=True,
-                 _norm_type='BatchNorm', color=True, weights=None,
+                 _norm_type='BatchNorm', weights=None,
                  **kwards):
         HybridBlock.__init__(self,**kwards)
 
@@ -45,8 +45,6 @@ class ResUNet_d6(HybridBlock):
 
         # dilat_rates = [3]
         dilat_rates = []
-
-        self.color = color
 
 
         with self.name_scope():
@@ -216,13 +214,12 @@ class ResUNet_d6(HybridBlock):
         bound = self.bound_logits(bound)
         bound_logits = F.sigmoid(bound) # Boundaries are not mutually exclusive the way I am creating them.
 
-        if self.color:
-            # Color prediction (HSV --> cv2)
-            convc_logits = self.color_logits(convl)
-            # HSV (cv2) color prediction
-            convc = F.sigmoid(convc_logits) # This will be for self-supervised as well
-        else:
-            convc = _input
+        # if self.color:
+        # Color prediction (HSV --> cv2)
+        convc_logits = self.color_logits(convl)
+        # HSV (cv2) color prediction
+        convc = F.sigmoid(convc_logits) # This will be for self-supervised as well
+
 
         # Finally, find segmentation mask
         seg = F.concat(conv, bound, dist)
@@ -230,7 +227,6 @@ class ResUNet_d6(HybridBlock):
         #logits = F.softmax(logits,axis=1)
         seg_logits = self.ChannelAct(seg)
         if not self.from_logits:
-
             return seg, bound, dist, convc
         else:
             # Return without apply any sofmtax

@@ -115,13 +115,10 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
             if args.multitasking:
                 bound_label_list = gluon.utils.split_and_load(label[:, nclasses:2*nclasses, :, :], devices)
                 dist_label_list = gluon.utils.split_and_load(label[:, 2*nclasses:3*nclasses, :, :], devices)
-                if args.no_color:
-                    color_label_list = data_list
+                if args.dataset_type == 'amazon':
+                    color_label_list = gluon.utils.split_and_load(label[:, 3*nclasses:(3*nclasses+6), :, :], devices)
                 else:
-                    if args.dataset_type == 'amazon':
-                        color_label_list = gluon.utils.split_and_load(label[:, 3*nclasses:(3*nclasses+6), :, :], devices)
-                    else:
-                        color_label_list = gluon.utils.split_and_load(label[:, 3*nclasses:(3*nclasses+3), :, :], devices)
+                    color_label_list = gluon.utils.split_and_load(label[:, 3*nclasses:(3*nclasses+3), :, :], devices)
             else:
                 bound_label_list = seg_label_list
                 dist_label_list = seg_label_list
@@ -151,10 +148,7 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
                     if args.multitasking:
                         bound_losses.append(args.wbound*loss_clss(bound_logits, y_bound))
                         dist_losses.append(args.wdist*loss_dist(dist_logits, y_dist))
-                        if args.no_color:
-                            color_losses.append(0.0)
-                        else:
-                            color_losses.append(args.wcolor*loss_color(color_logits, y_color))
+                        color_losses.append(args.wcolor*loss_color(color_logits, y_color))
 
                         total_losses.append(seg_losses[i] + bound_losses[i] + dist_losses[i] + color_losses[i])
                     else:
@@ -211,13 +205,10 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
             if args.multitasking:
                 bound_label_list = gluon.utils.split_and_load(label[:, nclasses:2*nclasses, :, :], devices)
                 dist_label_list = gluon.utils.split_and_load(label[:, 2*nclasses:3*nclasses, :, :], devices)
-                if args.no_color:
-                    color_label_list = data_list
+                if args.dataset_type == 'amazon':
+                    color_label_list = gluon.utils.split_and_load(label[:, 3*nclasses:(3*nclasses+6), :, :], devices)
                 else:
-                    if args.dataset_type == 'amazon':
-                        color_label_list = gluon.utils.split_and_load(label[:, 3*nclasses:(3*nclasses+6), :, :], devices)
-                    else:
-                        color_label_list = gluon.utils.split_and_load(label[:, 3*nclasses:(3*nclasses+3), :, :], devices)
+                    color_label_list = gluon.utils.split_and_load(label[:, 3*nclasses:(3*nclasses+3), :, :], devices)
             else:
                 bound_label_list = seg_label_list
                 dist_label_list = seg_label_list
@@ -245,10 +236,7 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
                 if args.multitasking:
                     bound_losses.append(args.wbound*loss_clss(bound_logits, y_bound))
                     dist_losses.append(args.wdist*loss_dist(dist_logits, y_dist))
-                    if args.no_color:
-                        color_losses.append(0.0)
-                    else:
-                        color_losses.append(args.wcolor*loss_color(color_logits, y_color))
+                    color_losses.append(args.wcolor*loss_color(color_logits, y_color))
                     total_losses.append(seg_losses[i] + bound_losses[i] + dist_losses[i] + color_losses[i])
                 else:
                     bound_losses.append(0.0)
@@ -505,7 +493,6 @@ if __name__ == '__main__':
         net = ResUNet_d6(args.dataset_type, Nfilters_init, args.num_classes,
                          patch_size=args.patch_size, verbose=args.debug,
                          from_logits=from_logits,
-                         color=args.no_color,
                          weights=weights_elemwise)
     elif args.model == 'unet':
         # Changed from 64 to 32
@@ -572,11 +559,11 @@ if __name__ == '__main__':
         aug = None
 
     train_dataset = ISPRSDataset(root=args.dataset_path,
-                                 mode='train', color=args.no_color,
+                                 mode='train',
                                  mtsk=args.multitasking, norm=tnorm,
                                  transform=aug)
     val_dataset = ISPRSDataset(root=args.dataset_path,
-                               mode='val', color=args.no_color,
+                               mode='val',
                                mtsk=args.multitasking, norm=tnorm,
                                transform=None)
 

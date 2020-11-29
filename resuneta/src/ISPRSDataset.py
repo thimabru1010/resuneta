@@ -15,15 +15,11 @@ import os
 import numpy as np
 
 from mxnet.gluon.data import dataset
-import cv2
-import mxnet as mx
-
-import matplotlib.pyplot as plt
 
 
 class ISPRSDataset(dataset.Dataset):
-    def __init__(self, root, mode='train', mtsk=True, color=True,
-                 transform=None, norm=None):
+    def __init__(self, root, mode='train', mtsk=True, transform=None,
+                 norm=None):
 
         self._mode = mode
         self.mtsk = mtsk
