@@ -407,8 +407,7 @@ if args.model == 'resuneta':
     args.use_multitasking = True
     # Nbatch = 8
     net = ResUNet_d6('amazon', nfilters_init, args.num_classes,
-                     patch_size=args.patch_size,
-                     multitasking=args.use_multitasking)
+                     patch_size=args.patch_size)
 elif args.model == 'unet':
     net = UNet(args.num_classes, groups=args.groups, nfilter=64)
     args.use_multitasking = False

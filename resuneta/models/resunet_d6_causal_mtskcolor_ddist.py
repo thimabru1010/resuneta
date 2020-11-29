@@ -59,6 +59,7 @@ class ResUNet_d6(HybridBlock):
             if verbose:
                 print ("depth:= {0}, nfilters: {1}".format(6,nfilters))
             self.UpComb1 = combine_layers(nfilters)
+            dilat_rates = [3, 5]
             # self.UpConv1 = ResNet_atrous_2_unit(nfilters,_dilation_rates=[3,5])
             self.UpConv1 = ResNet_atrous_2_unit(nfilters,
                                                 _dilation_rates=dilat_rates)
@@ -67,6 +68,7 @@ class ResUNet_d6(HybridBlock):
             if verbose:
                 print ("depth:= {0}, nfilters: {1}".format(7,nfilters))
             self.UpComb2 = combine_layers(nfilters)
+            dilat_rates = [3, 15]
             self.UpConv2 = ResNet_atrous_2_unit(nfilters,
                                                 _dilation_rates=dilat_rates)
 
