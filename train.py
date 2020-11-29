@@ -505,7 +505,7 @@ if __name__ == '__main__':
         net = ResUNet_d6(args.dataset_type, Nfilters_init, args.num_classes,
                          patch_size=args.patch_size, verbose=args.debug,
                          from_logits=from_logits,
-                         no_color=args.no_color,
+                         color=args.no_color,
                          weights=weights_elemwise)
     elif args.model == 'unet':
         # Changed from 64 to 32
