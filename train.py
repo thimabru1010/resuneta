@@ -438,6 +438,8 @@ if __name__ == '__main__':
                         type=float, default=1.0)
     parser.add_argument("--wcolor", help="HSV transform loss weight",
                         type=float, default=1.0)
+    parser.add_argument("--no_color", help="Don't use HSV transform task",
+                        action='store_true')
 
     parser.add_argument("--groups", help="Groups to be used in convolutions",
                         type=int, default=1)
@@ -494,7 +496,7 @@ if __name__ == '__main__':
         net = ResUNet_d6(args.dataset_type, Nfilters_init, args.num_classes,
                          patch_size=args.patch_size, verbose=args.debug,
                          from_logits=from_logits,
-                         multitasking=args.multitasking,
+                         no_color=args.no_color,
                          weights=weights_elemwise)
     elif args.model == 'unet':
         # Changed from 64 to 32

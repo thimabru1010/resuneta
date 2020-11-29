@@ -19,7 +19,7 @@ class ResUNet_d6(HybridBlock):
 
     def __init__(self, dataset_type, _nfilters_init,  _NClasses,
                  patch_size=256, verbose=True, from_logits=True,
-                 _norm_type='BatchNorm', multitasking=True, weights=None,
+                 _norm_type='BatchNorm', no_color=True, weights=None,
                  **kwards):
         HybridBlock.__init__(self,**kwards)
 
@@ -33,7 +33,6 @@ class ResUNet_d6(HybridBlock):
         # Provide a flexibility in Normalization layers, test both
         #self.NormLayer = InstanceNorm
         #self.NormLayer = gluon.nn.BatchNorm
-        self.multitasking = multitasking
 
         if patch_size == 256:
             self.psp_depth = 4
@@ -46,6 +45,8 @@ class ResUNet_d6(HybridBlock):
 
         # dilat_rates = [3]
         dilat_rates = []
+
+        self.no_color = color
 
 
         with self.name_scope():
@@ -102,43 +103,36 @@ class ResUNet_d6(HybridBlock):
 
             self.psp_2ndlast = PSP_Pooling(self.nfilters, _norm_type=_norm_type, depth=self.psp_depth)
 
-            if self.multitasking:
+            # Segmenetation logits -- deeper for better reconstruction
+            self.logits = gluon.nn.HybridSequential()
+            self.logits.add( Conv2DNormed(channels = self.nfilters,kernel_size = (3,3),padding=(1,1)))
+            self.logits.add( gluon.nn.Activation('relu'))
+            self.logits.add( Conv2DNormed(channels = self.nfilters,kernel_size = (3,3),padding=(1,1)))
+            self.logits.add( gluon.nn.Activation('relu'))
+            self.logits.add( gluon.nn.Conv2D(self.NClasses,kernel_size=1,padding=0))
 
-                # Segmenetation logits -- deeper for better reconstruction
-                self.logits = gluon.nn.HybridSequential()
-                self.logits.add( Conv2DNormed(channels = self.nfilters,kernel_size = (3,3),padding=(1,1)))
-                self.logits.add( gluon.nn.Activation('relu'))
-                self.logits.add( Conv2DNormed(channels = self.nfilters,kernel_size = (3,3),padding=(1,1)))
-                self.logits.add( gluon.nn.Activation('relu'))
-                self.logits.add( gluon.nn.Conv2D(self.NClasses,kernel_size=1,padding=0))
-
-                # bound logits
-                self.bound_logits = gluon.nn.HybridSequential()
-                self.bound_logits.add( Conv2DNormed(channels = self.nfilters,kernel_size = (3,3),padding=(1,1)))
-                self.bound_logits.add( gluon.nn.Activation('relu'))
-                self.bound_logits.add( gluon.nn.Conv2D(self.NClasses,kernel_size=1,padding=0))
+            # bound logits
+            self.bound_logits = gluon.nn.HybridSequential()
+            self.bound_logits.add( Conv2DNormed(channels = self.nfilters,kernel_size = (3,3),padding=(1,1)))
+            self.bound_logits.add( gluon.nn.Activation('relu'))
+            self.bound_logits.add( gluon.nn.Conv2D(self.NClasses,kernel_size=1,padding=0))
 
 
-                # distance logits -- deeper for better reconstruction
-                self.distance_logits = gluon.nn.HybridSequential()
-                self.distance_logits.add( Conv2DNormed(channels = self.nfilters,kernel_size = (3,3),padding=(1,1)))
-                self.distance_logits.add( gluon.nn.Activation('relu'))
-                self.distance_logits.add( Conv2DNormed(channels = self.nfilters,kernel_size = (3,3),padding=(1,1)))
-                self.distance_logits.add( gluon.nn.Activation('relu'))
-                self.distance_logits.add( gluon.nn.Conv2D(self.NClasses,kernel_size=1,padding=0))
+            # distance logits -- deeper for better reconstruction
+            self.distance_logits = gluon.nn.HybridSequential()
+            self.distance_logits.add( Conv2DNormed(channels = self.nfilters,kernel_size = (3,3),padding=(1,1)))
+            self.distance_logits.add( gluon.nn.Activation('relu'))
+            self.distance_logits.add( Conv2DNormed(channels = self.nfilters,kernel_size = (3,3),padding=(1,1)))
+            self.distance_logits.add( gluon.nn.Activation('relu'))
+            self.distance_logits.add( gluon.nn.Conv2D(self.NClasses,kernel_size=1,padding=0))
 
 
-                # This layer is trying to identify the exact coloration on HSV scale (cv2 devined)
-                if self.dataset_type == 'ISPRS':
-                    self.color_logits = gluon.nn.Conv2D(3, kernel_size=1, padding=0)
-                elif self.dataset_type == 'amazon':
-                    self.color_logits = gluon.nn.Conv2D(6, kernel_size=1, padding=0)
-            else:
-                self.seg_pointwise = gluon.nn.HybridSequential()
-                self.seg_pointwise.add(gluon.nn.Conv2D(self.NClasses, kernel_size=1, padding=0))
+            # This layer is trying to identify the exact coloration on HSV scale (cv2 devined)
+            if self.dataset_type == 'ISPRS':
+                self.color_logits = gluon.nn.Conv2D(3, kernel_size=1, padding=0)
+            elif self.dataset_type == 'amazon':
+                self.color_logits = gluon.nn.Conv2D(6, kernel_size=1, padding=0)
 
-                # # This conv will be only used for non multitasking mode
-                # self.seg_pointwise = gluon.nn.Conv2D(self.NClasses, kernel_size=1, padding=0)
 
             # if not self.from_logits:
             # Last activation, customization for binary results
@@ -208,7 +202,6 @@ class ResUNet_d6(HybridBlock):
         conv = F.relu(conv)
         # print(conv)
 
-        # if self.multitasking:
         # logits
         # 1st find distance map, skeleton like, topology info
         dist = self.distance_logits(convl) # Modification here, do not use max pooling for distance
@@ -238,7 +231,3 @@ class ResUNet_d6(HybridBlock):
             # Return without apply any sofmtax
             # regressions are still returned after sigmoid
             return seg_logits, bound_logits, dist_logits, convc
-        # else:
-        #     seg_logits = self.seg_pointwise(conv)
-        #     seg_logits = self.ChannelAct(seg_logits)
-        #     return seg_logits
