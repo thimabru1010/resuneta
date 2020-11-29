@@ -46,7 +46,7 @@ class ResUNet_d6(HybridBlock):
         # dilat_rates = [3]
         dilat_rates = []
 
-        self.no_color = color
+        self.no_color = no_color
 
 
         with self.name_scope():
