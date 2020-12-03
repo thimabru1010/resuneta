@@ -430,15 +430,6 @@ if __name__ == '__main__':
 
     # Mask with tiles
     # Divide tiles in 5 rows and 3 columns. Total = 15 tiles
-    # tile.shape --> (6100/5, 6600/3) = (1220, 2200)
-    # [NEW] Divide tiles in 5 rows and 5 columns. Total = 25 tiles
-    # [NEW] tile.shape --> (6100/5, 6600/5) = (1220, 1320)
-    # tile_number = np.ones((1220, 1320))
-    # mask_c_1 = np.concatenate((tile_number, 2*tile_number, 3*tile_number, 16*tile_number, 17*tile_number), axis=1)
-    # mask_c_2 = np.concatenate((4*tile_number, 5*tile_number, 6*tile_number, 18*tile_number, 19*tile_number), axis=1)
-    # mask_c_3 = np.concatenate((7*tile_number, 8*tile_number, 9*tile_number, 20*tile_number, 21*tile_number), axis=1)
-    # mask_c_4 = np.concatenate((10*tile_number, 11*tile_number, 12*tile_number, 22*tile_number, 23*tile_number), axis=1)
-    # mask_c_5 = np.concatenate((13*tile_number, 14*tile_number, 15*tile_number, 24*tile_number, 25*tile_number), axis=1)
     tile_number = np.ones((1040, 1680))
     mask_c_1 = np.concatenate((tile_number, 2*tile_number, 3*tile_number), axis=1)
     mask_c_2 = np.concatenate((4*tile_number, 5*tile_number, 6*tile_number), axis=1)
@@ -447,21 +438,16 @@ if __name__ == '__main__':
     mask_c_5 = np.concatenate((13*tile_number, 14*tile_number, 15*tile_number), axis=1)
     mask_tiles = np.concatenate((mask_c_1, mask_c_2, mask_c_3, mask_c_4, mask_c_5), axis=0)
 
-    # tst1 = 5 # 357
-    # tst2 = 11 # 257
-    # tst3 = 14
-    # tst4 = 15
-    # tst5 = 13
-    # tst6 = 12
-
     # all_tiles = [i for i in range(1, 16)]
     # tr_tiles = [tr2, tr3, tr4, tr6, tr8, tr9]
     # tr_tiles = [2, 8, 13, 7, 11, 1, 14, 13, 9, 6, 10]
-    tr_tiles = [1, 2, 3, 5, 6, 7, 8, 10, 11, 14]
+    # tr_tiles = [1, 2, 3, 5, 6, 7, 8, 10, 11]
+    tr_tiles = [1, 2, 3, 6, 7, 8, 10, 11, 12]
     # val_tiles = [val3, val4]
     # val_tiles = [5, 4, 15, 12]
     # val_tiles = [12, 13, 14, 15]
     val_tiles = [4, 9, 14]
+    tst_tiles = [5, 15, 13]
     all_tiles = tr_tiles + val_tiles
     print(f'All tiles: {all_tiles}')
     # final_mask[img_mask_ref == -99] = -1
@@ -475,18 +461,13 @@ if __name__ == '__main__':
     #                                                                           patches_tr_ref,
     #                                                                           test_size=0.2, random_state=42)
 
-    # Testing tiles
-    # tst_tiles = [tst1, tst2, tst3, tst4]
-
     # Trainig tiles ------------------------------------------------------------
-    # tr_tiles = [tr1, tr2, tr3, tr4, tr5, tr6, tr7, tr8, tr9, tr10]
 
     patches_tr, patches_tr_ref = extract_tiles2patches(tr_tiles, mask_tiles, input_image,
                                                        final_mask, args.patch_size,
                                                        args.stride, args.def_percent)
 
     # Validation tiles ---------------------------------------------------------
-    # val_tiles = [val1, val3, val4, val5, val6]
 
     patches_val, patches_val_ref = extract_tiles2patches(val_tiles, mask_tiles, input_image,
                                                          final_mask, args.patch_size, args.stride,

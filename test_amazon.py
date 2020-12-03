@@ -369,33 +369,23 @@ del img_t1, img_t2, past_ref1, past_ref2 #  , image_ref
 print('Images deleted!')
 check_memory()
 
-# Put the patch size according to you training here
+# # Separate per tiles
+tile_number = np.ones((1040, 1680))
+mask_c_1 = np.concatenate((tile_number, 2*tile_number, 3*tile_number), axis=1)
+mask_c_2 = np.concatenate((4*tile_number, 5*tile_number, 6*tile_number), axis=1)
+mask_c_3 = np.concatenate((7*tile_number, 8*tile_number, 9*tile_number), axis=1)
+mask_c_4 = np.concatenate((10*tile_number, 11*tile_number, 12*tile_number), axis=1)
+mask_c_5 = np.concatenate((13*tile_number, 14*tile_number, 15*tile_number), axis=1)
+mask_tiles = np.concatenate((mask_c_1, mask_c_2, mask_c_3, mask_c_4, mask_c_5), axis=0)
+
+# Testing tiles
+# tst_tiles = [tst1, tst2, tst3, tst4]
+tst_tiles = [5, 15, 13]
+input_patches, ref_patches = extract_tiles2patches(tst_tiles, mask_tiles, input_image,
+                                                   final_mask, args.patch_size)
+
 # input_patches = extract_patches(input_image, args.patch_size, img_type=1)
 # ref_patches = extract_patches(final_mask, args.patch_size, img_type=2)
-
-# # Separate per tiles
-# tile_number = np.ones((1040, 1680))
-# mask_c_1 = np.concatenate((tile_number, 2*tile_number, 3*tile_number), axis=1)
-# mask_c_2 = np.concatenate((4*tile_number, 5*tile_number, 6*tile_number), axis=1)
-# mask_c_3 = np.concatenate((7*tile_number, 8*tile_number, 9*tile_number), axis=1)
-# mask_c_4 = np.concatenate((10*tile_number, 11*tile_number, 12*tile_number), axis=1)
-# mask_c_5 = np.concatenate((13*tile_number, 14*tile_number, 15*tile_number), axis=1)
-# mask_tiles = np.concatenate((mask_c_1, mask_c_2, mask_c_3, mask_c_4, mask_c_5), axis=0)
-#
-# tst1 = 5 # 357
-# tst2 = 11 # 257
-# tst3 = 14
-# tst4 = 15
-# tst5 = 13
-# tst6 = 12
-#
-# # Testing tiles
-# tst_tiles = [tst1, tst2, tst3, tst4]
-# input_patches, ref_patches = extract_tiles2patches(tst_tiles, mask_tiles, input_image,
-#                                                    final_mask, args.patch_size)
-
-input_patches = extract_patches(input_image, args.patch_size, img_type=1)
-ref_patches = extract_patches(final_mask, args.patch_size, img_type=2)
 
 assert len(input_patches) == len(ref_patches), "Input patches and Reference patches have a different lenght"
 
@@ -548,10 +538,10 @@ if not os.path.exists(args.output_path):
 # print(tst_tiles)
 print(np.squeeze(final_mask, axis=-1).shape)
 # print(seg_preds_def)
-img_reconstructed, _ = pred_recostruction(args.patch_size, seg_preds_def,
-                                       np.squeeze(final_mask, axis=-1))
-# img_reconstructed = reconstruct_patches2tiles(tst_tiles, mask_tiles, final_mask,
-#                                               args.patch_size, seg_pred)
+# img_reconstructed, _ = pred_recostruction(args.patch_size, seg_preds_def,
+#                                        np.squeeze(final_mask, axis=-1))
+img_reconstructed = reconstruct_patches2tiles(tst_tiles, mask_tiles, final_mask,
+                                              args.patch_size, seg_pred)
 # img_reconstructed_rgb = convert_preds2rgb(img_reconstructed,
 #                                           label_dict)
 #
@@ -576,7 +566,7 @@ plt.show()
 plt.close()
 fig.savefig(os.path.join(args.output_path, 'seg_pred_def&ref.jpg'))
 
-plt.imsave('seg_pred_def2.jpeg', img_reconstructed)
+# plt.imsave('seg_pred_def2.jpeg', img_reconstructed)
 
 # Metrics
 final_mask = np.squeeze(final_mask, axis=-1)
@@ -594,6 +584,7 @@ ProbList.reverse()
 # print(final_mask.shape)
 print(ProbList)
 # ProbList = [0.2, 0.5, 0.8]
+# Ver isso aqui junto com os tiles
 def_metrics, prec, recall, tpr, fpr = compute_def_metrics(ProbList, img_reconstructed, final_mask)
 print('Image Saved!')
 
