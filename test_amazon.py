@@ -380,7 +380,12 @@ mask_tiles = np.concatenate((mask_c_1, mask_c_2, mask_c_3, mask_c_4, mask_c_5), 
 
 # Testing tiles
 # tst_tiles = [tst1, tst2, tst3, tst4]
-tst_tiles = [5, 15, 13]
+tst_tiles = [5, 15, 13, 14]
+
+mask_tst = np.zeros_like(mask_tiles)
+for tst_tile in tst_tiles:
+    mask_tst[mask_tiles == tst_tile] = 1
+
 input_patches, ref_patches = extract_tiles2patches(tst_tiles, mask_tiles, input_image,
                                                    final_mask, args.patch_size)
 
@@ -552,14 +557,13 @@ img_reconstructed = reconstruct_patches2tiles(tst_tiles, mask_tiles, final_mask,
 print('Shapes')
 print(img_reconstructed.shape)
 # print(img_reconstructed)
-fig, axes = plt.subplots(nrows=1, ncols=2,
-                          figsize=(10, 5))
+fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
 axes[0].set_title('Reference')
 axes[1].set_title('Def pred')
 
 print(final_mask.shape)
 # axes[0].imshow(final_mask[:, :, 0])
-axes[0].imshow(image_ref)
+axes[0].imshow(image_ref*mask_tst)
 im = axes[1].imshow(img_reconstructed)
 colorbar(im, axes[1], fig)
 plt.show()
@@ -569,15 +573,15 @@ fig.savefig(os.path.join(args.output_path, 'seg_pred_def&ref.jpg'))
 # plt.imsave('seg_pred_def2.jpeg', img_reconstructed)
 
 # Metrics
-final_mask = np.squeeze(final_mask, axis=-1)
-ref1 = np.ones_like(final_mask).astype(np.float32)
-ref1[final_mask == 2] = 0
-# TileMask = mask_amazon_ts * ref1
-TileMask = ref1
-GTTruePositives = (final_mask == 1)
-
-Npoints = 100
-Pmax = np.max(img_reconstructed[GTTruePositives * TileMask == 1])
+# final_mask = np.squeeze(final_mask, axis=-1)
+# ref1 = np.ones_like(final_mask).astype(np.float32)
+# ref1[final_mask == 2] = 0
+# # TileMask = mask_amazon_ts * ref1
+# TileMask = ref1
+# GTTruePositives = (final_mask == 1)
+#
+# Npoints = 100
+# Pmax = np.max(img_reconstructed[GTTruePositives * TileMask == 1])
 # ProbList = np.linspace(Pmax, 0, Npoints)
 ProbList = np.arange(start=0, stop=1, step=0.02).tolist()
 ProbList.reverse()
@@ -585,14 +589,16 @@ ProbList.reverse()
 print(ProbList)
 # ProbList = [0.2, 0.5, 0.8]
 # Ver isso aqui junto com os tiles
-def_metrics, prec, recall, tpr, fpr = compute_def_metrics(ProbList, img_reconstructed, final_mask)
+def_metrics, prec, recall, tpr, fpr = compute_def_metrics(ProbList,
+                                                          img_reconstructed,
+                                                          final_mask)
 print('Image Saved!')
 
 # Calculates AUC ROC and AP for precisionXrecall
 
 refs, probs = prepare4metrics(img_reconstructed, final_mask)
 
-roc_auc = roc_auc_score(refs, probs)
+# roc_auc = roc_auc_score(refs, probs)
 ap = average_precision_score(refs, probs)
 
 fig_pr = plt.figure()
@@ -603,31 +609,31 @@ fig_pr = plt.figure()
 plt.plot(recall, prec, color='darkorange', lw=2)
 # plt.plot([0, 0], [1, 0], color='navy', lw=2, linestyle='--')
 plt.xlim([0.0, 1.0])
-plt.ylim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
 plt.xlabel('Recall')
 plt.ylabel('Precision')
 plt.title(f'Precision x Recall (mAP: {ap:.2f})')
 # plt.legend(loc="lower right")
 
-fig_roc = plt.figure()
-# ROC curve
-plt.plot(fpr, tpr, color='darkorange', lw=2)
-plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
-plt.xlim([0.0, 1.0])
-plt.ylim([0.0, 1.0])
-plt.xlabel('False Positive Rate')
-plt.ylabel('True Positive Rate')
-plt.title(f'ROC curve (AUC: {roc_auc:.2f})%')
-plt.legend(loc="lower right")
-
-plt.show()
-plt.close()
+# fig_roc = plt.figure()
+# # ROC curve
+# plt.plot(fpr, tpr, color='darkorange', lw=2)
+# plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+# plt.xlim([0.0, 1.0])
+# plt.ylim([0.0, 1.0])
+# plt.xlabel('False Positive Rate')
+# plt.ylabel('True Positive Rate')
+# plt.title(f'ROC curve (AUC: {roc_auc:.2f})%')
+# plt.legend(loc="lower right")
+#
+# plt.show()
+# plt.close()
 
 fig_pr.savefig(os.path.join(args.output_path, 'precisionXrecall.jpg'),
                dpi=300)
 
-fig_roc.savefig(os.path.join(args.output_path, 'ROC.jpg'),
-                dpi=300)
+# fig_roc.savefig(os.path.join(args.output_path, 'ROC.jpg'),
+#                 dpi=300)
 
 label_name = {0: 'No def', 1: 'Actual def', 2: 'Past def'}
 

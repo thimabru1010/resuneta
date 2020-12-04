@@ -4,6 +4,67 @@ import matplotlib.pyplot as plt
 import os
 import sys
 from sklearn.metrics import roc_curve, roc_auc_score
+from sklearn.metrics import confusion_matrix
+from tqdm import tqdm
+
+
+def compute_roc(thresholds, img_predicted, img_labels):
+    ''' INPUTS:
+        thresholds = Vector of threshold values
+        img_predicted = predicted maps (with probabilities)
+        img_labels = image with labels (0-> no def, 1-> def, 2-> past def)
+        mask_amazon_ts = binary tile mask (0-> train + val, 1-> test)
+        px_area = not considered area (<69 pixels)
+
+        OUTPUT:
+        recall and precision for each threshold
+    '''
+
+    prec = []
+    recall = []
+    tpr = []
+    fpr = []
+
+    for thr in tqdm(thresholds):
+        print('-'*60)
+        print(f'Threshold: {thr}')
+
+        img_predicted_ = img_predicted.copy()
+        img_predicted_[img_predicted_ >= thr] = 1
+        img_predicted_[img_predicted_ < thr] = 0
+
+        ref_final = img_labels.copy()
+        pre_final = img_predicted_
+
+        # Metrics
+        cm = confusion_matrix(ref_final, pre_final)
+
+        TN = cm[0, 0]
+        FN = cm[1, 0]
+        TP = cm[1, 1]
+        FP = cm[0, 1]
+        precision_ = TP/(TP+FP)
+        recall_ = TP/(TP+FN)
+
+        # TruePositiveRate = TruePositives / (TruePositives + False Negatives)
+        TPR = TP / (TP + FN)
+        # FalsePositiveRate = FalsePositives / (FalsePositives + TrueNegatives)
+        FPR = FP / (FP + TN)
+
+        # print(f' Precision: {precision_}')
+        # print(f' Recall: {recall_}')
+        print(f'TPR: {TPR}')
+        print(f'FPR: {FPR}')
+
+        tpr.append(TPR)
+        fpr.append(FPR)
+        prec.append(precision_)
+        recall.append(recall_)
+
+    print('-'*60)
+
+    return prec, recall, tpr, fpr
+
 
 root_path = sys.argv[1]
 
@@ -57,7 +118,7 @@ image_ref = load_npy_image(os.path.join(root_path, 'labels',
                                         'cut_ref_2019_ok.npy'))
 
 print(f'References Min: {np.min(image_ref)}, Max: {np.max(image_ref)}')
-
+print(f'S1 Min: {np.min(S1)}, Max: {np.max(S1)}')
 # print(S1.shape)
 # plt.figure(figsize=(10,5))
 # ax = sns.heatmap(S1, cmap="jet")
@@ -69,9 +130,18 @@ ref_final = ref_final.astype(int)
 pred_final = np.reshape(S1, (S1.shape[0] * S1.shape[1]))
 
 fpr, tpr, thresholds = roc_curve(ref_final, pred_final)
+
+thresholds = np.arange(start=np.min(S1), stop=np.max(S1), step=0.02).tolist()
+thresholds.reverse()
+
 print(len(thresholds))
 print(thresholds)
 auc = roc_auc_score(ref_final, pred_final)
+
+_, _, tpr, fpr = compute_roc(thresholds, pred_final, ref_final)
+
+tpr = np.array(tpr)
+fpr = np.array(fpr)
 
 plt.figure()
 lw = 2

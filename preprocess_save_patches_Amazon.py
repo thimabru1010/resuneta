@@ -446,8 +446,8 @@ if __name__ == '__main__':
     # val_tiles = [val3, val4]
     # val_tiles = [5, 4, 15, 12]
     # val_tiles = [12, 13, 14, 15]
-    val_tiles = [4, 9, 14]
-    tst_tiles = [5, 15, 13]
+    val_tiles = [4, 9]
+    tst_tiles = [5, 15, 13, 14]
     all_tiles = tr_tiles + val_tiles
     print(f'All tiles: {all_tiles}')
     # final_mask[img_mask_ref == -99] = -1
