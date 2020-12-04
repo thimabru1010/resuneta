@@ -311,7 +311,7 @@ if __name__ == '__main__':
                         labels to one hot encoding", action='store_true', default=False)
     parser.add_argument("--def_percent",
                         help="Choose minimum percentage of Deforastation",
-                        type=int, default=5)
+                        type=int, default=2)
     args = parser.parse_args()
 
     print('='*50)

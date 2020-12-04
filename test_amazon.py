@@ -220,7 +220,7 @@ def extract_tiles2patches(tiles, mask_amazon, input_image, image_ref, patch_size
         #print(type(patches_img))
         # print(patches_img.shape)
         # print(patch_ref.shape)
-        print(len(patches_img))
+        print(f'{len(patches_img)} patches extracted for tile {num_tile}')
         if len(patches_img) > 0:
             patches_out.append(patches_img)
             labels_out.append(patches_ref)
@@ -297,6 +297,9 @@ parser.add_argument("--model", help="Path to where save predictions",
                     type=str, default='resuneta', choices=['resuneta', 'unet', 'unet_small'])
 parser.add_argument("--groups", help="Groups to be used in convolutions",
                     type=int, default=1)
+parser.add_argument("--dataset_loc",
+                    help="Select dataset from path 66 or 63", type=int,
+                    default=63, choices=[66, 63])
 args = parser.parse_args()
 
 # Test model
@@ -317,8 +320,11 @@ print(img_t1.shape)
 print(img_t2.shape)
 # Concatenation of images
 input_image = np.concatenate((img_t1, img_t2), axis=-1)
-# input_image = input_image[:6100, :6600]
-input_image = input_image[:3328, :5248]
+if args.dataset_loc == 66:
+    input_image = input_image[:5200, :5040]
+else:
+    input_image = input_image[:3328, :5248]
+
 h_, w_, channels = input_image.shape
 print(f"Input image shape: {input_image.shape}")
 check_memory()
@@ -334,8 +340,11 @@ img_ref_path = 'cut_ref_2019_ok.npy'
 image_ref = load_npy_image(os.path.join(root_path,
                                         'labels', img_ref_path)).astype(np.float32)
 # Clip to fit tiles of your specific image
-# image_ref = image_ref[:6100, :6600]
-image_ref = image_ref[:3328, :5248]
+if args.dataset_loc == 66:
+    image_ref = image_ref[:5200, :5040]
+else:
+    image_ref = image_ref[:3328, :5248]
+
 # image_ref[img_mask_ref == -99] = -1
 print(f"Image reference shape: {image_ref.shape}")
 
@@ -350,8 +359,10 @@ past_ref2 = load_npy_image(os.path.join(root_path,
                                         'labels', past_ref2_path)).astype(np.float32)
 past_ref_sum = past_ref1 + past_ref2
 # Clip to fit tiles of your specific image
-# past_ref_sum = past_ref_sum[:6100, :6600]
-past_ref_sum = past_ref_sum[:3328, :5248]
+if args.dataset_loc == 66:
+    past_ref_sum = past_ref_sum[:5200, :5040]
+else:
+    past_ref_sum = past_ref_sum[:3328, :5248]
 print(f"Past reference shape: {past_ref_sum.shape}")
 
 #  Creation of buffer
@@ -386,11 +397,12 @@ mask_tst = np.zeros_like(mask_tiles)
 for tst_tile in tst_tiles:
     mask_tst[mask_tiles == tst_tile] = 1
 
-input_patches, ref_patches = extract_tiles2patches(tst_tiles, mask_tiles, input_image,
-                                                   final_mask, args.patch_size)
-
-# input_patches = extract_patches(input_image, args.patch_size, img_type=1)
-# ref_patches = extract_patches(final_mask, args.patch_size, img_type=2)
+if args.dataset_loc == 66:
+    input_patches, ref_patches = extract_tiles2patches(tst_tiles, mask_tiles, input_image,
+                                                       final_mask, args.patch_size)
+else:
+    input_patches = extract_patches(input_image, args.patch_size, img_type=1)
+    ref_patches = extract_patches(final_mask, args.patch_size, img_type=2)
 
 assert len(input_patches) == len(ref_patches), "Input patches and Reference patches have a different lenght"
 
@@ -529,11 +541,9 @@ check_memory()
 label_dict = {'(255, 255, 255)': -1, '(0, 255, 0)': 0, '(255, 0, 0)': 1, '(0, 0, 255)': 2}
 
 # Reconstruct entire image segmentation predction
-print(final_mask.shape)
-final_mask = np.expand_dims(final_mask, axis=-1)
-print(final_mask.shape)
-# img_reconstructed = pred_recostruction(args.patch_size, seg_pred,
-#                                        final_mask, img_type=1)
+# print(final_mask.shape)
+# final_mask = np.expand_dims(final_mask, axis=-1)
+# print(final_mask.shape)
 
 if not os.path.exists(args.output_path):
     os.makedirs(args.output_path)
@@ -541,12 +551,17 @@ if not os.path.exists(args.output_path):
 # print(tst_tiles)
 # tst_tiles.reverse()
 # print(tst_tiles)
-print(np.squeeze(final_mask, axis=-1).shape)
+# print(np.squeeze(final_mask, axis=-1).shape)
 # print(seg_preds_def)
-# img_reconstructed, _ = pred_recostruction(args.patch_size, seg_preds_def,
-#                                        np.squeeze(final_mask, axis=-1))
-img_reconstructed = reconstruct_patches2tiles(tst_tiles, mask_tiles, final_mask,
-                                              args.patch_size, seg_pred)
+print(args.dataset_loc)
+if args.dataset_loc == 66:
+    img_reconstructed = reconstruct_patches2tiles(tst_tiles, mask_tiles, final_mask,
+                                                  args.patch_size, seg_pred)
+else:
+    img_reconstructed, _ = pred_recostruction(args.patch_size, seg_preds_def,
+                                         np.squeeze(final_mask, axis=-1))
+
+
 # img_reconstructed_rgb = convert_preds2rgb(img_reconstructed,
 #                                           label_dict)
 #
@@ -562,8 +577,11 @@ axes[0].set_title('Reference')
 axes[1].set_title('Def pred')
 
 print(final_mask.shape)
-# axes[0].imshow(final_mask[:, :, 0])
-axes[0].imshow(image_ref*mask_tst)
+if args.dataset_loc == 66:
+    axes[0].imshow(image_ref*mask_tst)
+else:
+    axes[0].imshow(final_mask[:, :, 0])
+
 im = axes[1].imshow(img_reconstructed)
 colorbar(im, axes[1], fig)
 plt.show()
