@@ -1,7 +1,8 @@
 import numpy as np
 import skimage
 from sklearn.metrics import confusion_matrix
-
+import math
+from tqdm import tqdm
 
 def prepare4metrics(img_predicted_, img_labels, px_area=69):
     # Mask of the small regions (<69 px)
@@ -52,7 +53,7 @@ def compute_def_metrics(thresholds, img_predicted, img_labels,
     tpr = []
     fpr = []
 
-    for thr in thresholds:
+    for thr in tqdm(thresholds):
         print('-'*60)
         print(f'Threshold: {thr}')
 
@@ -97,21 +98,37 @@ def compute_def_metrics(thresholds, img_predicted, img_labels,
         # counts_dict = dict(zip(unique, counts))
         # print(f'Pre final: {counts_dict}')
 
-        ref_final = np.reshape(ref_final, (ref_final.shape[0] *
-                                                    ref_final.shape[1]))
+        if len(ref_final.shape) == 2:
+            ref_final = np.reshape(ref_final, (ref_final.shape[0] *
+                                               ref_final.shape[1]))
 
-        pre_final = np.reshape(pre_final, (pre_final.shape[0] *
-                                                 pre_final.shape[1]))
+            pre_final = np.reshape(pre_final, (pre_final.shape[0] *
+                                               pre_final.shape[1]))
+        else:
+            ref_final = np.reshape(ref_final, (ref_final.shape[0] *
+                                               ref_final.shape[1] *
+                                               ref_final.shape[2]))
+
+            pre_final = np.reshape(pre_final, (pre_final.shape[0] *
+                                               pre_final.shape[1] *
+                                               pre_final.shape[2]))
 
         # Metrics
         cm = confusion_matrix(ref_final, pre_final)
+        print(cm)
 
         TN = cm[0, 0]
         FN = cm[1, 0]
         TP = cm[1, 1]
         FP = cm[0, 1]
         precision_ = TP/(TP+FP)
+        if math.isnan(precision_):
+            print('Precision is Nan')
+            precision_ = 0.0
         recall_ = TP/(TP+FN)
+        if math.isnan(recall_):
+            print('Recall is Nan')
+            recall_ = 0.0
 
         # TruePositiveRate = TruePositives / (TruePositives + False Negatives)
         TPR = TP / (TP + FN)

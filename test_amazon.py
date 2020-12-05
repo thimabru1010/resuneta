@@ -114,7 +114,7 @@ def pred_recostruction(patch_size, pred_labels, binary_img_test_ref, img_type=1,
         #print(num_patches_h, num_patches_w)
 
         new_shape = (height, width)
-        img_reconstructed = np.full(new_shape, -1, dtype=np.float32)
+        img_reconstructed = np.full(new_shape, 0, dtype=np.float32)
         # cont = 0
         # rows
         for h in range(num_patches_h):
@@ -145,9 +145,11 @@ def pred_recostruction(patch_size, pred_labels, binary_img_test_ref, img_type=1,
 
 
 def reconstruct_patches2tiles(tiles, mask_amazon, image_ref, patch_size, preds):
-    new_image_ref = np.full((image_ref.shape[0], image_ref.shape[1]), -1)
+    # new_image_ref = np.full((image_ref.shape[0], image_ref.shape[1]), -1)
     print('Reconstructing tiles')
     cont = 0
+    rec_tiles = []
+    ref_tiles = []
     for num_tile in tiles:
         # print('='*60)
         # print(num_tile)
@@ -158,12 +160,16 @@ def reconstruct_patches2tiles(tiles, mask_amazon, image_ref, patch_size, preds):
         y2 = np.max(cols)
 
         # tile_img = input_image[x1:x2+1, y1:y2+1, :]
-        tile = image_ref[x1:x2+1, y1:y2+1]
-        tile_rec, cont = pred_recostruction(patch_size, preds, tile, cont=cont)
+        tile_ref = image_ref[x1:x2+1, y1:y2+1]
+        # recursive
+        tile_rec, cont = pred_recostruction(patch_size, preds, tile_ref, cont=cont)
 
-        new_image_ref[x1:x2+1, y1:y2+1] = tile_rec.copy()
+        # new_image_ref[x1:x2+1, y1:y2+1] = tile_rec.copy()
+        rec_tiles.append(tile_rec)
+        ref_tiles.append(tile_ref)
+        # reconstructed_tiles.append([tile_rec, tile_ref])
 
-    return new_image_ref
+    return rec_tiles, ref_tiles
 
 
 def convert_preds2rgb(img_reconstructed, label_dict):
@@ -191,7 +197,8 @@ def colorbar(mappable, ax, fig):
     return cbar
 
 
-def extract_tiles2patches(tiles, mask_amazon, input_image, image_ref, patch_size):
+def extract_tiles2patches(tiles, mask_amazon, input_image, image_ref,
+                          patch_size):
     patches_out = []
     labels_out = []
     check_memory()
@@ -271,6 +278,7 @@ def gather_preds(pred):
     pred = np.concatenate(pred, axis=0)
     pred = pred.transpose((0, 2, 3, 1))
     return pred
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--use_multitasking",
@@ -380,22 +388,23 @@ del img_t1, img_t2, past_ref1, past_ref2 #  , image_ref
 print('Images deleted!')
 check_memory()
 
-# # Separate per tiles
-tile_number = np.ones((1040, 1680))
-mask_c_1 = np.concatenate((tile_number, 2*tile_number, 3*tile_number), axis=1)
-mask_c_2 = np.concatenate((4*tile_number, 5*tile_number, 6*tile_number), axis=1)
-mask_c_3 = np.concatenate((7*tile_number, 8*tile_number, 9*tile_number), axis=1)
-mask_c_4 = np.concatenate((10*tile_number, 11*tile_number, 12*tile_number), axis=1)
-mask_c_5 = np.concatenate((13*tile_number, 14*tile_number, 15*tile_number), axis=1)
-mask_tiles = np.concatenate((mask_c_1, mask_c_2, mask_c_3, mask_c_4, mask_c_5), axis=0)
+if args.dataset_loc == 66:
+    # Separate per tiles
+    tile_number = np.ones((1040, 1680))
+    mask_c_1 = np.concatenate((tile_number, 2*tile_number, 3*tile_number), axis=1)
+    mask_c_2 = np.concatenate((4*tile_number, 5*tile_number, 6*tile_number), axis=1)
+    mask_c_3 = np.concatenate((7*tile_number, 8*tile_number, 9*tile_number), axis=1)
+    mask_c_4 = np.concatenate((10*tile_number, 11*tile_number, 12*tile_number), axis=1)
+    mask_c_5 = np.concatenate((13*tile_number, 14*tile_number, 15*tile_number), axis=1)
+    mask_tiles = np.concatenate((mask_c_1, mask_c_2, mask_c_3, mask_c_4, mask_c_5), axis=0)
 
-# Testing tiles
-# tst_tiles = [tst1, tst2, tst3, tst4]
-tst_tiles = [5, 15, 13, 14]
+    # Testing tiles
+    # tst_tiles = [tst1, tst2, tst3, tst4]
+    tst_tiles = [5, 15, 13, 14]
 
-mask_tst = np.zeros_like(mask_tiles)
-for tst_tile in tst_tiles:
-    mask_tst[mask_tiles == tst_tile] = 1
+    mask_tst = np.zeros_like(mask_tiles)
+    for tst_tile in tst_tiles:
+        mask_tst[mask_tiles == tst_tile] = 1
 
 if args.dataset_loc == 66:
     input_patches, ref_patches = extract_tiles2patches(tst_tiles, mask_tiles, input_image,
@@ -553,10 +562,11 @@ if not os.path.exists(args.output_path):
 # print(tst_tiles)
 # print(np.squeeze(final_mask, axis=-1).shape)
 # print(seg_preds_def)
+print(f'Seg preds range -- Min: {seg_preds_def.min()} Max: {seg_preds_def.max()}')
 print(args.dataset_loc)
 if args.dataset_loc == 66:
-    img_reconstructed = reconstruct_patches2tiles(tst_tiles, mask_tiles, final_mask,
-                                                  args.patch_size, seg_pred)
+    rec_tiles, ref_tiles = reconstruct_patches2tiles(tst_tiles, mask_tiles, final_mask,
+                                                  args.patch_size, seg_preds_def)
 else:
     img_reconstructed, _ = pred_recostruction(args.patch_size, seg_preds_def,
                                          np.squeeze(final_mask, axis=-1))
@@ -569,21 +579,32 @@ else:
 # plt.imsave(os.path.join(args.output_path, 'pred_seg_reconstructed.jpeg'),
 #            img_reconstructed_rgb)
 
-print('Shapes')
-print(img_reconstructed.shape)
-# print(img_reconstructed)
-fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
-axes[0].set_title('Reference')
-axes[1].set_title('Def pred')
 
 print(final_mask.shape)
+print(len(rec_tiles))
+# tiles = zip(rec_tiles, ref_tiles)
 if args.dataset_loc == 66:
-    axes[0].imshow(image_ref*mask_tst)
+    fig, axes = plt.subplots(nrows=len(rec_tiles), ncols=2,
+                             figsize=((15*2)//len(rec_tiles), 15))
+    axes[0, 0].set_title('Reference')
+    axes[0, 1].set_title('Def pred')
+    for i, (tile_pred, tile_ref) in enumerate(list(zip(rec_tiles, ref_tiles))):
+        axes[i, 0].imshow(tile_ref)
+        im = axes[i, 1].imshow(tile_pred)
+        colorbar(im, axes[i, 1], fig)
 else:
+    print('Shapes')
+    print(img_reconstructed.shape)
+    # print(img_reconstructed)
+    fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
+    axes[0].set_title('Reference')
+    axes[1].set_title('Def pred')
+
     axes[0].imshow(final_mask[:, :, 0])
 
-im = axes[1].imshow(img_reconstructed)
-colorbar(im, axes[1], fig)
+    im = axes[1].imshow(img_reconstructed)
+    colorbar(im, axes[1], fig)
+plt.tight_layout()
 plt.show()
 plt.close()
 fig.savefig(os.path.join(args.output_path, 'seg_pred_def&ref.jpg'))
@@ -607,9 +628,16 @@ ProbList.reverse()
 print(ProbList)
 # ProbList = [0.2, 0.5, 0.8]
 # Ver isso aqui junto com os tiles
-def_metrics, prec, recall, tpr, fpr = compute_def_metrics(ProbList,
-                                                          img_reconstructed,
-                                                          final_mask)
+if args.dataset_loc == 66:
+    rec_tiles = np.stack(rec_tiles, axis=0)
+    ref_tiles = np.stack(ref_tiles, axis=0)
+    def_metrics, prec, recall, tpr, fpr = compute_def_metrics(ProbList,
+                                                              rec_tiles,
+                                                              ref_tiles)
+else:
+    def_metrics, prec, recall, tpr, fpr = compute_def_metrics(ProbList,
+                                                              img_reconstructed,
+                                                              final_mask)
 print('Image Saved!')
 
 # Calculates AUC ROC and AP for precisionXrecall
