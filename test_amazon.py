@@ -27,6 +27,7 @@ import matplotlib.pyplot as plt
 from tensorflow.keras.utils import to_categorical
 import itertools
 from metrics_amazon import compute_def_metrics, prepare4metrics
+import math
 
 
 def plot_confusion_matrix(cm, classes,
@@ -105,6 +106,7 @@ def pred_recostruction(patch_size, pred_labels, binary_img_test_ref, img_type=1,
                        cont=0):
     # Patches Reconstruction
     if img_type == 1:
+        # Single channel images
         stride = patch_size
 
         height, width = binary_img_test_ref.shape
@@ -124,6 +126,7 @@ def pred_recostruction(patch_size, pred_labels, binary_img_test_ref, img_type=1,
                 cont += 1
         print('Reconstruction Done!')
     if img_type == 2:
+        # Reconstruct RGB images
         stride = patch_size
 
         height, width = binary_img_test_ref.shape
@@ -141,6 +144,7 @@ def pred_recostruction(patch_size, pred_labels, binary_img_test_ref, img_type=1,
                 img_reconstructed[h*stride:(h+1)*stride, w*stride:(w+1)*stride, :] = pred_labels[cont]
                 cont += 1
         print('Reconstruction Done!')
+    print(f'Reconstructed Image shape: {img_reconstructed.shape}')
     return img_reconstructed, cont
 
 
@@ -406,12 +410,12 @@ if args.dataset_loc == 66:
     for tst_tile in tst_tiles:
         mask_tst[mask_tiles == tst_tile] = 1
 
-if args.dataset_loc == 66:
-    input_patches, ref_patches = extract_tiles2patches(tst_tiles, mask_tiles, input_image,
-                                                       final_mask, args.patch_size)
-else:
-    input_patches = extract_patches(input_image, args.patch_size, img_type=1)
-    ref_patches = extract_patches(final_mask, args.patch_size, img_type=2)
+# if args.dataset_loc == 66:
+#     input_patches, ref_patches = extract_tiles2patches(tst_tiles, mask_tiles, input_image,
+#                                                        final_mask, args.patch_size)
+# else:
+input_patches = extract_patches(input_image, args.patch_size, img_type=1)
+ref_patches = extract_patches(final_mask, args.patch_size, img_type=2)
 
 assert len(input_patches) == len(ref_patches), "Input patches and Reference patches have a different lenght"
 
@@ -498,15 +502,49 @@ else:
     print(f'seg shape argmax: {seg_pred.shape}')
 
 # Metrics
-# print(ref_patches.shape)
-# print(seg_pred.shape)
-true_labels = np.reshape(ref_patches, (ref_patches.shape[0] *
-                                            ref_patches.shape[1] *
-                                            ref_patches.shape[2]))
+print(final_mask.shape)
+pred_reconstructed, _ = pred_recostruction(args.patch_size, seg_pred, final_mask)
+print(pred_reconstructed.shape)
+unique, counts = np.unique(pred_reconstructed, return_counts=True)
+counts_dict = dict(zip(unique, counts))
+print(counts_dict)
 
-predicted_labels = np.reshape(seg_pred, (seg_pred.shape[0] *
-                                         seg_pred.shape[1] *
-                                         seg_pred.shape[2]))
+fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
+axes[0].set_title('Reference')
+axes[1].set_title('Def pred')
+
+axes[0].imshow(final_mask)
+
+im = axes[1].imshow(pred_reconstructed)
+colorbar(im, axes[1], fig)
+plt.show()
+plt.close()
+
+if args.dataset_loc == 63:
+    true_labels = np.reshape(ref_patches, (ref_patches.shape[0] *
+                                                ref_patches.shape[1] *
+                                                ref_patches.shape[2]))
+
+    predicted_labels = np.reshape(seg_pred, (seg_pred.shape[0] *
+                                             seg_pred.shape[1] *
+                                             seg_pred.shape[2]))
+else:
+    tst_refs = []
+    tst_preds = []
+    for i, tst_tile in enumerate(tst_tiles):
+        tst_refs.append(image_ref[mask_tiles == tst_tile])
+        tst_preds.append(pred_reconstructed[mask_tiles == tst_tile])
+        print(tst_refs[i].shape)
+
+    ref_patches = np.stack(tst_refs, axis=0)
+    pred_patches = np.stack(tst_preds, axis=0)
+    print(ref_patches.shape)
+    print(pred_patches.shape)
+    true_labels = np.reshape(ref_patches, (ref_patches.shape[0] *
+                                                ref_patches.shape[1]))
+
+    predicted_labels = np.reshape(pred_patches, (pred_patches.shape[0] *
+                                             pred_patches.shape[1]))
 
 
 metrics = compute_metrics(true_labels, predicted_labels)
@@ -557,19 +595,14 @@ label_dict = {'(255, 255, 255)': -1, '(0, 255, 0)': 0, '(255, 0, 0)': 1, '(0, 0,
 if not os.path.exists(args.output_path):
     os.makedirs(args.output_path)
 
-# print(tst_tiles)
-# tst_tiles.reverse()
-# print(tst_tiles)
-# print(np.squeeze(final_mask, axis=-1).shape)
-# print(seg_preds_def)
 print(f'Seg preds range -- Min: {seg_preds_def.min()} Max: {seg_preds_def.max()}')
 print(args.dataset_loc)
-if args.dataset_loc == 66:
-    rec_tiles, ref_tiles = reconstruct_patches2tiles(tst_tiles, mask_tiles, final_mask,
-                                                  args.patch_size, seg_preds_def)
-else:
-    img_reconstructed, _ = pred_recostruction(args.patch_size, seg_preds_def,
-                                         np.squeeze(final_mask, axis=-1))
+# if args.dataset_loc == 66:
+#     rec_tiles, ref_tiles = reconstruct_patches2tiles(tst_tiles, mask_tiles, final_mask,
+#                                                   args.patch_size, seg_preds_def)
+# else:
+pred_def_reconstructed, _ = pred_recostruction(args.patch_size, seg_preds_def,
+                                     final_mask)
 
 
 # img_reconstructed_rgb = convert_preds2rgb(img_reconstructed,
@@ -581,28 +614,30 @@ else:
 
 
 print(final_mask.shape)
-print(len(rec_tiles))
 # tiles = zip(rec_tiles, ref_tiles)
 if args.dataset_loc == 66:
-    fig, axes = plt.subplots(nrows=len(rec_tiles), ncols=2,
-                             figsize=((15*2)//len(rec_tiles), 15))
+    fig, axes = plt.subplots(nrows=len(tst_tiles), ncols=2,
+                             figsize=((15*2)//len(tst_tiles), 15))
     axes[0, 0].set_title('Reference')
     axes[0, 1].set_title('Def pred')
-    for i, (tile_pred, tile_ref) in enumerate(list(zip(rec_tiles, ref_tiles))):
+    for i, tst_tile in enumerate(tst_tiles):
+        tile_ref = image_ref[mask_tiles == tst_tile]
+        tile_ref = np.reshape(tile_ref, (1040, 1680))
+        tile_pred = pred_def_reconstructed[mask_tiles == tst_tile]
+        tile_pred = np.reshape(tile_pred, (1040, 1680))
         axes[i, 0].imshow(tile_ref)
         im = axes[i, 1].imshow(tile_pred)
         colorbar(im, axes[i, 1], fig)
 else:
     print('Shapes')
-    print(img_reconstructed.shape)
-    # print(img_reconstructed)
+    print(pred_def_reconstructed.shape)
     fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
     axes[0].set_title('Reference')
     axes[1].set_title('Def pred')
 
     axes[0].imshow(final_mask[:, :, 0])
 
-    im = axes[1].imshow(img_reconstructed)
+    im = axes[1].imshow(pred_def_reconstructed)
     colorbar(im, axes[1], fig)
 plt.tight_layout()
 plt.show()
@@ -622,58 +657,72 @@ fig.savefig(os.path.join(args.output_path, 'seg_pred_def&ref.jpg'))
 # Npoints = 100
 # Pmax = np.max(img_reconstructed[GTTruePositives * TileMask == 1])
 # ProbList = np.linspace(Pmax, 0, Npoints)
-ProbList = np.arange(start=0, stop=1, step=0.02).tolist()
+# ProbList = np.arange(start=0, stop=1, step=0.02).tolist()
+ProbList = np.arange(start=0, stop=1, step=0.1).tolist()
 ProbList.reverse()
 # print(final_mask.shape)
 print(ProbList)
 # ProbList = [0.2, 0.5, 0.8]
 # Ver isso aqui junto com os tiles
-if args.dataset_loc == 66:
-    rec_tiles = np.stack(rec_tiles, axis=0)
-    ref_tiles = np.stack(ref_tiles, axis=0)
-    def_metrics, prec, recall, tpr, fpr = compute_def_metrics(ProbList,
-                                                              rec_tiles,
-                                                              ref_tiles)
-else:
-    def_metrics, prec, recall, tpr, fpr = compute_def_metrics(ProbList,
-                                                              img_reconstructed,
-                                                              final_mask)
+# if args.dataset_loc == 66:
+#     rec_tiles = np.stack(rec_tiles, axis=0)
+#     ref_tiles = np.stack(ref_tiles, axis=0)
+#     print(f'Input tiles shape: {rec_tiles.shape}')
+#     def_metrics, prec, recall, tpr, fpr = compute_def_metrics(ProbList,
+#                                                               rec_tiles,
+#                                                               ref_tiles,
+#                                                               mask_tst)
+# else:
+def_probs_reconstructed, _ = pred_recostruction(args.patch_size, seg_preds_def,
+                                     final_mask)
+
+def_metrics, prec, recall = compute_def_metrics(ProbList,
+                                              def_probs_reconstructed,
+                                              final_mask,
+                                              mask_tst)
+print(def_metrics)
+# Interpolate Nan values
+metrics_copy = def_metrics.copy()
+# indexes = list(range(len(def_metrics)))
+for i in range(len(def_metrics)):
+    # if def_metrics[i, 1] == -1:
+    # if math.isnan(def_metrics[i, 1]):
+    if def_metrics[i, 1] == -1:
+        # metrics_copy[i, 1] = 2*metrics_copy[i+1, 1] - metrics_copy[i+2, 1]
+        metrics_copy[i, 1] = 2*metrics_copy[i-1, 1] - metrics_copy[i-2, 1]
+
+# Calculates mAP
+Recall = def_metrics[:, 0]
+Precision = def_metrics[:, 1]
+
+DeltaR = Recall[1:]-Recall[:-1]
+ap = np.sum(Precision[:-1]*DeltaR)
+print('mAP:', ap)
+
+Recall = metrics_copy[:, 0]
+Precision = metrics_copy[:, 1]
+
+DeltaR = Recall[1:]-Recall[:-1]
+ap2 = np.sum(Precision[:-1]*DeltaR)
+print('mAP2:', ap2)
 print('Image Saved!')
 
-# Calculates AUC ROC and AP for precisionXrecall
-
-refs, probs = prepare4metrics(img_reconstructed, final_mask)
-
-# roc_auc = roc_auc_score(refs, probs)
-ap = average_precision_score(refs, probs)
-
 fig_pr = plt.figure()
-# plt.plot(fpr, tpr, color='darkorange',
-#         lw=lw, label=f'ROC curve (area = {auc*100:.2f}%)')
 
 # Precision x Recall curve
-plt.plot(recall, prec, color='darkorange', lw=2)
-# plt.plot([0, 0], [1, 0], color='navy', lw=2, linestyle='--')
+# plt.plot(recall, prec, color='darkorange', lw=2)
+plt.plot(def_metrics[:, 0], def_metrics[:, 1], color='darkorange', lw=2)
+plt.plot(metrics_copy[:, 0], metrics_copy[:, 1], color='blue', lw=2,
+         linestyle='--')
 plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.05])
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title(f'Precision x Recall (mAP: {ap:.2f})')
-# plt.legend(loc="lower right")
+plt.title(f'Precision x Recall (mAP: {ap:.2f}) (mAP 2: {ap2:.2f})')
+plt.legend(['Original', 'Interpolated'], loc="lower right")
 
-# fig_roc = plt.figure()
-# # ROC curve
-# plt.plot(fpr, tpr, color='darkorange', lw=2)
-# plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
-# plt.xlim([0.0, 1.0])
-# plt.ylim([0.0, 1.0])
-# plt.xlabel('False Positive Rate')
-# plt.ylabel('True Positive Rate')
-# plt.title(f'ROC curve (AUC: {roc_auc:.2f})%')
-# plt.legend(loc="lower right")
-#
-# plt.show()
-# plt.close()
+plt.show()
+plt.close()
 
 fig_pr.savefig(os.path.join(args.output_path, 'precisionXrecall.jpg'),
                dpi=300)

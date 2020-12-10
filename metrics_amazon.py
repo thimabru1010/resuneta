@@ -34,8 +34,9 @@ def prepare4metrics(img_predicted_, img_labels, px_area=69):
 
     return ref_final, pred_final
 
+
 def compute_def_metrics(thresholds, img_predicted, img_labels,
-                        mask_amazon_ts=None, px_area=69):
+                        mask_amazon_ts, px_area=69):
     ''' INPUTS:
         thresholds = Vector of threshold values
         img_predicted = predicted maps (with probabilities)
@@ -46,12 +47,13 @@ def compute_def_metrics(thresholds, img_predicted, img_labels,
         OUTPUT:
         recall and precision for each threshold
     '''
-    metrics_all = []
 
+    metrics_all = []
     prec = []
     recall = []
-    tpr = []
-    fpr = []
+
+    prec_nan = 0
+    recall_nan = 0
 
     for thr in tqdm(thresholds):
         print('-'*60)
@@ -82,73 +84,61 @@ def compute_def_metrics(thresholds, img_predicted, img_labels,
         pred_consider = mask_no_consider * img_predicted_
 
         # Pixels filtered
-        # ref_final = ref_consider[mask_amazon_ts==1]
-        # pre_final = pred_consider[mask_amazon_ts==1]
+        ref_final = ref_consider[mask_amazon_ts == 1]
+        pre_final = pred_consider[mask_amazon_ts == 1]
+        print(ref_final.shape)
 
-        ref_final = ref_consider
-        pre_final = pred_consider
-        # print(ref_final.shape)
+        # ref_final = ref_consider
+        # pre_final = pred_consider
+
+        # if len(ref_final.shape) == 2:
+        #     ref_final = np.reshape(ref_final, (ref_final.shape[0] *
+        #                                        ref_final.shape[1]))
         #
-        # unique, counts = np.unique(ref_final, return_counts=True)
-        # counts_dict = dict(zip(unique, counts))
-        # print(f'Ref final: {counts_dict}')
+        #     pre_final = np.reshape(pre_final, (pre_final.shape[0] *
+        #                                        pre_final.shape[1]))
+        # else:
+        #     ref_final = np.reshape(ref_final, (ref_final.shape[0] *
+        #                                        ref_final.shape[1] *
+        #                                        ref_final.shape[2]))
         #
-        # print(pre_final.shape)
-        # unique, counts = np.unique(pre_final, return_counts=True)
-        # counts_dict = dict(zip(unique, counts))
-        # print(f'Pre final: {counts_dict}')
-
-        if len(ref_final.shape) == 2:
-            ref_final = np.reshape(ref_final, (ref_final.shape[0] *
-                                               ref_final.shape[1]))
-
-            pre_final = np.reshape(pre_final, (pre_final.shape[0] *
-                                               pre_final.shape[1]))
-        else:
-            ref_final = np.reshape(ref_final, (ref_final.shape[0] *
-                                               ref_final.shape[1] *
-                                               ref_final.shape[2]))
-
-            pre_final = np.reshape(pre_final, (pre_final.shape[0] *
-                                               pre_final.shape[1] *
-                                               pre_final.shape[2]))
+        #     pre_final = np.reshape(pre_final, (pre_final.shape[0] *
+        #                                        pre_final.shape[1] *
+        #                                        pre_final.shape[2]))
 
         # Metrics
         cm = confusion_matrix(ref_final, pre_final)
         print(cm)
 
-        TN = cm[0, 0]
+        # TN = cm[0, 0]
         FN = cm[1, 0]
         TP = cm[1, 1]
         FP = cm[0, 1]
         precision_ = TP/(TP+FP)
         if math.isnan(precision_):
             print('Precision is Nan')
-            precision_ = 0.0
+            # precision_ = 0.0
+            precision_ = -1
+            prec_nan += 1
         recall_ = TP/(TP+FN)
-        if math.isnan(recall_):
-            print('Recall is Nan')
-            recall_ = 0.0
-
-        # TruePositiveRate = TruePositives / (TruePositives + False Negatives)
-        TPR = TP / (TP + FN)
-        # FalsePositiveRate = FalsePositives / (FalsePositives + TrueNegatives)
-        FPR = FP / (FP + TN)
+        # if math.isnan(recall_):
+        #     print('Recall is Nan')
+        #     # recall_ = 0.0
+        #     recall_ = -1
+        #     recall_nan += 1
 
         print(f' Precision: {precision_}')
         print(f' Recall: {recall_}')
-
-        tpr.append(TPR)
-        fpr.append(FPR)
         prec.append(precision_)
         recall.append(recall_)
 
-        # mm = np.hstack((recall_, precision_))
-        # metrics_all.append(mm)
+        mm = np.hstack((recall_, precision_))
+        metrics_all.append(mm)
     print('-'*60)
-    # metrics_ = np.asarray(metrics_all)
-    metrics_ = None
-    return metrics_, prec, recall, tpr, fpr
+    print(f'Precision Nan values: {prec_nan}')
+    print(f'recall Nan values: {recall_nan}')
+    metrics_ = np.asarray(metrics_all)
+    return metrics_, prec, recall
 
 #%% **** Example ****
 #
