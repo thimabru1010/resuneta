@@ -13,6 +13,41 @@ from tqdm import tqdm
 
 # from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split
+import matplotlib.pyplot as plt
+
+
+def compute_cva(image_t1, image_t2):
+    _, image_t1 = normalization(img_t1, norm_type=2)
+    _, image_t2 = normalization(img_t2, norm_type=2)
+
+    blue_t1 = image_t1[:, :, 1]
+    red_t1 = image_t1[:, :, 3]
+    nir_t1 = image_t1[:, :, 4]
+    swir_t1 = image_t1[:, :, 5]
+
+    blue_t2 = image_t2[:, :, 1]
+    red_t2 = image_t2[:, :, 3]
+    nir_t2 = image_t2[:, :, 4]
+    swir_t2 = image_t2[:, :, 5]
+
+    # NDVI and BI index
+    ndvi1 = (nir_t1-red_t1)/(nir_t1+red_t1)
+    # print(ndvi1)
+    bi1 = (swir_t1+red_t1)-(nir_t1+blue_t1)/(swir_t1+red_t1)+(nir_t1+blue_t1)
+
+    ndvi2 = (nir_t2-red_t2)/(nir_t2+red_t2)
+    bi2 = (swir_t2+red_t2)-(nir_t2+blue_t2)/(swir_t2+red_t2)+(nir_t2+blue_t2)
+    print(np.min(ndvi1), np.max(ndvi1))
+    print(np.min(bi1), np.max(bi1))
+
+    # Calculating the change:
+    S = (ndvi2-ndvi1)**2+(bi2-bi1)**2
+    S1 = np.sqrt(S)
+    th = 0.26074
+    S1_ref = S1.copy()
+    S1_ref[S1 >= th] = 1
+    S1_ref[S1 < th] = 0
+    return S1_ref
 
 
 def create_folders(folder_path, mode='train'):
@@ -101,8 +136,8 @@ def filter_patches(patches_img, patches_ref, percent):
     return filt_patches_img, filt_patches_ref
 
 
-def extract_tiles2patches(tiles, mask_amazon, input_image, image_ref, patch_size,
-                          stride, percent):
+def extract_tiles2patches(tiles, mask_amazon, input_image, image_ref, CVA_ref,
+                          patch_size, stride, percent):
     patches_out = []
     labels_out = []
     check_memory()
@@ -179,12 +214,13 @@ def show_deforastation_per_tile(tiles, mask_amazon, image_ref):
     print(sorted(zip(defs, tiles), reverse=True))
     print('='*60)
 
+
 def filename(i):
     return f'patch_{i}.npy'
 
-import matplotlib.pyplot as plt
 
-def save_patches(patches_tr, patches_tr_ref, folder_path, scaler, data_aug, mode='train'):
+def save_patches(patches_tr, patches_tr_ref, folder_path, scaler, data_aug,
+                 mode='train'):
     classes_dict = {-1: 0, 0: 0, 1: 0, 2: 0}
     for i in tqdm(range(len(patches_tr))):
         # Expand dims (Squeeze) to receive data_augmentation. Depreceated ?
@@ -308,7 +344,7 @@ if __name__ == '__main__':
                         labels to one hot encoding", type=int, default=3)
     parser.add_argument("--data_aug",
                         help="Choose number of classes to convert \
-                        labels to one hot encoding", action='store_true', default=False)
+                        labels to one hot encoding", action='store_true')
     parser.add_argument("--def_percent",
                         help="Choose minimum percentage of Deforastation",
                         type=int, default=2)
@@ -423,6 +459,8 @@ if __name__ == '__main__':
     print(weight0)
     print(weight1)
     print(weight2)
+
+    CVA_ref = compute_cva(img_t1, img_t2)
 
     check_memory()
     del img_t1, img_t2, image_ref, past_ref1, past_ref2

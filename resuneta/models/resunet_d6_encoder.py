@@ -50,8 +50,6 @@ class ResUNet_d6_encoder(HybridBlock):
             dilat_rates = [3, 15]
             if self.small:
                 dilat_rates = []
-            # dilat_rates = [3]
-            # dilat_rates = []
 
             # Usually 32
             nfilters = self.nfilters * 2**(0)

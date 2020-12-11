@@ -131,14 +131,14 @@ pred_final = np.reshape(S1, (S1.shape[0] * S1.shape[1]))
 
 fpr, tpr, thresholds = roc_curve(ref_final, pred_final)
 
-thresholds = np.arange(start=np.min(S1), stop=np.max(S1), step=0.02).tolist()
-thresholds.reverse()
-
 print(len(thresholds))
 print(thresholds)
 auc = roc_auc_score(ref_final, pred_final)
 
-_, _, tpr, fpr = compute_roc(thresholds, pred_final, ref_final)
+# thresholds = np.arange(start=np.min(S1), stop=np.max(S1), step=0.02).tolist()
+# thresholds.reverse()
+#
+# _, _, tpr, fpr = compute_roc(thresholds, pred_final, ref_final)
 
 tpr = np.array(tpr)
 fpr = np.array(fpr)
@@ -167,21 +167,23 @@ print(f'Optimal Threshold: {optimal_threshold}')
 
 S1_normed = np.copy(S1)
 th = optimal_threshold
-S1_normed[S1 >= th] = 1
-S1_normed[S1 < th] = 0
-print(S1_normed)
-print(f'S1 normed Min: {np.min(S1_normed)}, Max: {np.max(S1_normed)}')
+for th in [optimal_threshold, 1.5, 1.0, 0.5]:
+    print('-------------------------------------------------------')
+    print(f'TH: {th}')
+    S1_normed[S1 >= th] = 1
+    S1_normed[S1 < th] = 0
+    print(f'S1 normed Min: {np.min(S1_normed)}, Max: {np.max(S1_normed)}')
 
-unique, counts = np.unique(S1_normed, return_counts=True)
-counts_dict = dict(zip(unique, counts))
-print(f'CVA pixels: {counts_dict}')
+    unique, counts = np.unique(S1_normed, return_counts=True)
+    counts_dict = dict(zip(unique, counts))
+    print(f'CVA pixels: {counts_dict}')
 
-unique, counts = np.unique(image_ref, return_counts=True)
-counts_dict = dict(zip(unique, counts))
-print(f'Image ref pixels: {counts_dict}')
+    unique, counts = np.unique(image_ref, return_counts=True)
+    counts_dict = dict(zip(unique, counts))
+    print(f'Image ref pixels: {counts_dict}')
 
-fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
-axes[0].imshow(S1_normed, cmap='jet')
-axes[1].imshow(image_ref, cmap='jet')
-plt.show()
-plt.close()
+    fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
+    axes[0].imshow(S1_normed, cmap='jet')
+    axes[1].imshow(image_ref, cmap='jet')
+    plt.show()
+    plt.close()
