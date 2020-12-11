@@ -118,14 +118,14 @@ def compute_def_metrics(thresholds, img_predicted, img_labels,
         if math.isnan(precision_):
             print('Precision is Nan')
             # precision_ = 0.0
-            precision_ = -1
+            # precision_ = -1
             prec_nan += 1
         recall_ = TP/(TP+FN)
-        # if math.isnan(recall_):
-        #     print('Recall is Nan')
-        #     # recall_ = 0.0
-        #     recall_ = -1
-        #     recall_nan += 1
+        if math.isnan(recall_):
+            print('Recall is Nan')
+            # recall_ = 0.0
+            # recall_ = -1
+            recall_nan += 1
 
         print(f' Precision: {precision_}')
         print(f' Recall: {recall_}')

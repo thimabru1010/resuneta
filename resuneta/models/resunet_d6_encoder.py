@@ -18,7 +18,7 @@ class ResUNet_d6_encoder(HybridBlock):
     """
 
     def __init__(self, _nfilters_init,  _NClasses,  patch_size=256, verbose=True,
-                 _norm_type='BatchNorm', **kwards):
+                 _norm_type='BatchNorm', small=False, **kwards):
         HybridBlock.__init__(self,**kwards)
 
         self.model_name = "ResUNet_d6_encoder"
@@ -33,6 +33,7 @@ class ResUNet_d6_encoder(HybridBlock):
         elif patch_size == 128:
             self.psp_depth = 3
 
+        self.small = small
 
         with self.name_scope():
 
@@ -47,6 +48,8 @@ class ResUNet_d6_encoder(HybridBlock):
             # Progressively reducing the dilation_rate of Atrous convolutions (the deeper the smaller).
 
             dilat_rates = [3, 15]
+            if self.small:
+                dilat_rates = []
             # dilat_rates = [3]
             # dilat_rates = []
 
@@ -84,6 +87,8 @@ class ResUNet_d6_encoder(HybridBlock):
                 print ("depth:= {0}, nfilters: {1}".format(3,nfilters))
             # self.Dn4 = ResNet_atrous_2_unit(nfilters,_dilation_rates=[3,5], _norm_type = _norm_type)
             dilat_rates = [3, 5]
+            if self.small:
+                dilat_rates = []
             self.Dn4 = ResNet_atrous_2_unit(nfilters,
                                             _dilation_rates=dilat_rates,
                                             _norm_type = _norm_type)

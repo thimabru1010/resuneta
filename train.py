@@ -494,6 +494,12 @@ if __name__ == '__main__':
                          patch_size=args.patch_size, verbose=args.debug,
                          from_logits=from_logits,
                          weights=weights_elemwise)
+    if args.model == 'resuneta_small':
+     args.multitasking = True
+     net = ResUNet_d6(args.dataset_type, Nfilters_init, args.num_classes,
+                      patch_size=args.patch_size, verbose=args.debug,
+                      from_logits=from_logits,
+                      weights=weights_elemwise, small=True)
     elif args.model == 'unet':
         # Changed from 64 to 32
         net = UNet(args.num_classes, groups=args.groups, nfilter=64,

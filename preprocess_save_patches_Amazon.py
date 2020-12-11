@@ -418,9 +418,11 @@ if __name__ == '__main__':
     total_pixels = counts_dict[0] + counts_dict[1] + counts_dict[2]
     weight0 = total_pixels / counts_dict[0]
     weight1 = total_pixels / counts_dict[1]
+    weight2 = total_pixels / counts_dict[2]
     print('weights')
     print(weight0)
     print(weight1)
+    print(weight2)
 
     check_memory()
     del img_t1, img_t2, image_ref, past_ref1, past_ref2
@@ -439,12 +441,12 @@ if __name__ == '__main__':
     mask_tiles = np.concatenate((mask_c_1, mask_c_2, mask_c_3, mask_c_4, mask_c_5), axis=0)
 
     # all_tiles = [i for i in range(1, 16)]
-    # tr_tiles = [1, 2, 3, 6, 7, 8, 10, 11, 12]
-    tr_tiles = [2, 3, 6, 7, 8, 10, 11, 12]
-    # val_tiles = [4, 9]
-    val_tiles = [4, 9, 15]
-    # tst_tiles = [5, 15, 13, 14]
-    tst_tiles = [5, 1, 13, 14]
+    tr_tiles = [1, 2, 3, 6, 7, 8, 10, 11, 12]
+    # tr_tiles = [2, 3, 6, 7, 8, 10, 11, 12]
+    val_tiles = [4, 9]
+    # val_tiles = [4, 9, 15]
+    tst_tiles = [5, 15, 13, 14]
+    # tst_tiles = [5, 1, 13, 14]
     all_tiles = tr_tiles + val_tiles
     print(f'All tiles: {all_tiles}')
     # final_mask[img_mask_ref == -99] = -1

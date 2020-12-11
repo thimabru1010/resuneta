@@ -428,6 +428,12 @@ if args.model == 'resuneta':
     # Nbatch = 8
     net = ResUNet_d6('amazon', nfilters_init, args.num_classes,
                      patch_size=args.patch_size)
+if args.model == 'resuneta':
+    nfilters_init = 32
+    args.use_multitasking = True
+    # Nbatch = 8
+    net = ResUNet_d6('amazon', nfilters_init, args.num_classes,
+                     patch_size=args.patch_size, small=True)
 elif args.model == 'unet':
     net = UNet(args.num_classes, groups=args.groups, nfilter=64)
     args.use_multitasking = False
@@ -658,7 +664,7 @@ fig.savefig(os.path.join(args.output_path, 'seg_pred_def&ref.jpg'))
 # Pmax = np.max(img_reconstructed[GTTruePositives * TileMask == 1])
 # ProbList = np.linspace(Pmax, 0, Npoints)
 # ProbList = np.arange(start=0, stop=1, step=0.02).tolist()
-ProbList = np.arange(start=0, stop=1, step=0.1).tolist()
+ProbList = np.arange(start=0, stop=1, step=0.02).tolist()
 ProbList.reverse()
 # print(final_mask.shape)
 print(ProbList)

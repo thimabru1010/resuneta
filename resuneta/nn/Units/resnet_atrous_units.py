@@ -93,11 +93,11 @@ class ResNet_atrous_2_unit(HybridBlock):
         # """
 
         # Uniform description for both Symbol and NDArray
-        x = F.broadcast_add( x , self.ResBlock1(_xl) )
+        x = F.broadcast_add(x, self.ResBlock1(_xl) )
         if len(self.dilatation_rates) > 0:
-            x = F.broadcast_add( x , self.ResBlock2(_xl) )
+            x = F.broadcast_add(x, self.ResBlock2(_xl) )
         if len(self.dilatation_rates) > 1:
-            x = F.broadcast_add( x , self.ResBlock3(_xl) )
+            x = F.broadcast_add(x, self.ResBlock3(_xl) )
 
         return x
 

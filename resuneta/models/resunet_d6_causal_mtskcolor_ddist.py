@@ -19,7 +19,7 @@ class ResUNet_d6(HybridBlock):
 
     def __init__(self, dataset_type, _nfilters_init,  _NClasses,
                  patch_size=256, verbose=True, from_logits=True,
-                 _norm_type='BatchNorm', weights=None,
+                 _norm_type='BatchNorm', weights=None, small=False,
                  **kwards):
         HybridBlock.__init__(self,**kwards)
 
@@ -43,8 +43,7 @@ class ResUNet_d6(HybridBlock):
 
         self.dataset_type = dataset_type
 
-        # dilat_rates = [3]
-        dilat_rates = []
+        self.small = small
 
 
         with self.name_scope():
@@ -52,14 +51,17 @@ class ResUNet_d6(HybridBlock):
 
             self.encoder = ResUNet_d6_encoder(self.nfilters, self.NClasses,
                                               patch_size=patch_size,
-                                              _norm_type=_norm_type, verbose=verbose)
+                                              _norm_type=_norm_type, verbose=verbose,
+                                              small=self.small)
 
 
             nfilters  = self.nfilters * 2 ** (self.depth - 1 -1)
             if verbose:
-                print ("depth:= {0}, nfilters: {1}".format(6,nfilters))
+                print ("depth:= {0}, nfilters: {1}".format(6, nfilters))
             self.UpComb1 = combine_layers(nfilters)
             dilat_rates = [3, 5]
+            if self.small:
+                dilat_rates = []
             # self.UpConv1 = ResNet_atrous_2_unit(nfilters,_dilation_rates=[3,5])
             self.UpConv1 = ResNet_atrous_2_unit(nfilters,
                                                 _dilation_rates=dilat_rates)
@@ -69,6 +71,8 @@ class ResUNet_d6(HybridBlock):
                 print ("depth:= {0}, nfilters: {1}".format(7,nfilters))
             self.UpComb2 = combine_layers(nfilters)
             dilat_rates = [3, 15]
+            if self.small:
+                dilat_rates = []
             self.UpConv2 = ResNet_atrous_2_unit(nfilters,
                                                 _dilation_rates=dilat_rates)
 

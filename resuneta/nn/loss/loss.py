@@ -36,13 +36,13 @@ class Tanimoto(Loss):
 
         # print(wli.shape)
         # print(f'Actual: {wli}')
-        if self.no_past_def:
-            no_consider = mx.nd.array([1.0, 1.0, 0.0], ctx=wli.ctx)
-            wli = wli * no_consider
-
-            no_consider = mx.nd.array([1.0, 1.0, 0.0], ctx=_preds.ctx)
-            _preds = no_consider * _preds.transpose((0, 2, 3, 1))
-            _preds = _preds.transpose((0, 3, 1, 2))
+        # if self.no_past_def:
+        #     no_consider = mx.nd.array([1.0, 1.0, 0.0], ctx=wli.ctx)
+        #     wli = wli * no_consider
+        #
+        #     no_consider = mx.nd.array([1.0, 1.0, 0.0], ctx=_preds.ctx)
+        #     _preds = no_consider * _preds.transpose((0, 2, 3, 1))
+        #     _preds = _preds.transpose((0, 3, 1, 2))
 
         rl_x_pl = F.sum(F.broadcast_mul(_label, _preds), axis=self.axis)
         # print(f'rl_x_pl: {rl_x_pl.shape}')
