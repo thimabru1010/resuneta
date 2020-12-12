@@ -120,7 +120,7 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
         epoch_bound_loss = {'train': 0.0, 'val': 0.0}
         epoch_dist_loss = {'train': 0.0, 'val': 0.0}
         epoch_color_loss = {'train': 0.0, 'val': 0.0}
-        epoch_cva_loss = {'Train': 0.0, 'Val': 0.0}
+        epoch_cva_loss = {'train': 0.0, 'val': 0.0}
         epoch_total_loss = {'train': 0.0, 'val': 0.0}
 
         epoch_seg_acc = {'train': 0.0, 'val': 0.0}
