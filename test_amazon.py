@@ -861,10 +861,11 @@ if args.use_multitasking:
 
         task = 4
         cva_pred = patches_pred[task][i]
-        cva_pred2 = cva_pred.copy()
-        cva_pred2[cva_pred >= 0.5] = 1
-        cva_pred2[cva_pred < 0.5] = 0
-        axes_cva[1].imshow(cva_pred2)
+        cva_pred = np.argmax(cva_pred)
+        # cva_pred2 = cva_pred.copy()
+        # cva_pred2[cva_pred >= 0.5] = 1
+        # cva_pred2[cva_pred < 0.5] = 0
+        axes_cva[1].imshow(cva_pred)
 
         plt.tight_layout()
         fig3.savefig(os.path.join(args.output_path, 'preds', f'pred{i}_CVA.jpg'))

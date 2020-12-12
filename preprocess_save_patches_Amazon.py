@@ -257,9 +257,7 @@ def save_patches(patches_tr, patches_tr_ref, patches_tr_cva,
                 classes_dict[clss] += counts[clss]
         # Performs the one hot encoding
         label_aug_h = tf.keras.utils.to_categorical(label_aug, args.num_classes)
-        print(cva_aug.shape)
         cva_aug_h = tf.keras.utils.to_categorical(cva_aug, 2)
-        print(cva_aug_h.shape)
         for j in range(len(img_aug)):
             # Input image 14 bands of Staelite
             # Float32 its need to train the model

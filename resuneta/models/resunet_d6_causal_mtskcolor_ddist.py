@@ -204,7 +204,7 @@ class ResUNet_d6(HybridBlock):
 
         # CVA
         cva = self.cva_logits(convl)
-        cva_logits = F.sigmoid(cva)
+        cva_logits = F.softmax(cva, axis=1)
 
         # logits
         # 1st find distance map, skeleton like, topology info
