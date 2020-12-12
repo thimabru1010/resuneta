@@ -41,6 +41,7 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
                 patience=10, delta=0.001):
 
     print(f'Checking from logits: {from_logits}')
+    wce_weights = None
 
     if args.loss == 'tanimoto':
         loss_seg = Tanimoto_with_dual()
