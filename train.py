@@ -271,6 +271,8 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
                     seg_logits, bound_logits, dist_logits, color_logits, cva_logits = net(X)
                 else:
                     seg_logits = net(X)
+                    cva_logits = seg_logits
+                    
                 seg_losses.append(loss_seg(seg_logits, y_seg))
                 acc_metric.update(mx.nd.argmax(seg_logits, axis=1), mx.nd.argmax(y_seg, axis=1))
                 acc_metric_cva.update(mx.nd.argmax(cva_logits, axis=1), mx.nd.argmax(y_cva, axis=1))
