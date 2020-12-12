@@ -168,9 +168,8 @@ def extract_tiles2patches(tiles, mask_amazon, input_image, image_ref, CVA_ref,
 
         # Extract patches for each tile
         print(tile_img.shape)
-        patches_img, patches_ref, patches_cva = extract_patches(tile_img, tile_ref,
-                                                   cva_tile_ref, patch_size,
-                                                   stride)
+        patches_img, patches_ref, patches_cva = extract_patches(tile_img, tile_ref, patch_size,
+                                                   stride, cva_tile_ref)
 
         print(f'Patches of tile {num_tile} extracted!')
         assert len(patches_img) == len(patches_ref), "Train: Input patches and reference \
