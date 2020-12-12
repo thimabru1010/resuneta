@@ -408,7 +408,7 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
             'Batch size': args.batch_size, 'Loss': args.loss,
             'Data aug': args.data_aug, 'WCE weights': wce_weights}
 
-    if args.model == 'resuneta':
+    if 'resuneta' in args.model:
         data['Bound weight'] = args.wbound
         data['Dist weight'] = args.wdist
         data['Color weight'] = args.wcolor

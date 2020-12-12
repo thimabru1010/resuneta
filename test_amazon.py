@@ -307,7 +307,7 @@ parser.add_argument("--output_path",
                     help="Path to where save predictions",
                     type=str, default='results/preds_run')
 parser.add_argument("--model", help="Path to where save predictions",
-                    type=str, default='resuneta', choices=['resuneta', 'unet', 'unet_small'])
+                    type=str, default='resuneta', choices=['resuneta', 'resuneta_small', 'unet', 'unet_small'])
 parser.add_argument("--groups", help="Groups to be used in convolutions",
                     type=int, default=1)
 parser.add_argument("--dataset_loc",
@@ -391,6 +391,7 @@ buffer = 2
 final_mask = mask_no_considered(image_ref, buffer, past_ref_sum)
 
 CVA_ref = compute_cva(img_t1, img_t2, args.cva_th)
+CVA_ref = CVA_ref[:5200, :5040]
 
 check_memory()
 del img_t1, img_t2, past_ref1, past_ref2 #  , image_ref
@@ -424,7 +425,7 @@ ref_patches = extract_patches(final_mask, args.patch_size, img_type=2)
 mask_tiles_patches = extract_patches(mask_tst, args.patch_size, img_type=2)
 cva_ref_patches = extract_patches(CVA_ref, args.patch_size, img_type=2)
 
-del CVA_ref, input_image
+del input_image
 
 assert len(input_patches) == len(ref_patches), "Input patches and Reference patches have a different lenght"
 
@@ -609,8 +610,7 @@ label_dict = {'(255, 255, 255)': -1, '(0, 255, 0)': 0, '(255, 0, 0)': 1, '(0, 0,
 # final_mask = np.expand_dims(final_mask, axis=-1)
 # print(final_mask.shape)
 
-if not os.path.exists(args.output_path):
-    os.makedirs(args.output_path)
+if not os.path.exists(os.path.join(args.output_path, 'preds')):
     os.makedirs(os.path.join(args.output_path, 'preds'))
 
 print(f'Seg preds range -- Min: {seg_preds_def.min()} Max: {seg_preds_def.max()}')
@@ -657,23 +657,34 @@ else:
 
     im = axes[1].imshow(pred_def_reconstructed)
     colorbar(im, axes[1], fig)
+
 plt.tight_layout()
-plt.show()
-plt.close()
+
 fig.savefig(os.path.join(args.output_path, 'seg_pred_def&ref.jpg'))
 
-# plt.imsave('seg_pred_def2.jpeg', img_reconstructed)
+# Visualize CVA pred tiles
+cva_preds = np.argmax(patches_pred[4], axis=-1)
+pred_cva_reconstructed, _ = pred_recostruction(args.patch_size, cva_preds,
+                                     final_mask)
+
+fig_cva, axes = plt.subplots(nrows=len(tst_tiles), ncols=2,
+                            figsize=((15*2)//len(tst_tiles), 15))
+axes[0, 0].set_title('Reference CVA')
+axes[0, 1].set_title('Def pred CVA')
+for i, tst_tile in enumerate(tst_tiles):
+    tile_ref = CVA_ref[mask_tiles == tst_tile]
+    tile_ref = np.reshape(tile_ref, (1040, 1680))
+    tile_pred = pred_cva_reconstructed[mask_tiles == tst_tile]
+    tile_pred = np.reshape(tile_pred, (1040, 1680))
+    axes[i, 0].imshow(tile_ref)
+    axes[i, 1].imshow(tile_pred)
+
+fig_cva.savefig(os.path.join(args.output_path, 'CVA_pred&ref.jpg'))
+plt.show()
+plt.close()
+del CVA_ref, pred_cva_reconstructed
 
 # Metrics
-# final_mask = np.squeeze(final_mask, axis=-1)
-# ref1 = np.ones_like(final_mask).astype(np.float32)
-# ref1[final_mask == 2] = 0
-# # TileMask = mask_amazon_ts * ref1
-# TileMask = ref1
-# GTTruePositives = (final_mask == 1)
-#
-# Npoints = 100
-# Pmax = np.max(img_reconstructed[GTTruePositives * TileMask == 1])
 # ProbList = np.linspace(Pmax, 0, Npoints)
 ProbList = np.arange(start=0, stop=1, step=0.02).tolist()
 ProbList.reverse()
@@ -854,14 +865,15 @@ if args.use_multitasking:
         # CVA
         fig3, axes_cva = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
         axes_cva[0].set_title('CVA Ref')
-        axes_cva[1].set_title('CVA Pred th=0.5')
+        axes_cva[1].set_title('CVA Pred')
 
         cva_ref = cva_ref_patches[i]
         axes_cva[0].imshow(cva_ref)
 
         task = 4
         cva_pred = patches_pred[task][i]
-        cva_pred = np.argmax(cva_pred)
+        print(f'CVA shape {cva_pred.shape}')
+        cva_pred = np.argmax(cva_pred, axis=-1)
         # cva_pred2 = cva_pred.copy()
         # cva_pred2[cva_pred >= 0.5] = 1
         # cva_pred2[cva_pred < 0.5] = 0
