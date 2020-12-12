@@ -144,7 +144,7 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
             if args.multitasking:
                 bound_label_list = gluon.utils.split_and_load(label[:, nclasses:2*nclasses, :, :], devices)
                 dist_label_list = gluon.utils.split_and_load(label[:, 2*nclasses:3*nclasses, :, :], devices)
-                cva_label_list = gluon.utils.split_and_load(label[:, 3*nclasses:(3*nclasses+1), :, :], devices)
+                cva_label_list = gluon.utils.split_and_load(label[:, 3*nclasses:(3*nclasses+2), :, :], devices)
                 if args.dataset_type == 'amazon':
                     color_label_list = gluon.utils.split_and_load(label[:, -6:, :, :], devices)
                 else:
@@ -247,11 +247,11 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
             if args.multitasking:
                 bound_label_list = gluon.utils.split_and_load(label[:, nclasses:2*nclasses, :, :], devices)
                 dist_label_list = gluon.utils.split_and_load(label[:, 2*nclasses:3*nclasses, :, :], devices)
-                cva_label_list = gluon.utils.split_and_load(label[:, 3*nclasses:(3*nclasses+1), :, :], devices)
+                cva_label_list = gluon.utils.split_and_load(label[:, 3*nclasses:(3*nclasses+2), :, :], devices)
                 if args.dataset_type == 'amazon':
-                    color_label_list = gluon.utils.split_and_load(label[:, 3*nclasses:(3*nclasses+6), :, :], devices)
+                    color_label_list = gluon.utils.split_and_load(label[:, -6:, :, :], devices)
                 else:
-                    color_label_list = gluon.utils.split_and_load(label[:, 3*nclasses:(3*nclasses+3), :, :], devices)
+                    color_label_list = gluon.utils.split_and_load(label[:, -3:, :, :], devices)
             else:
                 bound_label_list = seg_label_list
                 dist_label_list = seg_label_list
@@ -280,7 +280,7 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
                     dist_losses.append(args.wdist*loss_dist(dist_logits, y_dist))
                     color_losses.append(args.wcolor*loss_color(color_logits, y_color))
                     cva_losses.append(args.wcva*loss_cva(cva_logits, y_cva))
-                    total_losses.append(seg_losses[i] + bound_losses[i] + dist_losses[i] + color_losses[i])
+                    total_losses.append(seg_losses[i] + bound_losses[i] + dist_losses[i] + color_losses[i] + cva_losses[i])
                 else:
                     bound_losses.append(0.0)
                     dist_losses.append(0.0)
