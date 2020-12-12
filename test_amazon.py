@@ -553,12 +553,12 @@ else:
         tst_preds.append(pred_reconstructed[mask_tiles == tst_tile])
         print(tst_refs[i].shape)
 
-    ref_patches = np.stack(tst_refs, axis=0)
+    ref_patches_tst = np.stack(tst_refs, axis=0)
     pred_patches = np.stack(tst_preds, axis=0)
-    print(ref_patches.shape)
+    print(ref_patches_tst.shape)
     print(pred_patches.shape)
-    true_labels = np.reshape(ref_patches, (ref_patches.shape[0] *
-                                                ref_patches.shape[1]))
+    true_labels = np.reshape(ref_patches_tst, (ref_patches_tst.shape[0] *
+                                                ref_patches_tst.shape[1]))
 
     predicted_labels = np.reshape(pred_patches, (pred_patches.shape[0] *
                                              pred_patches.shape[1]))

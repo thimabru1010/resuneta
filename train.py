@@ -400,7 +400,7 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
 
     # Save hyperparamters ------------------------------------------------------
 
-    data = {'Model': args.model, 'Dataset path': args.dataset_path,
+    data = {'Model': args.model,
             'Dataset': args.dataset_type,
             'Epochs': epoch, 'Optimizer': args.optimizer,
             'Learning Rate': args.learning_rate,
@@ -424,7 +424,7 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
 
     table(ax, df, loc='center')  # where df is your data frame
 
-    plt.savefig(os.path.join(args.results_path, 'hyperparamters.jpg'), dpi=200,
+    plt.savefig(os.path.join(args.results_path, f'hyperparamters_{args.dataset_path}.jpg'), dpi=200,
                 bbox_inches='tight')
 
 

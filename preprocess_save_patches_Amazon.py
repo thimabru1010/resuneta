@@ -16,7 +16,7 @@ from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 
 
-def compute_cva(image_t1, image_t2, th):
+def compute_cva(img_t1, img_t2, th):
     _, image_t1 = normalization(img_t1, norm_type=2)
     _, image_t2 = normalization(img_t2, norm_type=2)
 
