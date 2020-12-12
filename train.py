@@ -43,40 +43,66 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
     print(f'Checking from logits: {from_logits}')
 
     if args.loss == 'tanimoto':
-        loss_clss = Tanimoto_with_dual()
+        loss_seg = Tanimoto_with_dual()
+        loss_bound = Tanimoto_with_dual()
         loss_dist = Tanimoto_with_dual()
         loss_color = Tanimoto_with_dual(no_past_def=False)
+        loss_cva = Tanimoto_with_dual()
     elif args.loss == 'ce':
-        # weights = mx.nd.array(np.array([1.1494, 33.3333, 0]), ctx=devices)
-        loss_clss = gluon.loss.SoftmaxCrossEntropyLoss(axis=1,
+        loss_seg = gluon.loss.SoftmaxCrossEntropyLoss(axis=1,
                                                        from_logits=from_logits,
                                                        sparse_label=False)
-        # loss_clss = gluoncv.loss.SoftmaxCrossEntropyLoss(ignore_label=2)
-        # L2Loss --> MSE
-        loss_dist = gluon.loss.L2Loss() #  TODO: Maybe should put weights for distance
+
+        loss_bound = gluon.loss.SoftmaxCrossEntropyLoss(axis=1,
+                                                      from_logits=True,
+                                                      sparse_label=False)
+        loss_dist = gluon.loss.L2Loss()
         loss_color = gluon.loss.L2Loss()
+
+        loss_cva = gluon.loss.SoftmaxCrossEntropyLoss(axis=1,
+                                                      from_logits=True,
+                                                      sparse_label=False)
     elif args.loss == 'focal':
-        loss_clss = gluoncv.loss.FocalLoss(axis=1, from_logits=from_logits,
+        loss_seg = gluoncv.loss.FocalLoss(axis=1, from_logits=from_logits,
                                            sparse_label=False, alpha=args.alpha,
                                            gamma=args.gamma)
-        # L2Loss --> MSE
-        loss_dist = gluon.loss.L2Loss() #  TODO: Maybe should put weights for distance transform
-        loss_color = gluon.loss.L2Loss()
-    elif args.loss == 'wce':
-        # weights = mx.nd.array(np.array([1.1, 238, 0]))
-        # weights = weights / mx.nd.norm(weights)
-        # weights = mx.nd.array(np.array([0.2, 0.8, 0]))
-        weights = mx.nd.array(np.array([0.3, 0.7, 0]))
-        print(f'New weights: {weights}')
-        loss_clss = WeightedSoftmaxCrossEntropyLoss(axis=1,
-                                                    from_logits=from_logits,
-                                                    sparse_label=False,
-                                                    class_weights=weights)
+        loss_bound = gluoncv.loss.FocalLoss(axis=1, from_logits=True,
+                                          sparse_label=False, alpha=args.alpha,
+                                          gamma=args.gamma)
         # L2Loss --> MSE
         loss_dist = gluon.loss.L2Loss() #  TODO: Maybe should put weights for distance transform
         loss_color = gluon.loss.L2Loss()
 
+        loss_cva = gluoncv.loss.FocalLoss(axis=1, from_logits=True,
+                                          sparse_label=False, alpha=args.alpha,
+                                          gamma=args.gamma)
+    elif args.loss == 'wce':
+        if args.wce_weights == 1:
+            wce_weights = mx.nd.array(np.array([1.1, 238, 0]))
+        elif args.wce_weights == 2:
+            wce_weights = mx.nd.array(np.array([0.3, 0.7, 0]))
+        print(f'WCE weights: {wce_weights}')
+        loss_seg = WeightedSoftmaxCrossEntropyLoss(axis=1,
+                                                    from_logits=from_logits,
+                                                    sparse_label=False,
+                                                    class_weights=wce_weights)
+
+        loss_bound = WeightedSoftmaxCrossEntropyLoss(axis=1,
+                                                    from_logits=True,
+                                                    sparse_label=False,
+                                                    class_weights=wce_weights)
+        # L2Loss --> MSE
+        loss_dist = gluon.loss.L2Loss() #  TODO: Maybe should put weights for distance transform
+        loss_color = gluon.loss.L2Loss()
+
+        weights = mx.nd.array(np.array([1.0, 1.0]))
+        loss_cva = WeightedSoftmaxCrossEntropyLoss(axis=1,
+                                                    from_logits=True,
+                                                    sparse_label=False,
+                                                    class_weights=weights)
+
     acc_metric = mx.metric.Accuracy()
+    acc_metric_cva = mx.metric.Accuracy()
     mcc_metric = mx.metric.PCC()
     if args.optimizer == 'adam':
         optm = mx.optimizer.Adam(learning_rate=args.learning_rate,
@@ -94,11 +120,13 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
         epoch_bound_loss = {'train': 0.0, 'val': 0.0}
         epoch_dist_loss = {'train': 0.0, 'val': 0.0}
         epoch_color_loss = {'train': 0.0, 'val': 0.0}
-        # epoch_cva_loss = {'Train': 0.0, 'Val': 0.0}
+        epoch_cva_loss = {'Train': 0.0, 'Val': 0.0}
         epoch_total_loss = {'train': 0.0, 'val': 0.0}
 
         epoch_seg_acc = {'train': 0.0, 'val': 0.0}
+        epoch_cva_acc = {'train': 0.0, 'val': 0.0}
         acc_metric.reset()
+        acc_metric_cva.reset()
         # MCC is calculated for validation only
         epoch_seg_mcc = 0.0
 
@@ -115,14 +143,16 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
             if args.multitasking:
                 bound_label_list = gluon.utils.split_and_load(label[:, nclasses:2*nclasses, :, :], devices)
                 dist_label_list = gluon.utils.split_and_load(label[:, 2*nclasses:3*nclasses, :, :], devices)
+                cva_label_list = gluon.utils.split_and_load(label[:, 3*nclasses:(3*nclasses+1), :, :], devices)
                 if args.dataset_type == 'amazon':
-                    color_label_list = gluon.utils.split_and_load(label[:, 3*nclasses:(3*nclasses+6), :, :], devices)
+                    color_label_list = gluon.utils.split_and_load(label[:, -6:, :, :], devices)
                 else:
-                    color_label_list = gluon.utils.split_and_load(label[:, 3*nclasses:(3*nclasses+3), :, :], devices)
+                    color_label_list = gluon.utils.split_and_load(label[:, -3:, :, :], devices)
             else:
                 bound_label_list = seg_label_list
                 dist_label_list = seg_label_list
                 color_label_list = seg_label_list
+                cva_label_list = seg_label_list
 
             # Diff 4: run forward and backward on each devices.
             # MXNet will automatically run them in parallel
@@ -130,31 +160,35 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
             bound_losses = []
             dist_losses = []
             color_losses = []
+            cva_losses = []
             total_losses = []
 
             with autograd.record():
                 # Gather results from all devices into a single list
-                for i, data in enumerate(zip(data_list, seg_label_list, bound_label_list, dist_label_list, color_label_list)):
-                    X, y_seg, y_bound, y_dist, y_color = data
+                for i, data in enumerate(zip(data_list, seg_label_list, bound_label_list, dist_label_list, color_label_list, cva_label_list)):
+                    X, y_seg, y_bound, y_dist, y_color, y_cva = data
                     if args.multitasking:
-                        seg_logits, bound_logits, dist_logits, color_logits = net(X)
+                        seg_logits, bound_logits, dist_logits, color_logits, cva_logits = net(X)
                     # logger.debug(f'Seg logits: {seg_logits}')
                     else:
                         seg_logits = net(X)
                         # print(seg_logits)
-                    seg_losses.append(loss_clss(seg_logits, y_seg))
+                    seg_losses.append(loss_seg(seg_logits, y_seg))
                     # logger.debug(f'Seg CE value: {seg_losses[i]}')
                     acc_metric.update(mx.nd.argmax(seg_logits, axis=1), mx.nd.argmax(y_seg, axis=1))
+                    acc_metric_cva.update(mx.nd.argmax(cva_logits, axis=1), mx.nd.argmax(y_cva, axis=1))
                     if args.multitasking:
-                        bound_losses.append(args.wbound*loss_clss(bound_logits, y_bound))
+                        bound_losses.append(args.wbound*loss_bound(bound_logits, y_bound))
                         dist_losses.append(args.wdist*loss_dist(dist_logits, y_dist))
                         color_losses.append(args.wcolor*loss_color(color_logits, y_color))
+                        cva_losses.append(args.wcva*loss_cva(cva_logits, y_cva))
 
-                        total_losses.append(seg_losses[i] + bound_losses[i] + dist_losses[i] + color_losses[i])
+                        total_losses.append(seg_losses[i] + bound_losses[i] + dist_losses[i] + color_losses[i] + cva_losses[i])
                     else:
                         bound_losses.append(0.0)
                         dist_losses.append(0.0)
                         color_losses.append(0.0)
+                        cva_losses.append(0.0)
                         total_losses.append(seg_losses[i])
 
             for loss in total_losses:
@@ -165,20 +199,24 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
             bound_loss = []
             dist_loss = []
             color_loss = []
+            cva_loss = []
             total_loss = []
-            for l_seg, l_bound, l_dist, l_color, l_total in zip(seg_losses, bound_losses, dist_losses, color_losses, total_losses):
+            for l_losses in zip(seg_losses, bound_losses, dist_losses, color_losses, cva_losses, total_losses):
+                l_seg, l_bound, l_dist, l_color, l_cva, l_total = l_losses
                 # Sums for each device batch
                 seg_loss.append(l_seg.sum().asscalar())
                 if args.multitasking:
                     bound_loss.append(l_bound.sum().asscalar())
                     dist_loss.append(l_dist.sum().asscalar())
                     color_loss.append(l_color.sum().asscalar())
+                    cva_loss.append(l_cva.sum().asscalar())
                 total_loss.append(l_total.sum().asscalar())
             # Sum loss from all inferences on the batch
             epoch_seg_loss['train'] += sum(seg_loss)
             epoch_bound_loss['train'] += sum(bound_loss)
             epoch_dist_loss['train'] += sum(dist_loss)
             epoch_color_loss['train'] += sum(color_loss)
+            epoch_cva_loss['train'] += sum(cva_loss)
             epoch_total_loss['train'] += sum(total_loss)
 
         # After batch loop take the mean of batches losses
@@ -187,14 +225,17 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
         epoch_bound_loss['train'] /= n_batches_tr
         epoch_dist_loss['train'] /= n_batches_tr
         epoch_color_loss['train'] /= n_batches_tr
+        epoch_cva_loss['train'] /= n_batches_tr
         if args.multitasking:
-            tasks_weights = [1.0, args.wbound, args.wdist, args.wcolor]
+            tasks_weights = [1.0, args.wbound, args.wdist, args.wcolor, args.wcva]
             epoch_total_loss['train'] = (epoch_total_loss['train'] / n_batches_tr) / sum(tasks_weights)
         else:
             epoch_total_loss['train'] = (epoch_total_loss['train'] / n_batches_tr)
 
         _, epoch_seg_acc['train'] = acc_metric.get()
+        _, epoch_cva_acc['train'] = acc_metric_cva.get()
         acc_metric.reset()
+        acc_metric_cva.reset()
         mcc_metric.reset()
 
         # Validation loop ------------------------------------------------------
@@ -205,6 +246,7 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
             if args.multitasking:
                 bound_label_list = gluon.utils.split_and_load(label[:, nclasses:2*nclasses, :, :], devices)
                 dist_label_list = gluon.utils.split_and_load(label[:, 2*nclasses:3*nclasses, :, :], devices)
+                cva_label_list = gluon.utils.split_and_load(label[:, 3*nclasses:(3*nclasses+1), :, :], devices)
                 if args.dataset_type == 'amazon':
                     color_label_list = gluon.utils.split_and_load(label[:, 3*nclasses:(3*nclasses+6), :, :], devices)
                 else:
@@ -213,35 +255,36 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
                 bound_label_list = seg_label_list
                 dist_label_list = seg_label_list
                 color_label_list = seg_label_list
+                cva_label_list = seg_label_list
 
             seg_losses = []
             bound_losses = []
             dist_losses = []
             color_losses = []
+            cva_losses = []
             total_losses = []
 
-            for i, data in enumerate(zip(data_list, seg_label_list, bound_label_list, dist_label_list, color_label_list)):
-                X, y_seg, y_bound, y_dist, y_color = data
+            for i, data in enumerate(zip(data_list, seg_label_list, bound_label_list, dist_label_list, color_label_list, cva_label_list)):
+                X, y_seg, y_bound, y_dist, y_color, y_cva = data
                 if args.multitasking:
-                    seg_logits, bound_logits, dist_logits, color_logits = net(X)
+                    seg_logits, bound_logits, dist_logits, color_logits, cva_logits = net(X)
                 else:
                     seg_logits = net(X)
-                seg_losses.append(loss_clss(seg_logits, y_seg))
+                seg_losses.append(loss_seg(seg_logits, y_seg))
                 acc_metric.update(mx.nd.argmax(seg_logits, axis=1), mx.nd.argmax(y_seg, axis=1))
-                # print(seg_logits.shape)
-                # print(mx.nd.argmax(seg_logits, axis=1).shape)
-                # print(y_seg.shape)
-                # print(mx.nd.argmax(y_seg, axis=1).shape)
+                acc_metric_cva.update(mx.nd.argmax(cva_logits, axis=1), mx.nd.argmax(y_cva, axis=1))
                 mcc_metric.update(mx.nd.argmax(seg_logits, axis=1), mx.nd.argmax(y_seg, axis=1))
                 if args.multitasking:
-                    bound_losses.append(args.wbound*loss_clss(bound_logits, y_bound))
+                    bound_losses.append(args.wbound*loss_bound(bound_logits, y_bound))
                     dist_losses.append(args.wdist*loss_dist(dist_logits, y_dist))
                     color_losses.append(args.wcolor*loss_color(color_logits, y_color))
+                    cva_losses.append(args.wcva*loss_cva(cva_logits, y_cva))
                     total_losses.append(seg_losses[i] + bound_losses[i] + dist_losses[i] + color_losses[i])
                 else:
                     bound_losses.append(0.0)
                     dist_losses.append(0.0)
                     color_losses.append(0.0)
+                    cva_losses.append(0.0)
                     total_losses.append(seg_losses[i])
 
 
@@ -249,20 +292,24 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
             bound_loss = []
             dist_loss = []
             color_loss = []
+            cva_loss = []
             total_loss = []
-            for l_seg, l_bound, l_dist, l_color, l_total in zip(seg_losses, bound_losses, dist_losses, color_losses, total_losses):
+            for l_losses in zip(seg_losses, bound_losses, dist_losses, color_losses, cva_losses, total_losses):
+                l_seg, l_bound, l_dist, l_color, l_cva, l_total = l_losses
                 # Sums for each device batch
                 seg_loss.append(l_seg.sum().asscalar())
                 if args.multitasking:
                     bound_loss.append(l_bound.sum().asscalar())
                     dist_loss.append(l_dist.sum().asscalar())
                     color_loss.append(l_color.sum().asscalar())
+                    cva_loss.append(l_cva.sum().asscalar())
                 total_loss.append(l_total.sum().asscalar())
             # Sum loss from all inferences on the batch
             epoch_seg_loss['val'] += sum(seg_loss)
             epoch_bound_loss['val'] += sum(bound_loss)
             epoch_dist_loss['val'] += sum(dist_loss)
             epoch_color_loss['val'] += sum(color_loss)
+            epoch_cva_loss['val'] += sum(cva_loss)
             epoch_total_loss['val'] += sum(total_loss)
 
         # After batch loop take the mean of batches losses
@@ -271,13 +318,15 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
         epoch_bound_loss['val'] /= n_batches_val
         epoch_dist_loss['val'] /= n_batches_val
         epoch_color_loss['val'] /= n_batches_val
+        epoch_cva_loss['val'] /= n_batches_val
         if args.multitasking:
-            tasks_weights = [1.0, args.wbound, args.wdist, args.wcolor]
+            tasks_weights = [1.0, args.wbound, args.wdist, args.wcolor, args.wcva]
             epoch_total_loss['val'] = (epoch_total_loss['val'] / n_batches_val) / sum(tasks_weights)
         else:
             epoch_total_loss['val'] = (epoch_total_loss['val'] / n_batches_val)
 
         _, epoch_seg_acc['val'] = acc_metric.get()
+        _, epoch_cva_acc['val'] = acc_metric_cva.get()
         _, epoch_seg_mcc = mcc_metric.get()
 
         # Show metrics ---------------------------------------------------------
@@ -301,6 +350,11 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
         metrics_table.add_row(['Color', round(epoch_color_loss['train'], 5),
                                round(epoch_color_loss['val'], 5), 0, 0, 0])
 
+        metrics_table.add_row(['CVA', round(epoch_cva_loss['train'], 5),
+                              round(epoch_cva_loss['val'], 5),
+                              round(100*epoch_cva_acc['train'], 5),
+                              round(100*epoch_cva_acc['val'], 5), 0])
+
         metrics_table.add_row(['Total', round(epoch_total_loss['train'], 5),
                                round(epoch_total_loss['val'], 5), 0, 0, 0])
 
@@ -322,6 +376,9 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
             add_tensorboard_scalars(summary_writer, args.results_path, epoch,
                                     'Color', epoch_color_loss)
 
+            add_tensorboard_scalars(summary_writer, args.results_path, epoch,
+                                    'CVA', epoch_cva_loss, acc=epoch_cva_acc)
+
         add_tensorboard_scalars(summary_writer, args.results_path, epoch,
                                 'Total', epoch_total_loss)
 
@@ -340,19 +397,21 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
                                              'best_model.params'))
     summary_writer.close()
 
-    # Save hyperparamters
+    # Save hyperparamters ------------------------------------------------------
 
-    data = {'Model': args.model, 'Dataset': args.dataset_type,
+    data = {'Model': args.model, 'Dataset path': args.dataset_path,
+            'Dataset': args.dataset_type,
             'Epochs': epoch, 'Optimizer': args.optimizer,
             'Learning Rate': args.learning_rate,
             'Weight decay': args.weight_decay, 'Patch size': args.patch_size,
             'Batch size': args.batch_size, 'Loss': args.loss,
-            'Data aug': args.data_aug}
+            'Data aug': args.data_aug, 'WCE weights': wce_weights}
 
     if args.model == 'resuneta':
         data['Bound weight'] = args.wbound
         data['Dist weight'] = args.wdist
         data['Color weight'] = args.wcolor
+        data['CVA weight'] = args.wcva
 
     data_main = {'Hyperparameter': data.keys(), 'Value': data.values()}
 
@@ -435,15 +494,16 @@ if __name__ == '__main__':
                         type=float, default=1.0)
     parser.add_argument("--wcolor", help="HSV transform loss weight",
                         type=float, default=1.0)
+    parser.add_argument("--wcva", help="CVA loss weight",
+                        type=float, default=1.0)
     parser.add_argument("--no_color", help="Don't use HSV transform task",
                         action='store_true')
 
     parser.add_argument("--groups", help="Groups to be used in convolutions",
                         type=int, default=1)
 
-    parser.add_argument("--class_weights",
-                        help="Use class weights at the model after softmax",
-                        action='store_true')
+    parser.add_argument("--wce_weights", type=int, default=1,
+                        help="Weights to be used on Weighted Cross Entropy")
 
     parser.add_argument("--data_aug",
                         help="Use data augmentation or not",
@@ -477,39 +537,25 @@ if __name__ == '__main__':
     else:
         from_logits = False
 
-    # if args.class_weights:
-    #     # weights = mx.nd.array(np.array([1.0, 1.0, 0]))
-    #     weights = mx.nd.array(np.array([0.3, 0.7, 0]))
-    #     ones = mx.ndarray.ones(shape=(args.batch_size, args.patch_size, args.patch_size, 3))
-    #     weights_elemwise = (ones * weights).transpose((0, 3, 1, 2))
-    #     print(weights.shape)
-    # else:
-    weights = None
-    weights_elemwise = None
-
     Nfilters_init = 32
     if args.model == 'resuneta':
         args.multitasking = True
         net = ResUNet_d6(args.dataset_type, Nfilters_init, args.num_classes,
                          patch_size=args.patch_size, verbose=args.debug,
-                         from_logits=from_logits,
-                         weights=weights_elemwise)
+                         from_logits=from_logits)
     if args.model == 'resuneta_small':
      args.multitasking = True
      net = ResUNet_d6(args.dataset_type, Nfilters_init, args.num_classes,
                       patch_size=args.patch_size, verbose=args.debug,
-                      from_logits=from_logits,
-                      weights=weights_elemwise, small=True)
+                      from_logits=from_logits, small=True)
     elif args.model == 'unet':
         # Changed from 64 to 32
-        net = UNet(args.num_classes, groups=args.groups, nfilter=64,
-                   weights=weights)
+        net = UNet(args.num_classes, groups=args.groups, nfilter=64)
         args.multitasking = False
         # net = UNet(input_channels=14, output_channels=args.num_classes)
     elif args.model == 'unet_small':
         # Changed from 64 to 32
-        net = UNet_small(args.num_classes, groups=args.groups, nfilter=32,
-                   weights=weights)
+        net = UNet_small(args.num_classes, groups=args.groups, nfilter=32)
         args.multitasking = False
     net.initialize()
 
@@ -538,6 +584,7 @@ if __name__ == '__main__':
         tnorm = Normalize()
 
     if args.dataset_type == 'ISPRS':
+        color_channels = 3
         tnorm = Normalize()
     else:
         mean = np.array([6884.0415,  6188.7725,  5670.7944,  4999.9517,
@@ -548,6 +595,7 @@ if __name__ == '__main__':
                         2893.691, 7257.484, 4430.521, 3046.775])
         # tnorm = Normalize(mean=mean, std=std)
         tnorm = None
+        color_channels = 6
 
     if args.data_aug:
         prob = 0.7
@@ -567,11 +615,11 @@ if __name__ == '__main__':
     train_dataset = ISPRSDataset(root=args.dataset_path,
                                  mode='train',
                                  mtsk=args.multitasking, norm=tnorm,
-                                 transform=aug)
+                                 transform=aug, color_channels=color_channels)
     val_dataset = ISPRSDataset(root=args.dataset_path,
                                mode='val',
                                mtsk=args.multitasking, norm=tnorm,
-                               transform=None)
+                               transform=None, color_channels=color_channels)
 
     dataloader = {}
     dataloader['train'] = gluon.data.DataLoader(train_dataset,

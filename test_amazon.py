@@ -26,7 +26,8 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 from tensorflow.keras.utils import to_categorical
 import itertools
-from metrics_amazon import compute_def_metrics, prepare4metrics
+from metrics_amazon import compute_def_metrics
+from preprocess_save_patches_Amazon import compute_cva
 import math
 
 
@@ -312,6 +313,8 @@ parser.add_argument("--groups", help="Groups to be used in convolutions",
 parser.add_argument("--dataset_loc",
                     help="Select dataset from path 66 or 63", type=int,
                     default=63, choices=[66, 63])
+parser.add_argument("--cva_th", help="Choose CVA treshold",
+                    type=float, default=0.26074)
 args = parser.parse_args()
 
 # Test model
@@ -387,6 +390,8 @@ buffer = 2
 '''
 final_mask = mask_no_considered(image_ref, buffer, past_ref_sum)
 
+CVA_ref = compute_cva(img_t1, img_t2, args.cva_th)
+
 check_memory()
 del img_t1, img_t2, past_ref1, past_ref2 #  , image_ref
 print('Images deleted!')
@@ -416,6 +421,10 @@ if args.dataset_loc == 66:
 # else:
 input_patches = extract_patches(input_image, args.patch_size, img_type=1)
 ref_patches = extract_patches(final_mask, args.patch_size, img_type=2)
+mask_tiles_patches = extract_patches(mask_tst, args.patch_size, img_type=2)
+cva_ref_patches = extract_patches(CVA_ref, args.patch_size, img_type=2)
+
+del CVA_ref, input_image
 
 assert len(input_patches) == len(ref_patches), "Input patches and Reference patches have a different lenght"
 
@@ -428,7 +437,7 @@ if args.model == 'resuneta':
     # Nbatch = 8
     net = ResUNet_d6('amazon', nfilters_init, args.num_classes,
                      patch_size=args.patch_size)
-if args.model == 'resuneta':
+elif args.model == 'resuneta_small':
     nfilters_init = 32
     args.use_multitasking = True
     # Nbatch = 8
@@ -459,6 +468,7 @@ seg_preds2 = []
 bound_preds = []
 dist_preds = []
 color_preds = []
+cva_preds = []
 seg_refs = []
 patches_test = []
 
@@ -477,12 +487,13 @@ for i in tqdm(range(len(input_patches))):
     img_normed = mx.nd.expand_dims(img_normed, axis=0)
 
     if args.use_multitasking:
-        preds1, preds2, preds3, preds4 = net(img_normed.copyto(ctx))
+        preds1, preds2, preds3, preds4, preds5 = net(img_normed.copyto(ctx))
 
         seg_preds.append(preds1.asnumpy())
         bound_preds.append(preds2.asnumpy())
         dist_preds.append(preds3.asnumpy())
         color_preds.append(preds4.asnumpy())
+        cva_preds.append(preds5.asnumpy())
     else:
         preds1 = net(img_normed.copyto(ctx))
         # print(preds1)
@@ -498,7 +509,7 @@ if args.use_multitasking:
     seg_preds_def = seg_preds[:, :, :, 1]
     seg_pred = np.argmax(seg_preds, axis=-1)
     print(f'seg shape argmax: {seg_pred.shape}')
-    patches_pred = [seg_preds, gather_preds(bound_preds), gather_preds(dist_preds), gather_preds(color_preds)]
+    patches_pred = [seg_preds, gather_preds(bound_preds), gather_preds(dist_preds), gather_preds(color_preds), gather_preds(cva_preds)]
 else:
     seg_preds = gather_preds(seg_preds)
     print(f'seg shape: {seg_preds.shape}')
@@ -600,6 +611,7 @@ label_dict = {'(255, 255, 255)': -1, '(0, 255, 0)': 0, '(255, 0, 0)': 1, '(0, 0,
 
 if not os.path.exists(args.output_path):
     os.makedirs(args.output_path)
+    os.makedirs(os.path.join(args.output_path, 'preds'))
 
 print(f'Seg preds range -- Min: {seg_preds_def.min()} Max: {seg_preds_def.max()}')
 print(args.dataset_loc)
@@ -663,22 +675,12 @@ fig.savefig(os.path.join(args.output_path, 'seg_pred_def&ref.jpg'))
 # Npoints = 100
 # Pmax = np.max(img_reconstructed[GTTruePositives * TileMask == 1])
 # ProbList = np.linspace(Pmax, 0, Npoints)
-# ProbList = np.arange(start=0, stop=1, step=0.02).tolist()
 ProbList = np.arange(start=0, stop=1, step=0.02).tolist()
 ProbList.reverse()
 # print(final_mask.shape)
 print(ProbList)
 # ProbList = [0.2, 0.5, 0.8]
-# Ver isso aqui junto com os tiles
-# if args.dataset_loc == 66:
-#     rec_tiles = np.stack(rec_tiles, axis=0)
-#     ref_tiles = np.stack(ref_tiles, axis=0)
-#     print(f'Input tiles shape: {rec_tiles.shape}')
-#     def_metrics, prec, recall, tpr, fpr = compute_def_metrics(ProbList,
-#                                                               rec_tiles,
-#                                                               ref_tiles,
-#                                                               mask_tst)
-# else:
+
 def_probs_reconstructed, _ = pred_recostruction(args.patch_size, seg_preds_def,
                                      final_mask)
 
@@ -689,43 +691,41 @@ def_metrics, prec, recall = compute_def_metrics(ProbList,
 print(def_metrics)
 # Interpolate Nan values
 metrics_copy = def_metrics.copy()
-# indexes = list(range(len(def_metrics)))
-for i in range(len(def_metrics)):
-    # if def_metrics[i, 1] == -1:
-    # if math.isnan(def_metrics[i, 1]):
-    if def_metrics[i, 1] == -1:
-        # metrics_copy[i, 1] = 2*metrics_copy[i+1, 1] - metrics_copy[i+2, 1]
-        metrics_copy[i, 1] = 2*metrics_copy[i-1, 1] - metrics_copy[i-2, 1]
+indexes = list(range(len(def_metrics)))
+indexes.reverse()
+for i in indexes:
+    if math.isnan(def_metrics[i, 1]):
+        metrics_copy[i, 1] = 2*metrics_copy[i+1, 1] - metrics_copy[i+2, 1]
 
 # Calculates mAP
-Recall = def_metrics[:, 0]
-Precision = def_metrics[:, 1]
-
-DeltaR = Recall[1:]-Recall[:-1]
-ap = np.sum(Precision[:-1]*DeltaR)
-print('mAP:', ap)
+# Recall = def_metrics[:, 0]
+# Precision = def_metrics[:, 1]
+#
+# DeltaR = Recall[1:]-Recall[:-1]
+# ap = np.sum(Precision[:-1]*DeltaR)
+# print('mAP:', ap)
 
 Recall = metrics_copy[:, 0]
 Precision = metrics_copy[:, 1]
 
 DeltaR = Recall[1:]-Recall[:-1]
-ap2 = np.sum(Precision[:-1]*DeltaR)
-print('mAP2:', ap2)
+ap = np.sum(Precision[:-1]*DeltaR)
+print('mAP:', ap)
 print('Image Saved!')
 
 fig_pr = plt.figure()
 
 # Precision x Recall curve
-# plt.plot(recall, prec, color='darkorange', lw=2)
-plt.plot(def_metrics[:, 0], def_metrics[:, 1], color='darkorange', lw=2)
-plt.plot(metrics_copy[:, 0], metrics_copy[:, 1], color='blue', lw=2,
-         linestyle='--')
+plt.plot(def_metrics[:, 0], metrics_copy[:, 1], color='darkorange', lw=2)
+# plt.plot(def_metrics[:, 0], def_metrics[:, 1], color='darkorange', lw=2)
+# plt.plot(metrics_copy[:, 0], metrics_copy[:, 1], color='blue', lw=2,
+#          linestyle='--')
 plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.05])
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title(f'Precision x Recall (mAP: {ap:.2f}) (mAP 2: {ap2:.2f})')
-plt.legend(['Original', 'Interpolated'], loc="lower right")
+plt.title(f'Precision x Recall (mAP: {ap:.2f})')
+# plt.legend([f'Original', f'Interpolated'], loc="lower right")
 
 plt.show()
 plt.close()
@@ -733,15 +733,14 @@ plt.close()
 fig_pr.savefig(os.path.join(args.output_path, 'precisionXrecall.jpg'),
                dpi=300)
 
-# fig_roc.savefig(os.path.join(args.output_path, 'ROC.jpg'),
-#                 dpi=300)
-
 label_name = {0: 'No def', 1: 'Actual def', 2: 'Past def'}
+
 
 # Visualize inference per class
 if args.use_multitasking:
-
     for i in range(len(input_patches)):
+        if np.all(mask_tiles_patches[i] != 1):
+            continue
         print(f'Patch: {i}')
         # Plot predictions for each class and each task; Each row corresponds to a
         # class and has its predictions of each task
@@ -852,12 +851,27 @@ if args.use_multitasking:
         im = axes_c[4].imshow(diff, cmap=cm.Greys_r)
         colorbar(im, axes_c[4], fig2)
 
+        # CVA
+        fig3, axes_cva = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
+        axes_cva[0].set_title('CVA Ref')
+        axes_cva[1].set_title('CVA Pred th=0.5')
+
+        cva_ref = cva_ref_patches[i]
+        axes_cva[0].imshow(cva_ref)
+
+        task = 4
+        cva_pred = patches_pred[task][i]
+        cva_pred2 = cva_pred.copy()
+        cva_pred2[cva_pred >= 0.5] = 1
+        cva_pred2[cva_pred < 0.5] = 0
+        axes_cva[1].imshow(cva_pred2)
 
         plt.tight_layout()
+        fig3.savefig(os.path.join(args.output_path, 'preds', f'pred{i}_CVA.jpg'))
 
-        fig2.savefig(os.path.join(args.output_path, f'pred{i}_color.jpg'))
+        fig2.savefig(os.path.join(args.output_path, 'preds', f'pred{i}_color.jpg'))
         plt.subplots_adjust(top=0.99, left=0.05, hspace=0.01, wspace=0.4)
         plt.show()
-        fig1.savefig(os.path.join(args.output_path, f'pred{i}_classes.jpg'),
+        fig1.savefig(os.path.join(args.output_path, 'preds', f'pred{i}_classes.jpg'),
                      dpi=300)
         plt.close()

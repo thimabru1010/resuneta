@@ -76,16 +76,8 @@ class UNet_small(nn.HybridBlock):
             self.pool3 = nn.MaxPool2D()
             self.pool4 = nn.MaxPool2D()
             self.conv_pred = nn.Conv2D(num_classes, kernel_size=1)
-            # Using Hybrid Sequential avoids this error:
-            # UserWarning: Gradient of Parameter `unet0_conv0_bias` on context gpu(0) has not been updated by backward since last `step`.
-            # Don't know why
-            # self.conv_pred = nn.HybridSequential()
-            # self.conv_pred.add(nn.Conv2D(num_classes, kernel_size=1))
-
-            self.weights = weights
 
             self.from_logits = from_logits
-
 
     def hybrid_forward(self, F, x):
         # Encoder

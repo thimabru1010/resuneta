@@ -16,7 +16,7 @@ from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 
 
-def compute_cva(image_t1, image_t2):
+def compute_cva(image_t1, image_t2, th):
     _, image_t1 = normalization(img_t1, norm_type=2)
     _, image_t2 = normalization(img_t2, norm_type=2)
 
@@ -43,7 +43,6 @@ def compute_cva(image_t1, image_t2):
     # Calculating the change:
     S = (ndvi2-ndvi1)**2+(bi2-bi1)**2
     S1 = np.sqrt(S)
-    th = 0.26074
     S1_ref = S1.copy()
     S1_ref[S1 >= th] = 1
     S1_ref[S1 < th] = 0
@@ -58,9 +57,10 @@ def create_folders(folder_path, mode='train'):
         os.makedirs(os.path.join(folder_path, mode, 'masks/bound'))
         os.makedirs(os.path.join(folder_path, mode, 'masks/dist'))
         os.makedirs(os.path.join(folder_path, mode, 'masks/color'))
+        os.makedirs(os.path.join(folder_path, mode, 'masks/cva'))
 
 
-def extract_patches(image, reference, patch_size, stride):
+def extract_patches(image, reference, patch_size, stride, CVA_ref=None):
     window_shape = patch_size
     window_shape_array = (window_shape, window_shape, image.shape[2])
     window_shape_ref = (window_shape, window_shape)
@@ -69,6 +69,11 @@ def extract_patches(image, reference, patch_size, stride):
 
     patches_ref = np.array(view_as_windows(reference,
                                            window_shape_ref, step=stride))
+    if CVA_ref is not None:
+        patches_cva = np.array(view_as_windows(CVA_ref,
+                                               window_shape_ref, step=stride))
+    else:
+        patches_cva = None
 
     print('Patches extraidos')
     # print(patches_array.shape)
@@ -82,8 +87,10 @@ def extract_patches(image, reference, patch_size, stride):
     # print(patches_array.shape)
     patches_ref = patches_ref.reshape(num_row*num_col, row, col)
     # print(patches_ref.shape)
+    if CVA_ref is not None:
+        patches_cva = patches_cva.reshape(num_row*num_col, row, col)
 
-    return patches_array, patches_ref
+    return patches_array, patches_ref, patches_cva
 
 
 def count_deforastation(image_ref, image_mask_ref):
@@ -105,9 +112,10 @@ def count_deforastation(image_ref, image_mask_ref):
         image_ref[img_mask_ref == -99] = 0
 
 
-def filter_patches(patches_img, patches_ref, percent):
+def filter_patches(patches_img, patches_ref, patches_cva, percent):
     filt_patches_img = []
     filt_patches_ref = []
+    filt_patches_cva = []
     for i in range(len(patches_img)):
         unique, counts = np.unique(patches_ref[i], return_counts=True)
         counts_dict = dict(zip(unique, counts))
@@ -124,6 +132,7 @@ def filter_patches(patches_img, patches_ref, percent):
         if deforastation * 100 > percent:
             filt_patches_img.append(patches_img[i])
             filt_patches_ref.append(patches_ref[i])
+            filt_patches_cva.append(patches_cva[i])
 
     # print(type(filt_patches_img))
     # print(type(filt_patches_img[0]))
@@ -133,13 +142,15 @@ def filter_patches(patches_img, patches_ref, percent):
         filt_patches_ref = np.stack(filt_patches_ref, axis=0)
         # print(filt_patches_img.shape)
         # print(filt_patches_ref.shape)
-    return filt_patches_img, filt_patches_ref
+        filt_patches_cva = np.stack(filt_patches_cva, axis=0)
+    return filt_patches_img, filt_patches_ref, filt_patches_cva
 
 
 def extract_tiles2patches(tiles, mask_amazon, input_image, image_ref, CVA_ref,
                           patch_size, stride, percent):
     patches_out = []
     labels_out = []
+    cva_out = []
     check_memory()
     print('Extracting tiles')
     for num_tile in tiles:
@@ -153,16 +164,20 @@ def extract_tiles2patches(tiles, mask_amazon, input_image, image_ref, CVA_ref,
 
         tile_img = input_image[x1:x2+1, y1:y2+1, :]
         tile_ref = image_ref[x1:x2+1, y1:y2+1]
+        cva_tile_ref = CVA_ref[x1:x2+1, y1:y2+1]
 
         # Extract patches for each tile
         print(tile_img.shape)
-        patches_img, patches_ref = extract_patches(tile_img, tile_ref,
-                                                   patch_size, stride)
+        patches_img, patches_ref, patches_cva = extract_patches(tile_img, tile_ref,
+                                                   cva_tile_ref, patch_size,
+                                                   stride)
 
         print(f'Patches of tile {num_tile} extracted!')
         assert len(patches_img) == len(patches_ref), "Train: Input patches and reference \
         patches don't have the same numbers"
-        patches_img, patches_ref = filter_patches(patches_img, patches_ref, percent)
+        patches_img, patches_ref, patches_cva = filter_patches(patches_img,
+                                                               patches_ref,
+                                                  patches_cva, percent)
         print(f'Filtered patches: {len(patches_img)}')
 
         #print(type(patches_img))
@@ -172,6 +187,7 @@ def extract_tiles2patches(tiles, mask_amazon, input_image, image_ref, CVA_ref,
         if len(patches_img) > 0:
             patches_out.append(patches_img)
             labels_out.append(patches_ref)
+            cva_out.append(patches_cva)
 
         # check_memory()
         # del patches_img, patches_ref
@@ -181,7 +197,8 @@ def extract_tiles2patches(tiles, mask_amazon, input_image, image_ref, CVA_ref,
     # print(patches_out)
     patches_out = np.concatenate(patches_out, axis=0)
     labels_out = np.concatenate(labels_out, axis=0)
-    return patches_out, labels_out
+    cva_out = np.concatenate(cva_out, axis=0)
+    return patches_out, labels_out, cva_out
 
 
 def show_deforastation_per_tile(tiles, mask_amazon, image_ref):
@@ -219,48 +236,31 @@ def filename(i):
     return f'patch_{i}.npy'
 
 
-def save_patches(patches_tr, patches_tr_ref, folder_path, scaler, data_aug,
+def save_patches(patches_tr, patches_tr_ref, patches_tr_cva,
+                 folder_path, scaler, data_aug,
                  mode='train'):
     classes_dict = {-1: 0, 0: 0, 1: 0, 2: 0}
     for i in tqdm(range(len(patches_tr))):
         # Expand dims (Squeeze) to receive data_augmentation. Depreceated ?
         if data_aug:
-            img_aug, label_aug = data_augmentation(patches_tr[i], patches_tr_ref[i])
+            img_aug, label_aug, cva_aug = data_augmentation(patches_tr[i], patches_tr_ref[i],
+                                                   patches_tr_cva[i])
             unique, counts = np.unique(label_aug, return_counts=True)
             for clss in unique:
                 clss = int(clss)
                 classes_dict[clss] += counts[clss]
-            counts_dict = dict(zip(unique, counts))
-            # print(f'Class pixels of final mask: {counts_dict}')
         else:
             img_aug, label_aug = np.expand_dims(patches_tr[i], axis=0), np.expand_dims(patches_tr_ref[i], axis=0)
+            cva_aug = np.expand_dims(patches_tr_cva[i], axis=0)
             unique, counts = np.unique(label_aug[0], return_counts=True)
             for clss in unique:
                 clss = int(clss)
                 classes_dict[clss] += counts[clss]
-            counts_dict = dict(zip(unique, counts))
-            # print(f'Class pixels of final mask: {counts_dict}')
         # Performs the one hot encoding
         label_aug_h = tf.keras.utils.to_categorical(label_aug, args.num_classes)
-        # Convert from B x H x W x C --> B x C x H x W
-        # label_aug_h = label_aug_h.transpose((0, 3, 1, 2))
-        # img_t1 = patches_tr[i][:, :, 0:7]
-        # img_t2 = patches_tr[i][:, :, 7:]
-        # img_t1_bgr = img_t1[:, :, 1:4].astype(np.uint8)
-        # img_t1_rgb = img_t1_bgr[:, :, ::-1]
-        # img_t2_bgr = img_t2[:, :, 1:4].astype(np.uint8)
-        # img_t2_rgb = img_t2_bgr[:, :, ::-1]
-        #
-        # fig2, (ax1, ax2, ax3) = plt.subplots(nrows=1, ncols=3, figsize=(10, 5))
-        # ax1.set_title('Img T1 (2018)')
-        # ax1.imshow(img_t1_rgb)
-        # ax2.set_title('Img T2 (2019)')
-        # ax2.imshow(img_t2_rgb)
-        # ax3.set_title('Label')
-        # ax3.imshow(patches_tr_ref[i])
-        #
-        # plt.show()
-        # plt.close()
+        print(cva_aug.shape)
+        cva_aug_h = tf.keras.utils.to_categorical(cva_aug, 2)
+        print(cva_aug_h.shape)
         for j in range(len(img_aug)):
             # Input image 14 bands of Staelite
             # Float32 its need to train the model
@@ -317,6 +317,10 @@ def save_patches(patches_tr, patches_tr_ref, folder_path, scaler, data_aug,
             # Float32 its need to train the model
             np.save(os.path.join(folder_path, mode, 'masks/color', filename(i*5 + j)),
                     img_both_patch_hsv)
+
+            # CVA segmentation
+            np.save(os.path.join(folder_path, mode, 'masks/cva', filename(i*5 + j)),
+                    cva_aug_h[j].astype(np.float32))
     print(classes_dict)
     class0 = classes_dict[0] / (classes_dict[0] + classes_dict[1] + classes_dict[2])
     class0 = round(class0, 5)
@@ -348,6 +352,8 @@ if __name__ == '__main__':
     parser.add_argument("--def_percent",
                         help="Choose minimum percentage of Deforastation",
                         type=int, default=2)
+    parser.add_argument("--cva_th", help="Choose CVA threshold",
+                        type=float, default=0.26074)
     args = parser.parse_args()
 
     print('='*50)
@@ -357,6 +363,7 @@ if __name__ == '__main__':
     print(f'Number of classes={args.num_classes} ')
     print(f'Norm type: {args.norm_type}')
     print(f'Using data augmentation? {args.data_aug}')
+    print(f'CVA threshold {args.cva_th}')
     print('='*50)
 
     root_path = './DATASETS/Amazon_npy_corrigido'
@@ -460,7 +467,7 @@ if __name__ == '__main__':
     print(weight1)
     print(weight2)
 
-    CVA_ref = compute_cva(img_t1, img_t2)
+    CVA_ref = compute_cva(img_t1, img_t2, args.cva_th)
 
     check_memory()
     del img_t1, img_t2, image_ref, past_ref1, past_ref2
@@ -479,12 +486,12 @@ if __name__ == '__main__':
     mask_tiles = np.concatenate((mask_c_1, mask_c_2, mask_c_3, mask_c_4, mask_c_5), axis=0)
 
     # all_tiles = [i for i in range(1, 16)]
-    tr_tiles = [1, 2, 3, 6, 7, 8, 10, 11, 12]
-    # tr_tiles = [2, 3, 6, 7, 8, 10, 11, 12]
-    val_tiles = [4, 9]
-    # val_tiles = [4, 9, 15]
-    tst_tiles = [5, 15, 13, 14]
-    # tst_tiles = [5, 1, 13, 14]
+    # tr_tiles = [1, 2, 3, 6, 7, 8, 10, 11, 12]
+    tr_tiles = [2, 3, 6, 7, 8, 10, 11, 12]
+    # val_tiles = [4, 9]
+    val_tiles = [4, 9, 15]
+    # tst_tiles = [5, 15, 13, 14]
+    tst_tiles = [5, 1, 13, 14]
     all_tiles = tr_tiles + val_tiles
     print(f'All tiles: {all_tiles}')
     # final_mask[img_mask_ref == -99] = -1
@@ -500,26 +507,36 @@ if __name__ == '__main__':
 
     # Trainig tiles ------------------------------------------------------------
 
-    patches_tr, patches_tr_ref = extract_tiles2patches(tr_tiles, mask_tiles, input_image,
+    patches_tr, patches_tr_ref, patches_tr_cva = extract_tiles2patches(tr_tiles, mask_tiles, input_image,
                                                        final_mask, args.patch_size,
                                                        args.stride, args.def_percent)
 
     # Validation tiles ---------------------------------------------------------
 
-    patches_val, patches_val_ref = extract_tiles2patches(val_tiles, mask_tiles, input_image,
+    patches_val, patches_val_ref, patches_val_cva = extract_tiles2patches(val_tiles, mask_tiles, input_image,
                                                          final_mask, args.patch_size, args.stride,
                                                          args.def_percent)
 
     assert len(patches_tr) == len(patches_tr_ref), "Train: Input patches and reference \
     patches don't have the same numbers"
+    assert len(patches_tr) == len(patches_tr_cva), "Train: Input patches and CVA \
+    patches don't have the same numbers"
     assert len(patches_val) == len(patches_val_ref), "Val: Input patches and reference \
+    patches don't have the same numbers"
+    assert len(patches_val) == len(patches_val_cva), "Val: Input patches and CVA \
     patches don't have the same numbers"
 
     print('patches extracted!')
 
     print('saving images...')
-    folder_path = f'./DATASETS/Amazon_patch_size={args.patch_size}_' + \
-                f'stride={args.stride}_norm_type={args.norm_type}_data_aug={args.data_aug}_def_percent={args.def_percent}'
+    # folder_path = f'./DATASETS/Amazon_patch_size={args.patch_size}_' + \
+    #               f'stride={args.stride}_norm_type={args.norm_type}' + \
+    #               f'_data_aug={args.data_aug}_def_percent={args.def_percent}'+ \
+    #               f'_cva_th={args.cva_th}'
+    folder_path = f'./DATASETS/Amazon_patch_size={args.patch_size}_\
+                    stride={args.stride}_norm_type={args.norm_type}\
+                    _data_aug={args.data_aug}_def_percent={args.def_percent}\
+                    _cva_th={args.cva_th}'
 
     create_folders(folder_path, mode='train')
     create_folders(folder_path, mode='val')
@@ -528,5 +545,5 @@ if __name__ == '__main__':
     print(f'Number of val patches: {len(patches_val)}')
 
     # scaler = None
-    save_patches(patches_tr, patches_tr_ref, folder_path, scaler, args.data_aug, mode='train')
-    save_patches(patches_val, patches_val_ref, folder_path, scaler, args.data_aug, mode='val')
+    save_patches(patches_tr, patches_tr_ref, patches_tr_cva, folder_path, scaler, args.data_aug, mode='train')
+    save_patches(patches_val, patches_val_ref, patches_val_cva, folder_path, scaler, args.data_aug, mode='val')
