@@ -424,7 +424,8 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
 
     table(ax, df, loc='center')  # where df is your data frame
 
-    plt.savefig(os.path.join(args.results_path, f'hyperparamters_{args.dataset_path}.jpg'), dpi=200,
+    dataset_path = args.dataset_path.split('/')[1]
+    plt.savefig(os.path.join(args.results_path, f'hyperparamters_{dataset_path}.jpg'), dpi=200,
                 bbox_inches='tight')
 
 

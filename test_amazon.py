@@ -781,7 +781,7 @@ if args.use_multitasking:
             # Remeber we are not displaying color preds here, since this task
             # do not use classes
             # Multiply by 2 cause its always pred and ref side by side
-            for task in range(len(patches_pred) - 1):
+            for task in range(len(patches_pred) - 2):
                 task_pred = patches_pred[task]
                 col_ref = (task + 1)*2 + 1
                 print(task_pred.shape)
