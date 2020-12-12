@@ -508,13 +508,13 @@ if __name__ == '__main__':
     # Trainig tiles ------------------------------------------------------------
 
     patches_tr, patches_tr_ref, patches_tr_cva = extract_tiles2patches(tr_tiles, mask_tiles, input_image,
-                                                       final_mask, args.patch_size,
+                                                       final_mask, CVA_ref, args.patch_size,
                                                        args.stride, args.def_percent)
 
     # Validation tiles ---------------------------------------------------------
 
     patches_val, patches_val_ref, patches_val_cva = extract_tiles2patches(val_tiles, mask_tiles, input_image,
-                                                         final_mask, args.patch_size, args.stride,
+                                                         final_mask, CVA_ref, args.patch_size, args.stride,
                                                          args.def_percent)
 
     assert len(patches_tr) == len(patches_tr_ref), "Train: Input patches and reference \
