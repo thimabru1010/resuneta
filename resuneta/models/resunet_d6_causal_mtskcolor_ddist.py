@@ -127,13 +127,14 @@ class ResUNet_d6(HybridBlock):
             # CVA logits
             self.cva_logits = gluon.nn.HybridSequential()
             self.cva_logits.add(Conv2DNormed(channels=self.nfilters,
-                                             kernel_size=(3, 3), padding=(1, 1)))
+                                             kernel_size=(3, 3),
+                                             padding=(1, 1)))
             self.cva_logits.add(gluon.nn.Activation('relu'))
             self.cva_logits.add(Conv2DNormed(channels=self.nfilters,
                                              kernel_size=(3, 3),
                                              padding=(1, 1)))
             self.cva_logits.add(gluon.nn.Activation('relu'))
-            self.cva_logits.add(gluon.nn.Conv2D(self.NClasses, kernel_size=1,
+            self.cva_logits.add(gluon.nn.Conv2D(2, kernel_size=1,
                                                 padding=0))
 
 
