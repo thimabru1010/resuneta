@@ -408,7 +408,7 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
             'Learning Rate': args.learning_rate,
             'Weight decay': args.weight_decay, 'Patch size': args.patch_size,
             'Batch size': args.batch_size, 'Loss': args.loss,
-            'Data aug': args.data_aug, 'WCE weights': wce_weights}
+            'Data aug': args.data_aug, 'WCE weights': wce_weights.asnumpy()}
 
     if 'resuneta' in args.model:
         data['Bound weight'] = args.wbound
