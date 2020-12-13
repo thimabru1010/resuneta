@@ -139,10 +139,10 @@ class ResUNet_d6(HybridBlock):
 
 
             # This layer is trying to identify the exact coloration on HSV scale (cv2 devined)
-            if self.dataset_type == 'ISPRS':
-                self.color_logits = gluon.nn.Conv2D(3, kernel_size=1, padding=0)
-            elif self.dataset_type == 'amazon':
-                self.color_logits = gluon.nn.Conv2D(6, kernel_size=1, padding=0)
+            # if self.dataset_type == 'ISPRS':
+            #     self.color_logits = gluon.nn.Conv2D(3, kernel_size=1, padding=0)
+            # elif self.dataset_type == 'amazon':
+            #     self.color_logits = gluon.nn.Conv2D(6, kernel_size=1, padding=0)
 
 
             # if not self.from_logits:

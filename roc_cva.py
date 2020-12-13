@@ -167,7 +167,7 @@ print(f'Optimal Threshold: {optimal_threshold}')
 
 S1_normed = np.copy(S1)
 th = optimal_threshold
-for th in [optimal_threshold, 1.5, 1.0, 0.5]:
+for th in [optimal_threshold, 0.5, 1.0, 1.5]:
     print('-------------------------------------------------------')
     print(f'TH: {th}')
     S1_normed[S1 >= th] = 1
@@ -183,6 +183,7 @@ for th in [optimal_threshold, 1.5, 1.0, 0.5]:
     print(f'Image ref pixels: {counts_dict}')
 
     fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
+    axes[0].set_title(f'Threshold = {th}')
     axes[0].imshow(S1_normed, cmap='jet')
     axes[1].imshow(image_ref, cmap='jet')
     plt.show()
