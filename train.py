@@ -90,7 +90,7 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
                                                     sparse_label=False,
                                                     class_weights=wce_weights)
 
-        loss_bound = gluon.loss.SigmoidBinaryCrossEntropyLoss(from_logits=True)
+        loss_bound = gluon.loss.SigmoidBinaryCrossEntropyLoss(from_sigmoid=True)
         # L2Loss --> MSE
         loss_dist = gluon.loss.L2Loss() #  TODO: Maybe should put weights for distance transform
         loss_color = gluon.loss.L2Loss()
