@@ -514,6 +514,9 @@ if __name__ == '__main__':
     parser.add_argument("--data_aug",
                         help="Use data augmentation or not",
                         action='store_true')
+    parser.add_argument("--strong_aug",
+                        help="Use Strong data augmentation along with usual ones",
+                        action='store_true')
     args = parser.parse_args()
 
     if not os.path.exists(os.path.join(args.results_path)):
@@ -609,11 +612,15 @@ if __name__ == '__main__':
             A.OneOf([A.HorizontalFlip(p=prob), A.VerticalFlip(p=prob)], p=1),
             A.RandomRotate90(p=prob),
             A.RandomSizedCrop(min_max_height=(60, 100),
-                              height=args.patch_size, width=args.patch_size, p=prob)
-            # A.OneOf([
-            #     A.ElasticTransform(p=0.5, alpha=120, sigma=120 * 0.05, alpha_affine=120 * 0.03),
-            #     A.GridDistortion(p=0.5),
-            #     A.OpticalDistortion(distort_limit=1, shift_limit=0.5, p=1),], p=0.8),
+                              height=args.patch_size, width=args.patch_size,
+                              p=prob),
+            if args.strong_aug:
+                A.OneOf([
+                    A.ElasticTransform(p=prob, alpha=120, sigma=120 * 0.05,
+                                       alpha_affine=120 * 0.03),
+                    A.GridDistortion(p=prob),
+                    A.OpticalDistortion(distort_limit=1, shift_limit=0.5, p=prob),],
+                        p=0.8),
             ])
     else:
         aug = None
