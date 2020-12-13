@@ -234,7 +234,7 @@ class ResUNet_d6(HybridBlock):
         # HSV (cv2) color prediction
         convc_logits = F.sigmoid(convc) # This will be for self-supervised as well
         if not self.from_logits:
-            return seg, bound_logits, dist_logits, convc_logits, cva_logits
+            return seg, bound_logits, dist_logits, convc_logits, cva
         else:
             # Return without apply any sofmtax
             # regressions are still returned after sigmoid

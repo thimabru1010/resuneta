@@ -61,7 +61,7 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
         loss_color = gluon.loss.L2Loss()
 
         loss_cva = gluon.loss.SoftmaxCrossEntropyLoss(axis=1,
-                                                      from_logits=True,
+                                                      from_logits=from_logits,
                                                       sparse_label=False)
     elif args.loss == 'focal':
         loss_seg = gluoncv.loss.FocalLoss(axis=1, from_logits=from_logits,
@@ -74,7 +74,7 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
         loss_dist = gluon.loss.L2Loss() #  TODO: Maybe should put weights for distance transform
         loss_color = gluon.loss.L2Loss()
 
-        loss_cva = gluoncv.loss.FocalLoss(axis=1, from_logits=True,
+        loss_cva = gluoncv.loss.FocalLoss(axis=1, from_logits=from_logits,
                                           sparse_label=False, alpha=args.alpha,
                                           gamma=args.gamma)
     elif args.loss == 'wce':
@@ -90,17 +90,14 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
                                                     sparse_label=False,
                                                     class_weights=wce_weights)
 
-        loss_bound = WeightedSoftmaxCrossEntropyLoss(axis=1,
-                                                    from_logits=True,
-                                                    sparse_label=False,
-                                                    class_weights=wce_weights)
+        loss_bound = gluon.loss.SigmoidBinaryCrossEntropyLoss(from_logits=True)
         # L2Loss --> MSE
         loss_dist = gluon.loss.L2Loss() #  TODO: Maybe should put weights for distance transform
         loss_color = gluon.loss.L2Loss()
 
         weights = mx.nd.array(np.array([1.0, 1.0]))
         loss_cva = WeightedSoftmaxCrossEntropyLoss(axis=1,
-                                                    from_logits=True,
+                                                    from_logits=from_logits,
                                                     sparse_label=False,
                                                     class_weights=weights)
 
