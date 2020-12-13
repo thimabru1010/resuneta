@@ -182,7 +182,7 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
                         bound_losses.append(args.wbound*loss_bound(bound_logits, y_bound))
                         dist_losses.append(args.wdist*loss_dist(dist_logits, y_dist))
                         # color_losses.append(args.wcolor*loss_color(color_logits, y_color))
-                        color_losses.append(0.0)
+                        # color_losses.append(0.0)
                         cva_losses.append(args.wcva*loss_cva(cva_logits, y_cva))
 
                         total_losses.append(seg_losses[i] + bound_losses[i] + dist_losses[i] + cva_losses[i])
@@ -210,7 +210,8 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
                 if args.multitasking:
                     bound_loss.append(l_bound.sum().asscalar())
                     dist_loss.append(l_dist.sum().asscalar())
-                    color_loss.append(l_color.sum().asscalar())
+                    # color_loss.append(l_color.sum().asscalar())
+                    color_loss.append(0.0)
                     cva_loss.append(l_cva.sum().asscalar())
                 total_loss.append(l_total.sum().asscalar())
             # Sum loss from all inferences on the batch
@@ -306,7 +307,8 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
                 if args.multitasking:
                     bound_loss.append(l_bound.sum().asscalar())
                     dist_loss.append(l_dist.sum().asscalar())
-                    color_loss.append(l_color.sum().asscalar())
+                    # color_loss.append(l_color.sum().asscalar())
+                    color_loss.append(0.0)
                     cva_loss.append(l_cva.sum().asscalar())
                 total_loss.append(l_total.sum().asscalar())
             # Sum loss from all inferences on the batch
