@@ -550,7 +550,7 @@ else:
     tst_refs = []
     tst_preds = []
     for i, tst_tile in enumerate(tst_tiles):
-        tst_refs.append(image_ref[mask_tiles == tst_tile])
+        tst_refs.append(final_mask[mask_tiles == tst_tile])
         tst_preds.append(pred_reconstructed[mask_tiles == tst_tile])
         print(tst_refs[i].shape)
 
@@ -567,7 +567,6 @@ else:
 
 metrics = compute_metrics(true_labels, predicted_labels)
 confusion_matrix = confusion_matrix(true_labels, predicted_labels)
-np.set_printoptions(precision=2)
 class_names = ['No def', 'Def', 'Past def']
 
 print('Confusion  matrix \n', confusion_matrix)
@@ -663,26 +662,27 @@ plt.tight_layout()
 fig.savefig(os.path.join(args.output_path, 'seg_pred_def&ref.jpg'))
 
 # Visualize CVA pred tiles
-cva_preds = np.argmax(patches_pred[4], axis=-1)
-pred_cva_reconstructed, _ = pred_recostruction(args.patch_size, cva_preds,
-                                     final_mask)
+if args.use_multitasking:
+    cva_preds = np.argmax(patches_pred[4], axis=-1)
+    pred_cva_reconstructed, _ = pred_recostruction(args.patch_size, cva_preds,
+                                         final_mask)
 
-fig_cva, axes = plt.subplots(nrows=len(tst_tiles), ncols=2,
-                            figsize=((15*2)//len(tst_tiles), 15))
-axes[0, 0].set_title('Reference CVA')
-axes[0, 1].set_title('Def pred CVA')
-for i, tst_tile in enumerate(tst_tiles):
-    tile_ref = CVA_ref[mask_tiles == tst_tile]
-    tile_ref = np.reshape(tile_ref, (1040, 1680))
-    tile_pred = pred_cva_reconstructed[mask_tiles == tst_tile]
-    tile_pred = np.reshape(tile_pred, (1040, 1680))
-    axes[i, 0].imshow(tile_ref)
-    axes[i, 1].imshow(tile_pred)
+    fig_cva, axes = plt.subplots(nrows=len(tst_tiles), ncols=2,
+                                figsize=((15*2)//len(tst_tiles), 15))
+    axes[0, 0].set_title('Reference CVA')
+    axes[0, 1].set_title('Def pred CVA')
+    for i, tst_tile in enumerate(tst_tiles):
+        tile_ref = CVA_ref[mask_tiles == tst_tile]
+        tile_ref = np.reshape(tile_ref, (1040, 1680))
+        tile_pred = pred_cva_reconstructed[mask_tiles == tst_tile]
+        tile_pred = np.reshape(tile_pred, (1040, 1680))
+        axes[i, 0].imshow(tile_ref)
+        axes[i, 1].imshow(tile_pred)
 
-fig_cva.savefig(os.path.join(args.output_path, 'CVA_pred&ref.jpg'))
-plt.show()
-plt.close()
-del CVA_ref, pred_cva_reconstructed
+    fig_cva.savefig(os.path.join(args.output_path, 'CVA_pred&ref.jpg'))
+    plt.show()
+    plt.close()
+    del CVA_ref, pred_cva_reconstructed
 
 # Metrics
 # ProbList = np.linspace(Pmax, 0, Npoints)
