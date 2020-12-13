@@ -230,7 +230,8 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
         epoch_color_loss['train'] /= n_batches_tr
         epoch_cva_loss['train'] /= n_batches_tr
         if args.multitasking:
-            tasks_weights = [1.0, args.wbound, args.wdist, args.wcolor, args.wcva]
+            # tasks_weights = [1.0, args.wbound, args.wdist, args.wcolor, args.wcva]
+            tasks_weights = [1.0, args.wbound, args.wdist, args.wcva]
             epoch_total_loss['train'] = (epoch_total_loss['train'] / n_batches_tr) / sum(tasks_weights)
         else:
             epoch_total_loss['train'] = (epoch_total_loss['train'] / n_batches_tr)
@@ -327,7 +328,8 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
         epoch_color_loss['val'] /= n_batches_val
         epoch_cva_loss['val'] /= n_batches_val
         if args.multitasking:
-            tasks_weights = [1.0, args.wbound, args.wdist, args.wcolor, args.wcva]
+            # tasks_weights = [1.0, args.wbound, args.wdist, args.wcolor, args.wcva]
+            tasks_weights = [1.0, args.wbound, args.wdist, args.wcva]
             epoch_total_loss['val'] = (epoch_total_loss['val'] / n_batches_val) / sum(tasks_weights)
         else:
             epoch_total_loss['val'] = (epoch_total_loss['val'] / n_batches_val)
