@@ -606,6 +606,11 @@ if __name__ == '__main__':
         tnorm = None
         color_channels = 6
 
+    if args.strong_aug:
+        p_strong = 0.8
+    else:
+        p_strong = 0.0
+
     if args.data_aug:
         prob = 0.7
         aug = A.Compose([
@@ -614,13 +619,12 @@ if __name__ == '__main__':
             A.RandomSizedCrop(min_max_height=(60, 100),
                               height=args.patch_size, width=args.patch_size,
                               p=prob),
-            if args.strong_aug:
-                A.OneOf([
-                    A.ElasticTransform(p=prob, alpha=120, sigma=120 * 0.05,
-                                       alpha_affine=120 * 0.03),
-                    A.GridDistortion(p=prob),
-                    A.OpticalDistortion(distort_limit=1, shift_limit=0.5, p=prob),],
-                        p=0.8),
+            A.OneOf([
+                A.ElasticTransform(p=prob, alpha=120, sigma=120 * 0.05,
+                                   alpha_affine=120 * 0.03),
+                A.GridDistortion(p=prob),
+                A.OpticalDistortion(distort_limit=1, shift_limit=0.5, p=prob)],
+                    p=p_strong),
             ])
     else:
         aug = None
