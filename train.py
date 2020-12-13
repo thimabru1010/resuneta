@@ -168,7 +168,7 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
                 for i, data in enumerate(zip(data_list, seg_label_list, bound_label_list, dist_label_list, color_label_list, cva_label_list)):
                     X, y_seg, y_bound, y_dist, y_color, y_cva = data
                     if args.multitasking:
-                        seg_logits, bound_logits, dist_logits, color_logits, cva_logits = net(X)
+                        seg_logits, bound_logits, dist_logits, cva_logits = net(X)
                     # logger.debug(f'Seg logits: {seg_logits}')
                     else:
                         seg_logits = net(X)
@@ -181,10 +181,11 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
                     if args.multitasking:
                         bound_losses.append(args.wbound*loss_bound(bound_logits, y_bound))
                         dist_losses.append(args.wdist*loss_dist(dist_logits, y_dist))
-                        color_losses.append(args.wcolor*loss_color(color_logits, y_color))
+                        # color_losses.append(args.wcolor*loss_color(color_logits, y_color))
+                        color_losses.append(0.0)
                         cva_losses.append(args.wcva*loss_cva(cva_logits, y_cva))
 
-                        total_losses.append(seg_losses[i] + bound_losses[i] + dist_losses[i] + color_losses[i] + cva_losses[i])
+                        total_losses.append(seg_losses[i] + bound_losses[i] + dist_losses[i] + cva_losses[i])
                     else:
                         bound_losses.append(0.0)
                         dist_losses.append(0.0)
@@ -268,7 +269,7 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
             for i, data in enumerate(zip(data_list, seg_label_list, bound_label_list, dist_label_list, color_label_list, cva_label_list)):
                 X, y_seg, y_bound, y_dist, y_color, y_cva = data
                 if args.multitasking:
-                    seg_logits, bound_logits, dist_logits, color_logits, cva_logits = net(X)
+                    seg_logits, bound_logits, dist_logits, cva_logits = net(X)
                 else:
                     seg_logits = net(X)
                     cva_logits = seg_logits
@@ -280,9 +281,10 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
                 if args.multitasking:
                     bound_losses.append(args.wbound*loss_bound(bound_logits, y_bound))
                     dist_losses.append(args.wdist*loss_dist(dist_logits, y_dist))
-                    color_losses.append(args.wcolor*loss_color(color_logits, y_color))
+                    # color_losses.append(args.wcolor*loss_color(color_logits, y_color))
+                    color_losses.append(0.0)
                     cva_losses.append(args.wcva*loss_cva(cva_logits, y_cva))
-                    total_losses.append(seg_losses[i] + bound_losses[i] + dist_losses[i] + color_losses[i] + cva_losses[i])
+                    total_losses.append(seg_losses[i] + bound_losses[i] + dist_losses[i] + cva_losses[i])
                 else:
                     bound_losses.append(0.0)
                     dist_losses.append(0.0)
@@ -410,7 +412,8 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
             'Learning Rate': args.learning_rate,
             'Weight decay': args.weight_decay, 'Patch size': args.patch_size,
             'Batch size': args.batch_size, 'Loss': args.loss,
-            'Data aug': args.data_aug, 'WCE weights': wce_weights}
+            'Data aug': args.data_aug, 'Strong aug': args.strong_aug,
+            'WCE weights': wce_weights}
 
     if 'resuneta' in args.model:
         data['Bound weight'] = args.wbound

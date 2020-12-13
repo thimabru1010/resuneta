@@ -228,14 +228,16 @@ class ResUNet_d6(HybridBlock):
         #logits = F.softmax(logits,axis=1)
         seg_logits = self.ChannelAct(seg)
 
-        # if self.color:
-        # Color prediction (HSV --> cv2)
-        convc = self.color_logits(convl)
-        # HSV (cv2) color prediction
-        convc_logits = F.sigmoid(convc) # This will be for self-supervised as well
+        # # Color prediction (HSV --> cv2)
+        # convc = self.color_logits(convl)
+        # # HSV (cv2) color prediction
+        # convc_logits = F.sigmoid(convc) # This will be for self-supervised as well
+
         if not self.from_logits:
-            return seg, bound_logits, dist_logits, convc_logits, cva
+            # return seg, bound_logits, dist_logits, convc_logits, cva
+            return seg, bound_logits, dist_logits, cva
         else:
             # Return without apply any sofmtax
             # regressions are still returned after sigmoid
-            return seg_logits, bound_logits, dist_logits, convc_logits, cva_logits
+            # return seg_logits, bound_logits, dist_logits, convc_logits, cva_logits
+            return seg_logits, bound_logits, dist_logits, cva_logits

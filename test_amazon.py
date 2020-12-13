@@ -29,6 +29,7 @@ import itertools
 from metrics_amazon import compute_def_metrics
 from preprocess_save_patches_Amazon import compute_cva
 import math
+import threading as th
 
 
 def plot_confusion_matrix(cm, classes,
@@ -422,8 +423,6 @@ if args.dataset_loc == 66:
 # else:
 input_patches = extract_patches(input_image, args.patch_size, img_type=1)
 ref_patches = extract_patches(final_mask, args.patch_size, img_type=2)
-mask_tiles_patches = extract_patches(mask_tst, args.patch_size, img_type=2)
-cva_ref_patches = extract_patches(CVA_ref, args.patch_size, img_type=2)
 
 del input_image
 
@@ -661,7 +660,7 @@ plt.tight_layout()
 
 fig.savefig(os.path.join(args.output_path, 'seg_pred_def&ref.jpg'))
 
-# Visualize CVA pred tiles
+# Visualize CVA pred tiles -----------------------------------------------------
 if args.use_multitasking:
     cva_preds = np.argmax(patches_pred[4], axis=-1)
     pred_cva_reconstructed, _ = pred_recostruction(args.patch_size, cva_preds,
@@ -682,7 +681,7 @@ if args.use_multitasking:
     fig_cva.savefig(os.path.join(args.output_path, 'CVA_pred&ref.jpg'))
     plt.show()
     plt.close()
-    del CVA_ref, pred_cva_reconstructed
+    del pred_cva_reconstructed
 
 # Metrics
 # ProbList = np.linspace(Pmax, 0, Npoints)
@@ -692,13 +691,18 @@ ProbList.reverse()
 print(ProbList)
 # ProbList = [0.2, 0.5, 0.8]
 
+ProbList1 = np.array_split(ProbList, 2)[0]
+ProbList2 = np.array_split(ProbList, 2)[1]
+
+
 def_probs_reconstructed, _ = pred_recostruction(args.patch_size, seg_preds_def,
-                                     final_mask)
+                                                final_mask)
 
 def_metrics, prec, recall = compute_def_metrics(ProbList,
-                                              def_probs_reconstructed,
-                                              final_mask,
-                                              mask_tst)
+                                                def_probs_reconstructed,
+                                                final_mask,
+                                                mask_tst)
+
 print(def_metrics)
 # Interpolate Nan values
 metrics_copy = def_metrics.copy()
@@ -746,6 +750,9 @@ fig_pr.savefig(os.path.join(args.output_path, 'precisionXrecall.jpg'),
 
 label_name = {0: 'No def', 1: 'Actual def', 2: 'Past def'}
 
+mask_tiles_patches = extract_patches(mask_tst, args.patch_size, img_type=2)
+cva_ref_patches = extract_patches(CVA_ref, args.patch_size, img_type=2)
+del CVA_ref, mask_tst
 
 # Visualize inference per class
 if args.use_multitasking:

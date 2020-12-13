@@ -3,6 +3,8 @@ import skimage
 from sklearn.metrics import confusion_matrix
 import math
 from tqdm import tqdm
+from utils import check_memory
+
 
 def prepare4metrics(img_predicted_, img_labels, px_area=69):
     # Mask of the small regions (<69 px)
@@ -88,23 +90,6 @@ def compute_def_metrics(thresholds, img_predicted, img_labels,
         pre_final = pred_consider[mask_amazon_ts == 1]
         print(ref_final.shape)
 
-        # ref_final = ref_consider
-        # pre_final = pred_consider
-
-        # if len(ref_final.shape) == 2:
-        #     ref_final = np.reshape(ref_final, (ref_final.shape[0] *
-        #                                        ref_final.shape[1]))
-        #
-        #     pre_final = np.reshape(pre_final, (pre_final.shape[0] *
-        #                                        pre_final.shape[1]))
-        # else:
-        #     ref_final = np.reshape(ref_final, (ref_final.shape[0] *
-        #                                        ref_final.shape[1] *
-        #                                        ref_final.shape[2]))
-        #
-        #     pre_final = np.reshape(pre_final, (pre_final.shape[0] *
-        #                                        pre_final.shape[1] *
-        #                                        pre_final.shape[2]))
 
         # Metrics
         cm = confusion_matrix(ref_final, pre_final)
