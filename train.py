@@ -401,6 +401,8 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
     summary_writer.close()
 
     # Save hyperparamters ------------------------------------------------------
+    if wce_weights is not None:
+        wce_weights = wce_weights.asnumpy()
 
     data = {'Model': args.model,
             'Dataset': args.dataset_type,
@@ -408,7 +410,7 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
             'Learning Rate': args.learning_rate,
             'Weight decay': args.weight_decay, 'Patch size': args.patch_size,
             'Batch size': args.batch_size, 'Loss': args.loss,
-            'Data aug': args.data_aug, 'WCE weights': wce_weights.asnumpy()}
+            'Data aug': args.data_aug, 'WCE weights': wce_weights}
 
     if 'resuneta' in args.model:
         data['Bound weight'] = args.wbound
