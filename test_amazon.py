@@ -487,12 +487,13 @@ for i in tqdm(range(len(input_patches))):
     img_normed = mx.nd.expand_dims(img_normed, axis=0)
 
     if args.use_multitasking:
-        preds1, preds2, preds3, preds4, preds5 = net(img_normed.copyto(ctx))
+        # preds1, preds2, preds3, preds4, preds5 = net(img_normed.copyto(ctx))
+        preds1, preds2, preds3, preds5 = net(img_normed.copyto(ctx))
 
         seg_preds.append(preds1.asnumpy())
         bound_preds.append(preds2.asnumpy())
         dist_preds.append(preds3.asnumpy())
-        color_preds.append(preds4.asnumpy())
+        # color_preds.append(preds4.asnumpy())
         cva_preds.append(preds5.asnumpy())
     else:
         preds1 = net(img_normed.copyto(ctx))
@@ -509,7 +510,8 @@ if args.use_multitasking:
     seg_preds_def = seg_preds[:, :, :, 1]
     seg_pred = np.argmax(seg_preds, axis=-1)
     print(f'seg shape argmax: {seg_pred.shape}')
-    patches_pred = [seg_preds, gather_preds(bound_preds), gather_preds(dist_preds), gather_preds(color_preds), gather_preds(cva_preds)]
+    # patches_pred = [seg_preds, gather_preds(bound_preds), gather_preds(dist_preds), gather_preds(color_preds), gather_preds(cva_preds)]
+    patches_pred = [seg_preds, gather_preds(bound_preds), gather_preds(dist_preds), gather_preds(cva_preds)]
 else:
     seg_preds = gather_preds(seg_preds)
     print(f'seg shape: {seg_preds.shape}')
@@ -536,6 +538,8 @@ im = axes[1].imshow(pred_reconstructed)
 colorbar(im, axes[1], fig)
 plt.show()
 plt.close()
+
+fig.savefig(os.path.join(args.output_path, 'seg_argmax_pred&ref.jpg'))
 
 if args.dataset_loc == 63:
     true_labels = np.reshape(ref_patches, (ref_patches.shape[0] *
@@ -662,9 +666,20 @@ fig.savefig(os.path.join(args.output_path, 'seg_pred_def&ref.jpg'))
 
 # Visualize CVA pred tiles -----------------------------------------------------
 if args.use_multitasking:
-    cva_preds = np.argmax(patches_pred[4], axis=-1)
+    # cva_preds = np.argmax(patches_pred[4], axis=-1)
+    cva_preds = np.argmax(patches_pred[3], axis=-1)
     pred_cva_reconstructed, _ = pred_recostruction(args.patch_size, cva_preds,
                                          final_mask)
+
+    fig_cva_all, axes = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
+    axes[0].set_title('CVA Reference')
+    axes[1].set_title('CVA pred')
+
+    axes[0].imshow(CVA_ref)
+
+    im = axes[1].imshow(pred_cva_reconstructed)
+    colorbar(im, axes[1], fig)
+    fig_cva_all.savefig(os.path.join(args.output_path, 'CVA_pred&ref.jpg'))
 
     fig_cva, axes = plt.subplots(nrows=len(tst_tiles), ncols=2,
                                 figsize=((15*2)//len(tst_tiles), 15))
@@ -678,7 +693,7 @@ if args.use_multitasking:
         axes[i, 0].imshow(tile_ref)
         axes[i, 1].imshow(tile_pred)
 
-    fig_cva.savefig(os.path.join(args.output_path, 'CVA_pred&ref.jpg'))
+    fig_cva.savefig(os.path.join(args.output_path, 'CVA_pred&ref_tiles.jpg'))
     plt.show()
     plt.close()
     del pred_cva_reconstructed
@@ -713,12 +728,6 @@ for i in indexes:
         metrics_copy[i, 1] = 2*metrics_copy[i+1, 1] - metrics_copy[i+2, 1]
 
 # Calculates mAP
-# Recall = def_metrics[:, 0]
-# Precision = def_metrics[:, 1]
-#
-# DeltaR = Recall[1:]-Recall[:-1]
-# ap = np.sum(Precision[:-1]*DeltaR)
-# print('mAP:', ap)
 
 Recall = metrics_copy[:, 0]
 Precision = metrics_copy[:, 1]
@@ -731,7 +740,7 @@ print('Image Saved!')
 fig_pr = plt.figure()
 
 # Precision x Recall curve
-plt.plot(def_metrics[:, 0], metrics_copy[:, 1], color='darkorange', lw=2)
+plt.plot(metrics_copy[:, 0], metrics_copy[:, 1], color='darkorange', lw=2)
 # plt.plot(def_metrics[:, 0], def_metrics[:, 1], color='darkorange', lw=2)
 # plt.plot(metrics_copy[:, 0], metrics_copy[:, 1], color='blue', lw=2,
 #          linestyle='--')
@@ -781,8 +790,8 @@ if args.use_multitasking:
         img_t2_bgr = img_t2[:, :, 1:4].astype(np.uint8)
         # img_t2_rgb = img_t2_bgr[:, :, ::-1]
         img_t2_rgb = img_t2_bgr
-        print(img_t1_rgb.shape)
-        print(img_t2_rgb.shape)
+        # print(img_t1_rgb.shape)
+        # print(img_t2_rgb.shape)
         img_both_rgb = np.concatenate((img_t1_rgb, img_t2_rgb), axis=-1)
         # print(img)
         # img = tnorm.restore(img)
@@ -799,10 +808,9 @@ if args.use_multitasking:
             # Remeber we are not displaying color preds here, since this task
             # do not use classes
             # Multiply by 2 cause its always pred and ref side by side
-            for task in range(len(patches_pred) - 2):
+            for task in range(len(patches_pred) - 1):
                 task_pred = patches_pred[task]
                 col_ref = (task + 1)*2 + 1
-                print(task_pred.shape)
                 axes[n_class, col_ref].imshow(task_pred[i, :, :, n_class],
                                               cmap=cm.Greys_r)
                 col = col_ref - 1
@@ -812,7 +820,6 @@ if args.use_multitasking:
                                               cmap=cm.Greys_r)
                 elif task == 1:
                     # Boundary
-                    print(f' bound class: {n_class}')
                     axes[n_class, col].imshow(bound_ref_h[:, :, n_class],
                                               cmap=cm.Greys_r)
                 elif task == 2:
@@ -833,41 +840,41 @@ if args.use_multitasking:
             axes[n_class, 0].set_ylabel(f'{label_name[n_class]}')
 
         # Color
-        fig2, axes_c = plt.subplots(nrows=1, ncols=5, figsize=(10, 5))
-        print(axes_c.shape)
-        axes_c[0].set_title('Original T1')
-        axes_c[0].imshow(img_t1_rgb)
-
-        axes_c[1].set_title('Pred T1 HSV in RGB')
-        task = 3
-        hsv_pred = patches_pred[task][i]
-        # print(f'HSV max {i}: {hsv_patch.max()}, HSV min: {hsv_patch.min()}')
-        # As long as the normalization process was just img = img / 255
-        # Talvez de problemas ao mudar para np uint8
-        hsv_pred_t1 = (hsv_pred[:, :, :3] * np.array([179, 255, 255])).astype(np.uint8)
-        rgb_pred_t1 = cv2.cvtColor(hsv_pred_t1, cv2.COLOR_HSV2RGB)
-        axes_c[1].imshow(rgb_pred_t1)
-
-        axes_c[2].set_title('Original T2')
-        axes_c[2].imshow(img_t2_rgb)
-
-        axes_c[3].set_title('Pred T2 HSV in RGB')
-        hsv_pred_t2 = (hsv_pred[:, :, 3:] * np.array([179, 255, 255])).astype(np.uint8)
-        rgb_pred_t2 = cv2.cvtColor(hsv_pred_t1, cv2.COLOR_HSV2RGB)
-        axes_c[3].imshow(rgb_pred_t2)
-
-        axes_c[4].set_title('Difference between both')
-        print(img_t1_rgb.min(), img_t1_rgb.max())
-        hsv_t1_label = cv2.cvtColor(img_t1_rgb, cv2.COLOR_RGB2HSV)
-        hsv_t2_label = cv2.cvtColor(img_t2_rgb, cv2.COLOR_RGB2HSV)
-        hsv_label = np.concatenate((hsv_t1_label, hsv_t2_label), axis=-1)
-
-        hsv_patch = np.concatenate((hsv_pred_t1, hsv_pred_t2), axis=-1)
-
-        diff = np.mean(hsv_patch - hsv_label, axis=-1)
-        diff = 2*(diff-diff.min())/(diff.max()-diff.min()) - np.ones_like(diff)
-        im = axes_c[4].imshow(diff, cmap=cm.Greys_r)
-        colorbar(im, axes_c[4], fig2)
+        # fig2, axes_c = plt.subplots(nrows=1, ncols=5, figsize=(10, 5))
+        # print(axes_c.shape)
+        # axes_c[0].set_title('Original T1')
+        # axes_c[0].imshow(img_t1_rgb)
+        #
+        # axes_c[1].set_title('Pred T1 HSV in RGB')
+        # task = 3
+        # hsv_pred = patches_pred[task][i]
+        # # print(f'HSV max {i}: {hsv_patch.max()}, HSV min: {hsv_patch.min()}')
+        # # As long as the normalization process was just img = img / 255
+        # # Talvez de problemas ao mudar para np uint8
+        # hsv_pred_t1 = (hsv_pred[:, :, :3] * np.array([179, 255, 255])).astype(np.uint8)
+        # rgb_pred_t1 = cv2.cvtColor(hsv_pred_t1, cv2.COLOR_HSV2RGB)
+        # axes_c[1].imshow(rgb_pred_t1)
+        #
+        # axes_c[2].set_title('Original T2')
+        # axes_c[2].imshow(img_t2_rgb)
+        #
+        # axes_c[3].set_title('Pred T2 HSV in RGB')
+        # hsv_pred_t2 = (hsv_pred[:, :, 3:] * np.array([179, 255, 255])).astype(np.uint8)
+        # rgb_pred_t2 = cv2.cvtColor(hsv_pred_t1, cv2.COLOR_HSV2RGB)
+        # axes_c[3].imshow(rgb_pred_t2)
+        #
+        # axes_c[4].set_title('Difference between both')
+        # print(img_t1_rgb.min(), img_t1_rgb.max())
+        # hsv_t1_label = cv2.cvtColor(img_t1_rgb, cv2.COLOR_RGB2HSV)
+        # hsv_t2_label = cv2.cvtColor(img_t2_rgb, cv2.COLOR_RGB2HSV)
+        # hsv_label = np.concatenate((hsv_t1_label, hsv_t2_label), axis=-1)
+        #
+        # hsv_patch = np.concatenate((hsv_pred_t1, hsv_pred_t2), axis=-1)
+        #
+        # diff = np.mean(hsv_patch - hsv_label, axis=-1)
+        # diff = 2*(diff-diff.min())/(diff.max()-diff.min()) - np.ones_like(diff)
+        # im = axes_c[4].imshow(diff, cmap=cm.Greys_r)
+        # colorbar(im, axes_c[4], fig2)
 
         # CVA
         fig3, axes_cva = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
@@ -877,9 +884,10 @@ if args.use_multitasking:
         cva_ref = cva_ref_patches[i]
         axes_cva[0].imshow(cva_ref)
 
-        task = 4
+        # task = 4
+        task = 3
         cva_pred = patches_pred[task][i]
-        print(f'CVA shape {cva_pred.shape}')
+        # print(f'CVA shape {cva_pred.shape}')
         cva_pred = np.argmax(cva_pred, axis=-1)
         # cva_pred2 = cva_pred.copy()
         # cva_pred2[cva_pred >= 0.5] = 1
@@ -889,7 +897,7 @@ if args.use_multitasking:
         plt.tight_layout()
         fig3.savefig(os.path.join(args.output_path, 'preds', f'pred{i}_CVA.jpg'))
 
-        fig2.savefig(os.path.join(args.output_path, 'preds', f'pred{i}_color.jpg'))
+        # fig2.savefig(os.path.join(args.output_path, 'preds', f'pred{i}_color.jpg'))
         plt.subplots_adjust(top=0.99, left=0.05, hspace=0.01, wspace=0.4)
         plt.show()
         fig1.savefig(os.path.join(args.output_path, 'preds', f'pred{i}_classes.jpg'),
