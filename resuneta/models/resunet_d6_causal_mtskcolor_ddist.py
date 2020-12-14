@@ -204,13 +204,14 @@ class ResUNet_d6(HybridBlock):
         # print(conv)
 
         # CVA
-        cva = self.cva_logits(convl)
+        cva = self.cva_logits(conv)
         cva_logits = F.softmax(cva, axis=1)
 
         # logits
         # 1st find distance map, skeleton like, topology info
-        # dist = self.distance_logits(convl) # Modification here, do not use max pooling for distance
-        dist = self.distance_logits(cva_logits)
+        dist = self.distance_logits(convl) # Modification here, do not use max pooling for distance
+        # dist = F.concat(conv, dist_logits, cva_logits)
+        # dist = self.distance_logits(cva_logits)
         # TODO: Maybe the output not squeezed by softmax can affect other tasks
         dist_logits = self.ChannelAct(dist)
         # dist   = F.softmax(dist,axis=1)
