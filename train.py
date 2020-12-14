@@ -86,6 +86,8 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
             wce_weights = mx.nd.array(np.array([0.3, 0.7, 0]))
         elif args.wce_weights == 4:
             wce_weights = mx.nd.array(np.array([0.4, 0.7, 0.4]))
+        elif args.wce_weights == 5:
+            wce_weights = mx.nd.array(np.array([1, 10, 1]))
         print(f'WCE weights: {wce_weights}')
         loss_seg = WeightedSoftmaxCrossEntropyLoss(axis=1,
                                                     from_logits=from_logits,
@@ -170,7 +172,9 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
                 for i, data in enumerate(zip(data_list, seg_label_list, bound_label_list, dist_label_list, color_label_list, cva_label_list)):
                     X, y_seg, y_bound, y_dist, y_color, y_cva = data
                     if args.multitasking:
-                        seg_logits, bound_logits, dist_logits, cva_logits = net(X)
+                        # seg_logits, bound_logits, dist_logits, cva_logits = net(X)
+                        seg_logits, bound_logits, dist_logits = net(X)
+                        cva_logits = y_cva
                     # logger.debug(f'Seg logits: {seg_logits}')
                     else:
                         seg_logits = net(X)
@@ -187,7 +191,8 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
                         color_losses.append(0.0)
                         cva_losses.append(args.wcva*loss_cva(cva_logits, y_cva))
 
-                        total_losses.append(seg_losses[i] + bound_losses[i] + dist_losses[i] + cva_losses[i])
+                        # total_losses.append(seg_losses[i] + bound_losses[i] + dist_losses[i] + cva_losses[i])
+                        total_losses.append(seg_losses[i] + bound_losses[i] + dist_losses[i])
                     else:
                         bound_losses.append(0.0)
                         dist_losses.append(0.0)
@@ -273,7 +278,9 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
             for i, data in enumerate(zip(data_list, seg_label_list, bound_label_list, dist_label_list, color_label_list, cva_label_list)):
                 X, y_seg, y_bound, y_dist, y_color, y_cva = data
                 if args.multitasking:
-                    seg_logits, bound_logits, dist_logits, cva_logits = net(X)
+                    # seg_logits, bound_logits, dist_logits, cva_logits = net(X)
+                    seg_logits, bound_logits, dist_logits = net(X)
+                    cva_logits = y_cva
                 else:
                     seg_logits = net(X)
                     cva_logits = seg_logits
@@ -288,7 +295,8 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
                     # color_losses.append(args.wcolor*loss_color(color_logits, y_color))
                     color_losses.append(0.0)
                     cva_losses.append(args.wcva*loss_cva(cva_logits, y_cva))
-                    total_losses.append(seg_losses[i] + bound_losses[i] + dist_losses[i] + cva_losses[i])
+                    # total_losses.append(seg_losses[i] + bound_losses[i] + dist_losses[i] + cva_losses[i])
+                    total_losses.append(seg_losses[i] + bound_losses[i] + dist_losses[i])
                 else:
                     bound_losses.append(0.0)
                     dist_losses.append(0.0)
