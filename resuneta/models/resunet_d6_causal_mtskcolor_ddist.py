@@ -209,17 +209,17 @@ class ResUNet_d6(HybridBlock):
 
         # logits
         # 1st find distance map, skeleton like, topology info
-        dist = self.distance_logits(convl) # Modification here, do not use max pooling for distance
-        # dist = F.concat(conv, dist_logits, cva_logits)
-        # dist = self.distance_logits(cva_logits)
+        # dist = self.distance_logits(convl) # Modification here, do not use max pooling for distance
+        dist = F.concat(convl, cva_logits)
+        dist = self.distance_logits(dist)
         # TODO: Maybe the output not squeezed by softmax can affect other tasks
         dist_logits = self.ChannelAct(dist)
         # dist   = F.softmax(dist,axis=1)
         # dist = F.log_softmax(dist, axis=1)
 
         # Then find boundaries
-        # bound = F.concat(conv, dist_logits, cva_logits)
-        bound = F.concat(conv, dist_logits)
+        bound = F.concat(conv, dist_logits, cva_logits)
+        # bound = F.concat(conv, dist_logits)
         # bound = F.concat(conv, dist_logits)
         bound = self.bound_logits(bound)
         bound_logits = F.sigmoid(bound) # Boundaries are not mutually exclusive the way I am creating them.
