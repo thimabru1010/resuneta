@@ -167,7 +167,7 @@ print(f'Optimal Threshold: {optimal_threshold}')
 
 S1_normed = np.copy(S1)
 th = optimal_threshold
-for th in [optimal_threshold, 0.5, 1.0, 1.5]:
+for th in [optimal_threshold, 0.5, 0.7, 1.0, 1.5]:
     print('-------------------------------------------------------')
     print(f'TH: {th}')
     S1_normed[S1 >= th] = 1
