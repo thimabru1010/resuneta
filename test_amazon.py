@@ -488,14 +488,14 @@ for i in tqdm(range(len(input_patches))):
 
     if args.use_multitasking:
         # preds1, preds2, preds3, preds4, preds5 = net(img_normed.copyto(ctx))
-        # preds1, preds2, preds3, preds5 = net(img_normed.copyto(ctx))
-        preds1, preds2, preds3 = net(img_normed.copyto(ctx))
+        preds1, preds2, preds3, preds5 = net(img_normed.copyto(ctx))
+        # preds1, preds2, preds3 = net(img_normed.copyto(ctx))
 
         seg_preds.append(preds1.asnumpy())
         bound_preds.append(preds2.asnumpy())
         dist_preds.append(preds3.asnumpy())
         # color_preds.append(preds4.asnumpy())
-        # cva_preds.append(preds5.asnumpy())
+        cva_preds.append(preds5.asnumpy())
     else:
         preds1 = net(img_normed.copyto(ctx))
         # print(preds1)
@@ -512,8 +512,8 @@ if args.use_multitasking:
     seg_pred = np.argmax(seg_preds, axis=-1)
     print(f'seg shape argmax: {seg_pred.shape}')
     # patches_pred = [seg_preds, gather_preds(bound_preds), gather_preds(dist_preds), gather_preds(color_preds), gather_preds(cva_preds)]
-    # patches_pred = [seg_preds, gather_preds(bound_preds), gather_preds(dist_preds), gather_preds(cva_preds)]
-    patches_pred = [seg_preds, gather_preds(bound_preds), gather_preds(dist_preds)]
+    patches_pred = [seg_preds, gather_preds(bound_preds), gather_preds(dist_preds), gather_preds(cva_preds)]
+    # patches_pred = [seg_preds, gather_preds(bound_preds), gather_preds(dist_preds)]
 else:
     seg_preds = gather_preds(seg_preds)
     print(f'seg shape: {seg_preds.shape}')
@@ -667,7 +667,7 @@ plt.tight_layout()
 fig.savefig(os.path.join(args.output_path, 'seg_pred_def&ref.jpg'))
 
 # Visualize CVA pred tiles -----------------------------------------------------
-if args.use_multitasking and 0 == 1:
+if args.use_multitasking:
     # cva_preds = np.argmax(patches_pred[4], axis=-1)
     cva_preds = np.argmax(patches_pred[3], axis=-1)
     pred_cva_reconstructed, _ = pred_recostruction(args.patch_size, cva_preds,
@@ -879,25 +879,25 @@ if args.use_multitasking:
         # colorbar(im, axes_c[4], fig2)
 
         # CVA
-        # fig3, axes_cva = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
-        # axes_cva[0].set_title('CVA Ref')
-        # axes_cva[1].set_title('CVA Pred')
-        #
-        # cva_ref = cva_ref_patches[i]
-        # axes_cva[0].imshow(cva_ref)
-        #
-        # # task = 4
-        # task = 3
-        # cva_pred = patches_pred[task][i]
-        # # print(f'CVA shape {cva_pred.shape}')
-        # cva_pred = np.argmax(cva_pred, axis=-1)
-        # # cva_pred2 = cva_pred.copy()
-        # # cva_pred2[cva_pred >= 0.5] = 1
-        # # cva_pred2[cva_pred < 0.5] = 0
-        # axes_cva[1].imshow(cva_pred)
-        #
-        # plt.tight_layout()
-        # fig3.savefig(os.path.join(args.output_path, 'preds', f'pred{i}_CVA.jpg'))
+        fig3, axes_cva = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
+        axes_cva[0].set_title('CVA Ref')
+        axes_cva[1].set_title('CVA Pred')
+
+        cva_ref = cva_ref_patches[i]
+        axes_cva[0].imshow(cva_ref)
+
+        # task = 4
+        task = 3
+        cva_pred = patches_pred[task][i]
+        # print(f'CVA shape {cva_pred.shape}')
+        cva_pred = np.argmax(cva_pred, axis=-1)
+        # cva_pred2 = cva_pred.copy()
+        # cva_pred2[cva_pred >= 0.5] = 1
+        # cva_pred2[cva_pred < 0.5] = 0
+        axes_cva[1].imshow(cva_pred)
+
+        plt.tight_layout()
+        fig3.savefig(os.path.join(args.output_path, 'preds', f'pred{i}_CVA.jpg'))
 
         # fig2.savefig(os.path.join(args.output_path, 'preds', f'pred{i}_color.jpg'))
         plt.subplots_adjust(top=0.99, left=0.05, hspace=0.01, wspace=0.4)

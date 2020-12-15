@@ -218,7 +218,8 @@ class ResUNet_d6(HybridBlock):
         # dist = F.log_softmax(dist, axis=1)
 
         # Then find boundaries
-        bound = F.concat(conv, dist_logits, cva_logits)
+        # bound = F.concat(conv, dist_logits, cva_logits)
+        bound = F.concat(conv, dist_logits)
         # bound = F.concat(conv, dist_logits)
         bound = self.bound_logits(bound)
         bound_logits = F.sigmoid(bound) # Boundaries are not mutually exclusive the way I am creating them.
