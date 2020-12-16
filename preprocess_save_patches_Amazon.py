@@ -236,9 +236,10 @@ def filename(i):
 
 
 def save_patches(patches_tr, patches_tr_ref, patches_tr_cva,
-                 folder_path, scaler, data_aug,
+                 folder_path, scaler, data_aug, classes_dict=None,
                  mode='train'):
-    classes_dict = {0: 0, 1: 0, 2: 0}
+    if classes_dict is None:
+        classes_dict = {0: 0, 1: 0, 2: 0}
     for i in tqdm(range(len(patches_tr))):
         # Expand dims (Squeeze) to receive data_augmentation. Depreceated ?
         if data_aug:
@@ -329,13 +330,7 @@ def save_patches(patches_tr, patches_tr_ref, patches_tr_cva,
     class2 = round(class2, 5)
     print(f'class 2 %: {class2*100}')
 
-    # Save a pie graph with classes proportions
-    my_labels = 'No deforastation', 'Deforastation', 'Past Deforastation'
-    fig = plt.figure()
-    plt.pie(classes_dict.values(), labels=my_labels, autopct='%1.1f%%')
-    plt.title('Classes occurrences')
-    plt.axis('equal')
-    fig.savefig('./classes_occurrences_TrainVal.jpg', dpi=300)
+    return classes_dict
 
 
 if __name__ == '__main__':
@@ -546,5 +541,13 @@ if __name__ == '__main__':
     print(f'Number of val patches: {len(patches_val)}')
 
     # scaler = None
-    save_patches(patches_tr, patches_tr_ref, patches_tr_cva, folder_path, scaler, args.data_aug, mode='train')
-    save_patches(patches_val, patches_val_ref, patches_val_cva, folder_path, scaler, args.data_aug, mode='val')
+    classes_dict = save_patches(patches_tr, patches_tr_ref, patches_tr_cva, folder_path, scaler, args.data_aug, mode='train')
+    classes_dict = save_patches(patches_val, patches_val_ref, patches_val_cva, folder_path, scaler, args.data_aug, classes_dict, mode='val')
+
+    # Save a pie graph with classes proportions
+    my_labels = 'No deforastation', 'Deforastation', 'Past Deforastation'
+    fig = plt.figure()
+    plt.pie(classes_dict.values(), labels=my_labels, autopct='%1.1f%%')
+    plt.title('Classes occurrences')
+    plt.axis('equal')
+    fig.savefig('./classes_occurrences_TrainVal.jpg', dpi=300)
