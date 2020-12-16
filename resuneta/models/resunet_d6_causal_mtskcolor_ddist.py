@@ -209,9 +209,9 @@ class ResUNet_d6(HybridBlock):
 
         # logits
         # 1st find distance map, skeleton like, topology info
-        dist = self.distance_logits(convl) # Modification here, do not use max pooling for distance
-        # dist = F.concat(convl, cva_logits)
-        # dist = self.distance_logits(dist)
+        # dist = self.distance_logits(convl) # Modification here, do not use max pooling for distance
+        dist = F.concat(convl, cva_logits)
+        dist = self.distance_logits(dist)
         # TODO: Maybe the output not squeezed by softmax can affect other tasks
         dist_logits = self.ChannelAct(dist)
         # dist   = F.softmax(dist,axis=1)
