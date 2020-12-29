@@ -288,8 +288,10 @@ def save_patches(patches_tr, patches_tr_ref, patches_tr_cva,
             # Color
             # print(f'Checking if rgb img is in uint8 before hsv: {img_aug[j].dtype}')
             # Get only BGR from Aerial Image
-            # img_aug_unnorm = scaler.inverse_transform(img_aug[j])
-            img_aug_unnorm = img_aug[j]
+            try:
+                img_aug_unnorm = scaler.inverse_transform(img_aug[j])
+            except:
+                img_aug_unnorm = img_aug[j]
             # img_t1_patch = img_aug[j][:, :, 0:7]
             # img_t2_patch = img_aug[j][:, :, 7:]
             img_t1_patch = img_aug_unnorm[:, :, 0:7]
@@ -356,8 +358,9 @@ if __name__ == '__main__':
     parser.add_argument("--def_percent",
                         help="Choose minimum percentage of Deforastation",
                         type=int, default=2)
+    # Img 66 cva th = 0.26074
     parser.add_argument("--cva_th", help="Choose CVA threshold",
-                        type=float, default=0.26074)
+                        type=float, default=0.34)
     args = parser.parse_args()
 
     print('='*50)
@@ -481,7 +484,9 @@ if __name__ == '__main__':
 
     # Mask with tiles
     # Divide tiles in 5 rows and 3 columns. Total = 15 tiles
-    tile_number = np.ones((1040, 1680))
+    # (5909, 3067, 7) --> (5900, 3060, 7) --> tiles = (1180, 1020)
+    # tile_number = np.ones((1040, 1680))
+    tile_number = np.ones((1180, 1020))
     mask_c_1 = np.concatenate((tile_number, 2*tile_number, 3*tile_number), axis=1)
     mask_c_2 = np.concatenate((4*tile_number, 5*tile_number, 6*tile_number), axis=1)
     mask_c_3 = np.concatenate((7*tile_number, 8*tile_number, 9*tile_number), axis=1)
@@ -533,7 +538,7 @@ if __name__ == '__main__':
     print('patches extracted!')
 
     print('saving images...')
-    folder_path = f'./DATASETS/Amazon_patch_size={args.patch_size}_' + \
+    folder_path = f'./DATASETS/Amazon_Mabel_patch_size={args.patch_size}_' + \
                   f'stride={args.stride}_norm_type={args.norm_type}' + \
                   f'_data_aug={args.data_aug}_def_percent={args.def_percent}' + \
                   f'_cva_th={args.cva_th}'
@@ -544,7 +549,7 @@ if __name__ == '__main__':
     print(f'Number of train patches: {len(patches_tr)}')
     print(f'Number of val patches: {len(patches_val)}')
 
-    # scaler = None
+    scaler = None
     classes_dict = save_patches(patches_tr, patches_tr_ref, patches_tr_cva, folder_path, scaler, args.data_aug, mode='train')
     classes_dict = save_patches(patches_val, patches_val_ref, patches_val_cva, folder_path, scaler, args.data_aug, classes_dict, mode='val')
 
