@@ -82,8 +82,14 @@ print(img_t1.shape)
 print(img_t2.shape)
 
 # Normed images
-_, image_t1 = normalization(img_t1, norm_type=2)
-_, image_t2 = normalization(img_t2, norm_type=2)
+# _, image_t1 = normalization(img_t1, norm_type=2)
+# _, image_t2 = normalization(img_t2, norm_type=2)
+
+image_t1 = img_t1
+image_t2 = img_t2
+
+print(f'Img T1 min: {np.min(image_t1)}, max: {np.max(image_t1)}')
+print(f'Img T2 min: {np.min(image_t2)}, max: {np.max(image_t2)}')
 
 blue_t1 = image_t1[:, :, 1]
 red_t1 = image_t1[:, :, 3]
@@ -102,8 +108,8 @@ bi1 = (swir_t1+red_t1)-(nir_t1+blue_t1)/(swir_t1+red_t1)+(nir_t1+blue_t1)
 
 ndvi2 = (nir_t2-red_t2)/(nir_t2+red_t2)
 bi2 = (swir_t2+red_t2)-(nir_t2+blue_t2)/(swir_t2+red_t2)+(nir_t2+blue_t2)
-print(np.min(ndvi1), np.max(ndvi1))
-print(np.min(bi1), np.max(bi1))
+print(f'NVDI min: {np.min(ndvi1)}, max: {np.max(ndvi1)}')
+print(f'Bi: min: {np.min(bi1)}, max: {np.max(bi1)}')
 
 # Calculating the change:
 S = (ndvi2-ndvi1)**2+(bi2-bi1)**2
@@ -143,11 +149,19 @@ auc = roc_auc_score(ref_final, pred_final)
 tpr = np.array(tpr)
 fpr = np.array(fpr)
 
+
+optimal_idx = np.argmax(tpr - fpr)
+print(len(tpr))
+print(optimal_idx)
+optimal_threshold = thresholds[optimal_idx]
+opt_tpr, opt_fpr = tpr[optimal_idx], fpr[optimal_idx]
+
 plt.figure()
 lw = 2
 plt.plot(fpr, tpr, color='darkorange',
          lw=lw, label='ROC curve (area = %0.2f)' % auc)
 plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+plt.scatter(opt_fpr, opt_tpr, color='blue', label='Optimal threshold')
 plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.05])
 plt.xlabel('False Positive Rate')
@@ -157,16 +171,23 @@ plt.legend(loc="lower right")
 plt.show()
 plt.close()
 
-
-optimal_idx = np.argmax(tpr - fpr)
-print(len(tpr))
-print(optimal_idx)
-optimal_threshold = thresholds[optimal_idx]
-
 print(f'Optimal Threshold: {optimal_threshold}')
 
 S1_normed = np.copy(S1)
 th = optimal_threshold
+
+import matplotlib.patches as mpatches
+from matplotlib import colors
+
+fig = plt.figure()
+plt.imshow(image_ref, cmap='jet')
+plt.tick_params(axis="x", which = "both", bottom = False, top = False)
+plt.tick_params(axis="y", which = "both", left = False, top = False)
+plt.xticks([])
+plt.yticks([])
+plt.show()
+fig.savefig('def_ref_only.jpg')
+
 for th in [optimal_threshold, 0.5, 0.7, 1.0, 1.5]:
     print('-------------------------------------------------------')
     print(f'TH: {th}')
@@ -183,8 +204,19 @@ for th in [optimal_threshold, 0.5, 0.7, 1.0, 1.5]:
     print(f'Image ref pixels: {counts_dict}')
 
     fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
-    axes[0].set_title(f'Threshold = {th}')
+    axes[0].set_title(f'CVA Ref - Threshold = {th:.4f}')
+    axes[1].set_title('Def Ref')
     axes[0].imshow(S1_normed, cmap='jet')
     axes[1].imshow(image_ref, cmap='jet')
     plt.show()
     plt.close()
+    # fig.savefig(f'cva_ref&def_th={th}.jpg')
+
+    fig = plt.figure()
+    plt.imshow(S1_normed, cmap='jet')
+    plt.tick_params(axis="x", which="both", bottom=False, top=False)
+    plt.tick_params(axis="y", which="both", left=False, top=False)
+    plt.xticks([])
+    plt.yticks([])
+    plt.show()
+    # fig.savefig(f'cva_th={th}.jpg')

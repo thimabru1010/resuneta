@@ -17,8 +17,11 @@ import matplotlib.pyplot as plt
 
 
 def compute_cva(img_t1, img_t2, th):
-    _, image_t1 = normalization(img_t1, norm_type=2)
-    _, image_t2 = normalization(img_t2, norm_type=2)
+    # _, image_t1 = normalization(img_t1, norm_type=2)
+    # _, image_t2 = normalization(img_t2, norm_type=2)
+
+    image_t1 = img_t1
+    image_t2 = img_t2
 
     blue_t1 = image_t1[:, :, 1]
     red_t1 = image_t1[:, :, 3]
@@ -285,7 +288,8 @@ def save_patches(patches_tr, patches_tr_ref, patches_tr_cva,
             # Color
             # print(f'Checking if rgb img is in uint8 before hsv: {img_aug[j].dtype}')
             # Get only BGR from Aerial Image
-            img_aug_unnorm = scaler.inverse_transform(img_aug[j])
+            # img_aug_unnorm = scaler.inverse_transform(img_aug[j])
+            img_aug_unnorm = img_aug[j]
             # img_t1_patch = img_aug[j][:, :, 0:7]
             # img_t2_patch = img_aug[j][:, :, 7:]
             img_t1_patch = img_aug_unnorm[:, :, 0:7]
@@ -391,7 +395,7 @@ if __name__ == '__main__':
     h_, w_, channels = input_image.shape
     print(f"Input image shape: {input_image.shape}")
     check_memory()
-    scaler, input_image = normalization(input_image, norm_type=args.norm_type)
+    # scaler, input_image = normalization(input_image, norm_type=args.norm_type)
     check_memory()
 
     # Load Mask area -----------------------------------------------------------

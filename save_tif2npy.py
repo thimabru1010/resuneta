@@ -99,11 +99,13 @@ def load_tiff_image(patch):
 # Dataset TCC corrigido
 
 # root_path = '/media/thimabru/ssd/TCC/imagens_satelite_dataset/cut_img_66_new'
-root_path = '/media/thimabru/ssd/TCC/imagens_satelite_dataset/cut_227_63'
-output_path = 'DATASETS/Amazon_npy_cut_test'
+# root_path = '/media/thimabru/ssd/TCC/imagens_satelite_dataset/cut_227_63'
+root_path = '/media/thimabru/ssd/TCC/imagens_satelite_dataset/Novas_imagens_Mabel'
+output_path = 'DATASETS/Amazon_npy_MabelNormalized'
 if not os.path.exists(output_path):
     os.makedirs(output_path)
     os.makedirs(os.path.join(output_path, 'labels'))
+
 img_t1_path = 'cut_raster_2018_ok.tif'
 img_t2_path = 'cut_raster_2019_ok.tif'
 
