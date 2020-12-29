@@ -79,9 +79,11 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
                                           gamma=args.gamma)
     elif args.loss == 'wce':
         if args.wce_weights == 1:
-            wce_weights = mx.nd.array(np.array([1.1, 238, 0]))
+            # wce_weights = mx.nd.array(np.array([1.1, 238, 0]))
+            wce_weights = mx.nd.array(np.array([1.6, 77, 0]))
         elif args.wce_weights == 2:
-            wce_weights = mx.nd.array(np.array([1.1, 238, 11]))
+            # wce_weights = mx.nd.array(np.array([1.1, 238, 11]))
+            wce_weights = mx.nd.array(np.array([1.6, 77, 2.8]))
         elif args.wce_weights == 3:
             wce_weights = mx.nd.array(np.array([0.3, 0.7, 0]))
         elif args.wce_weights == 4:

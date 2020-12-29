@@ -376,6 +376,10 @@ if __name__ == '__main__':
     print('='*50)
 
     root_path = args.root_path
+    # h_bound = 5200
+    # w_bound = 5040
+    h_bound = 5900
+    w_bound = 3060
     # Load images --------------------------------------------------------------
     # img_t1_path = 'clipped_raster_004_66_2018.npy'
     # img_t2_path = 'clipped_raster_004_66_2019.npy'
@@ -396,7 +400,7 @@ if __name__ == '__main__':
     # Need to be in float32 to be normalized
     input_image = np.concatenate((img_t1, img_t2), axis=-1).astype(np.float32)
     # input_image = input_image[:6100, :6600]
-    input_image = input_image[:5200, :5040]
+    input_image = input_image[:h_bound, :w_bound]
     h_, w_, channels = input_image.shape
     print(f"Input image shape: {input_image.shape}")
     check_memory()
@@ -457,7 +461,7 @@ if __name__ == '__main__':
         2 --> Past deforastation (No considered)
     '''
     final_mask = mask_no_considered(image_ref, buffer, past_ref_sum)
-    final_mask = final_mask[:5200, :5040]
+    final_mask = final_mask[:h_bound, :w_bound]
 
     # final_mask[img_mask_ref == -99] = -1
     unique, counts = np.unique(final_mask, return_counts=True)
@@ -506,9 +510,9 @@ if __name__ == '__main__':
     # tst_tiles = [5, 1, 13, 14]
     # all_tiles = tr_tiles + val_tiles
     # Dataset Mabel -----------------------
-    tr_tiles = [3, 9, 2, 7, 5, 10, 11, 12]
-    val_tiles = [4, 6]
-    # tst_tiles = [1, 8, 13, 15]
+    tr_tiles = [3, 2, 7, 10, 4, 9, 1, 14]
+    val_tiles = [15, 12]
+    # tst_tiles = [5, 13, 11, 8, 6]
     print(f'All tiles: {all_tiles}')
     # final_mask[img_mask_ref == -99] = -1
     show_deforastation_per_tile(all_tiles, mask_tiles, final_mask)
