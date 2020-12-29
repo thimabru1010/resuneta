@@ -341,6 +341,8 @@ def save_patches(patches_tr, patches_tr_ref, patches_tr_cva,
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument("-rp", "--root_path", help="Choose root path",
+                        type=str, default='DATASETS/Amazon_npy_corrigido')
     parser.add_argument("--norm_type",
                         help="Choose type of normalization to be used",
                         type=int, default=1, choices=[1, 2, 3])
@@ -373,7 +375,7 @@ if __name__ == '__main__':
     print(f'CVA threshold {args.cva_th}')
     print('='*50)
 
-    root_path = './DATASETS/Amazon_npy_corrigido'
+    root_path = args.root_path
     # Load images --------------------------------------------------------------
     # img_t1_path = 'clipped_raster_004_66_2018.npy'
     # img_t2_path = 'clipped_raster_004_66_2019.npy'
