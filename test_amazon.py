@@ -312,13 +312,24 @@ parser.add_argument("--model", help="Path to where save predictions",
 parser.add_argument("--groups", help="Groups to be used in convolutions",
                     type=int, default=1)
 parser.add_argument("--dataset_loc",
-                    help="Select dataset from path 66 or 63", type=int,
-                    default=63, choices=[66, 63])
+                    help="Select dataset from path 66 or 63 or 0 (Mabel)",
+                    type=int, default=63, choices=[66, 63, 0])
 parser.add_argument("--cva_th", help="Choose CVA treshold",
                     type=float, default=0.26074)
 args = parser.parse_args()
 
 # Test model
+
+if args.dataset_loc == 66:
+    h_bound = 5200
+    w_bound = 5040
+elif args.dataset_loc == 63:
+    h_bound = 3328
+    w_bound = 5248
+elif args.dataset_loc == 0:
+    h_bound = 5900
+    w_bound = 3060
+
 # root_path = './DATASETS/Amazon_npy_corrigido'
 root_path = args.dataset_path
 
@@ -336,10 +347,9 @@ print(img_t1.shape)
 print(img_t2.shape)
 # Concatenation of images
 input_image = np.concatenate((img_t1, img_t2), axis=-1)
-if args.dataset_loc == 66:
-    input_image = input_image[:5200, :5040]
-else:
-    input_image = input_image[:3328, :5248]
+
+input_image = input_image[:h_bound, :w_bound]
+
 
 h_, w_, channels = input_image.shape
 print(f"Input image shape: {input_image.shape}")
@@ -356,10 +366,9 @@ img_ref_path = 'cut_ref_2019_ok.npy'
 image_ref = load_npy_image(os.path.join(root_path,
                                         'labels', img_ref_path)).astype(np.float32)
 # Clip to fit tiles of your specific image
-if args.dataset_loc == 66:
-    image_ref = image_ref[:5200, :5040]
-else:
-    image_ref = image_ref[:3328, :5248]
+
+image_ref = image_ref[:h_bound, :w_bound]
+
 
 # image_ref[img_mask_ref == -99] = -1
 print(f"Image reference shape: {image_ref.shape}")
@@ -375,10 +384,9 @@ past_ref2 = load_npy_image(os.path.join(root_path,
                                         'labels', past_ref2_path)).astype(np.float32)
 past_ref_sum = past_ref1 + past_ref2
 # Clip to fit tiles of your specific image
-if args.dataset_loc == 66:
-    past_ref_sum = past_ref_sum[:5200, :5040]
-else:
-    past_ref_sum = past_ref_sum[:3328, :5248]
+
+past_ref_sum = past_ref_sum[:h_bound, :w_bound]
+
 print(f"Past reference shape: {past_ref_sum.shape}")
 
 #  Creation of buffer
@@ -392,7 +400,7 @@ buffer = 2
 final_mask = mask_no_considered(image_ref, buffer, past_ref_sum)
 
 CVA_ref = compute_cva(img_t1, img_t2, args.cva_th)
-CVA_ref = CVA_ref[:5200, :5040]
+CVA_ref = CVA_ref[:h_bound, :w_bound]
 
 check_memory()
 del img_t1, img_t2, past_ref1, past_ref2 #  , image_ref
@@ -400,18 +408,25 @@ print('Images deleted!')
 check_memory()
 
 if args.dataset_loc == 66:
+    h_tiles = 1040
+    w_tiles = 1680
+    tst_tiles = [5, 15, 13, 14]
+
+elif args.dataset_loc == 0:
+    h_tiles = 1180
+    w_tiles = 1020
+    tst_tiles = [5, 13, 11, 8, 6]
+
+
+if args.dataset_loc == 66 or args.dataset_loc == 0:
     # Separate per tiles
-    tile_number = np.ones((1040, 1680))
+    tile_number = np.ones((h_tiles, w_tiles))
     mask_c_1 = np.concatenate((tile_number, 2*tile_number, 3*tile_number), axis=1)
     mask_c_2 = np.concatenate((4*tile_number, 5*tile_number, 6*tile_number), axis=1)
     mask_c_3 = np.concatenate((7*tile_number, 8*tile_number, 9*tile_number), axis=1)
     mask_c_4 = np.concatenate((10*tile_number, 11*tile_number, 12*tile_number), axis=1)
     mask_c_5 = np.concatenate((13*tile_number, 14*tile_number, 15*tile_number), axis=1)
     mask_tiles = np.concatenate((mask_c_1, mask_c_2, mask_c_3, mask_c_4, mask_c_5), axis=0)
-
-    # Testing tiles
-    # tst_tiles = [tst1, tst2, tst3, tst4]
-    tst_tiles = [5, 15, 13, 14]
 
     mask_tst = np.zeros_like(mask_tiles)
     for tst_tile in tst_tiles:
@@ -637,16 +652,16 @@ pred_def_reconstructed, _ = pred_recostruction(args.patch_size, seg_preds_def,
 
 print(final_mask.shape)
 # tiles = zip(rec_tiles, ref_tiles)
-if args.dataset_loc == 66:
+if args.dataset_loc == 66 or args.dataset_loc == 0:
     fig, axes = plt.subplots(nrows=len(tst_tiles), ncols=2,
                              figsize=((15*2)//len(tst_tiles), 15))
     axes[0, 0].set_title('Reference')
     axes[0, 1].set_title('Def pred')
     for i, tst_tile in enumerate(tst_tiles):
         tile_ref = image_ref[mask_tiles == tst_tile]
-        tile_ref = np.reshape(tile_ref, (1040, 1680))
+        tile_ref = np.reshape(tile_ref, (h_tiles, w_tiles))
         tile_pred = pred_def_reconstructed[mask_tiles == tst_tile]
-        tile_pred = np.reshape(tile_pred, (1040, 1680))
+        tile_pred = np.reshape(tile_pred, (h_tiles, w_tiles))
         axes[i, 0].imshow(tile_ref)
         im = axes[i, 1].imshow(tile_pred)
         colorbar(im, axes[i, 1], fig)
@@ -689,9 +704,9 @@ if args.use_multitasking:
     axes[0, 1].set_title('Def pred CVA')
     for i, tst_tile in enumerate(tst_tiles):
         tile_ref = CVA_ref[mask_tiles == tst_tile]
-        tile_ref = np.reshape(tile_ref, (1040, 1680))
+        tile_ref = np.reshape(tile_ref, (h_tiles, w_tiles))
         tile_pred = pred_cva_reconstructed[mask_tiles == tst_tile]
-        tile_pred = np.reshape(tile_pred, (1040, 1680))
+        tile_pred = np.reshape(tile_pred, (h_tiles, w_tiles))
         axes[i, 0].imshow(tile_ref)
         axes[i, 1].imshow(tile_pred)
 

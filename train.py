@@ -54,9 +54,8 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
                                                        from_logits=from_logits,
                                                        sparse_label=False)
 
-        loss_bound = gluon.loss.SoftmaxCrossEntropyLoss(axis=1,
-                                                      from_logits=True,
-                                                      sparse_label=False)
+        loss_bound = gluon.loss.SigmoidBinaryCrossEntropyLoss(from_sigmoid=True)
+        
         loss_dist = gluon.loss.L2Loss()
         loss_color = gluon.loss.L2Loss()
 
