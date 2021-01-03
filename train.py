@@ -109,7 +109,7 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
     acc_metric = mx.metric.Accuracy()
     acc_metric_cva = mx.metric.Accuracy()
     acc_metric_def = mx.metric.Accuracy()
-    # mcc_metric = mx.metric.PCC()
+    mcc_metric = mx.metric.PCC()
     if args.optimizer == 'adam':
         optm = mx.optimizer.Adam(learning_rate=args.learning_rate,
                                  wd=args.weight_decay)
@@ -256,7 +256,7 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
         acc_metric.reset()
         acc_metric_cva.reset()
         acc_metric_def.reset()
-        # mcc_metric.reset()
+        mcc_metric.reset()
 
         # Validation loop ------------------------------------------------------
         for data, label in tqdm(dataloader['val'], desc="Val"):
@@ -296,10 +296,10 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
 
                 seg_losses.append(loss_seg(seg_logits, y_seg))
                 acc_metric.update(mx.nd.argmax(seg_logits, axis=1), mx.nd.argmax(y_seg, axis=1))
-                y_seg_def_only = mx.nd.argmax(y_seg, axis=1)
-                y_seg_def_only = y_seg_def_only.as_in_context(mx.cpu())
-                y_seg_def_only[y_seg_def_only == 2.0] == 0.0
-                acc_metric_def.update(mx.nd.argmax(seg_logits.as_in_context(mx.cpu()), axis=1), y_seg_def_only)
+                # y_seg_def_only = mx.nd.argmax(y_seg, axis=1)
+                # y_seg_def_only = y_seg_def_only.as_in_context(mx.cpu())
+                # y_seg_def_only[y_seg_def_only == 2.0] == 0.0
+                # acc_metric_def.update(mx.nd.argmax(seg_logits.as_in_context(mx.cpu()), axis=1), y_seg_def_only)
                 acc_metric_cva.update(mx.nd.argmax(cva_logits, axis=1), mx.nd.argmax(y_cva, axis=1))
                 # mcc_metric.update(mx.nd.argmax(seg_logits, axis=1), mx.nd.argmax(y_seg, axis=1))
                 if args.multitasking:
@@ -360,7 +360,7 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
         _, epoch_seg_acc['val'] = acc_metric.get()
         _, epoch_seg_acc_def = acc_metric_def.get()
         _, epoch_cva_acc['val'] = acc_metric_cva.get()
-        # _, epoch_seg_mcc = mcc_metric.get()
+        _, epoch_seg_mcc = mcc_metric.get()
 
         # Show metrics ---------------------------------------------------------
         metrics_table = PrettyTable()
@@ -372,7 +372,7 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
                                round(epoch_seg_loss['val'], 5),
                                round(100*epoch_seg_acc['train'], 5),
                                round(100*epoch_seg_acc['val'], 5),
-                               round(epoch_seg_acc_def, 5)])
+                               round(epoch_seg_mcc, 5)])
 
         metrics_table.add_row(['Bound', round(epoch_bound_loss['train'], 5),
                                round(epoch_bound_loss['val'], 5), 0, 0, 0])
