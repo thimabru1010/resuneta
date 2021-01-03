@@ -415,7 +415,8 @@ if args.dataset_loc == 66:
 elif args.dataset_loc == 0:
     h_tiles = 1180
     w_tiles = 1020
-    tst_tiles = [5, 13, 11, 8, 6]
+    # tst_tiles = [5, 13, 11, 8, 6]
+    tst_tiles = [5, 13, 11, 8, 6, 4]
 
 
 if args.dataset_loc == 66 or args.dataset_loc == 0:
