@@ -297,7 +297,7 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
                 seg_losses.append(loss_seg(seg_logits, y_seg))
                 acc_metric.update(mx.nd.argmax(seg_logits, axis=1), mx.nd.argmax(y_seg, axis=1))
                 y_seg_def_only = mx.nd.argmax(y_seg, axis=1)
-                y_seg_def_only[y_seg_def_only == 2] == 0
+                y_seg_def_only[y_seg_def_only == 2.0] == 0.0
                 acc_metric_def.update(mx.nd.argmax(seg_logits, axis=1), y_seg_def_only)
                 acc_metric_cva.update(mx.nd.argmax(cva_logits, axis=1), mx.nd.argmax(y_cva, axis=1))
                 # mcc_metric.update(mx.nd.argmax(seg_logits, axis=1), mx.nd.argmax(y_seg, axis=1))
