@@ -510,9 +510,9 @@ if __name__ == '__main__':
     # tst_tiles = [5, 1, 13, 14]
     # all_tiles = tr_tiles + val_tiles
     # Dataset Mabel -----------------------
-    tr_tiles = [3, 2, 7, 10, 9, 1, 14]
+    tr_tiles = [3, 2, 7, 10, 9, 1, 14, 4, 11]
     val_tiles = [15, 12]
-    # tst_tiles = [5, 13, 11, 8, 6, 4]
+    # tst_tiles = [5, 13, 8, 6]
     print(f'All tiles: {all_tiles}')
     # final_mask[img_mask_ref == -99] = -1
     show_deforastation_per_tile(all_tiles, mask_tiles, final_mask)
