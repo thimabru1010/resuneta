@@ -87,9 +87,9 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
         elif args.wce_weights == 3:
             wce_weights = mx.nd.array(np.array([0.3, 0.7, 0]))
         elif args.wce_weights == 4:
-            wce_weights = mx.nd.array(np.array([0.4, 0.7, 0.4]))
+            wce_weights = mx.nd.array(np.array([0.4, 0.6, 0]))
         elif args.wce_weights == 5:
-            wce_weights = mx.nd.array(np.array([1, 10, 1]))
+            wce_weights = mx.nd.array(np.array([0.5, 0.5, 0]))
         print(f'WCE weights: {wce_weights}')
         loss_seg = WeightedSoftmaxCrossEntropyLoss(axis=1,
                                                     from_logits=from_logits,
