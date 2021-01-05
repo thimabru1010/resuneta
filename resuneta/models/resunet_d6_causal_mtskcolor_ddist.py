@@ -204,8 +204,8 @@ class ResUNet_d6(HybridBlock):
         # print(conv)
 
         # CVA
-        cva = self.cva_logits(conv)
-        cva_logits = F.softmax(cva, axis=1)
+        # cva = self.cva_logits(conv)
+        # cva_logits = F.softmax(cva, axis=1)
 
         # logits
         # 1st find distance map, skeleton like, topology info
@@ -237,9 +237,9 @@ class ResUNet_d6(HybridBlock):
 
         if not self.from_logits:
             # return seg, bound_logits, dist_logits, convc_logits, cva
-            return seg, bound_logits, dist_logits, cva
+            return seg, bound_logits, dist_logits# , cva
         else:
             # Return without apply any sofmtax
             # regressions are still returned after sigmoid
             # return seg_logits, bound_logits, dist_logits, convc_logits, cva_logits
-            return seg_logits, bound_logits, dist_logits, cva_logits
+            return seg_logits, bound_logits, dist_logits# , cva_logits

@@ -354,7 +354,7 @@ input_image = input_image[:h_bound, :w_bound]
 h_, w_, channels = input_image.shape
 print(f"Input image shape: {input_image.shape}")
 check_memory()
-scaler, input_image = normalization(input_image, norm_type=args.norm_type)
+# scaler, input_image = normalization(input_image, norm_type=args.norm_type)
 check_memory()
 
 # Load deforastation reference ---------------------------------------------
@@ -416,7 +416,8 @@ elif args.dataset_loc == 0:
     h_tiles = 1180
     w_tiles = 1020
     # tst_tiles = [5, 13, 11, 8, 6]
-    tst_tiles = [5, 13, 11, 8, 6, 4]
+    # tst_tiles = [5, 13, 11, 8, 6, 4]
+    tst_tiles = [5, 13, 8, 6]
 
 
 if args.dataset_loc == 66 or args.dataset_loc == 0:
@@ -796,7 +797,8 @@ if args.use_multitasking:
         image = input_patches[i]  # .astype(np.uint8)
         image_reshaped = image.reshape((image.shape[0] * image.shape[1]),
                                        image.shape[2])
-        image_unnormalized = scaler.inverse_transform(image_reshaped)
+        # image_unnormalized = scaler.inverse_transform(image_reshaped)
+        image_unnormalized = image
         img = image_unnormalized.reshape(image.shape[0], image.shape[1], image.shape[2])
         img_t1 = img[:, :, 0:7]
         img_t2 = img[:, :, 7:]

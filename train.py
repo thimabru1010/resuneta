@@ -177,9 +177,9 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
                 for i, data in enumerate(zip(data_list, seg_label_list, bound_label_list, dist_label_list, color_label_list, cva_label_list)):
                     X, y_seg, y_bound, y_dist, y_color, y_cva = data
                     if args.multitasking:
-                        seg_logits, bound_logits, dist_logits, cva_logits = net(X)
-                        # seg_logits, bound_logits, dist_logits = net(X)
-                        # cva_logits = y_cva
+                        # seg_logits, bound_logits, dist_logits, cva_logits = net(X)
+                        seg_logits, bound_logits, dist_logits = net(X)
+                        cva_logits = y_cva
                     # logger.debug(f'Seg logits: {seg_logits}')
                     else:
                         seg_logits = net(X)
@@ -288,9 +288,9 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
             for i, data in enumerate(zip(data_list, seg_label_list, bound_label_list, dist_label_list, color_label_list, cva_label_list)):
                 X, y_seg, y_bound, y_dist, y_color, y_cva = data
                 if args.multitasking:
-                    seg_logits, bound_logits, dist_logits, cva_logits = net(X)
-                    # seg_logits, bound_logits, dist_logits = net(X)
-                    # cva_logits = y_cva
+                    # seg_logits, bound_logits, dist_logits, cva_logits = net(X)
+                    seg_logits, bound_logits, dist_logits = net(X)
+                    cva_logits = y_cva
                 else:
                     seg_logits = net(X)
                     cva_logits = seg_logits
