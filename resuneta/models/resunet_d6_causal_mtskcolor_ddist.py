@@ -125,17 +125,17 @@ class ResUNet_d6(HybridBlock):
             self.distance_logits.add(gluon.nn.Conv2D(self.NClasses,kernel_size=1,padding=0))
 
             # CVA logits
-            # self.cva_logits = gluon.nn.HybridSequential()
-            # self.cva_logits.add(Conv2DNormed(channels=self.nfilters,
-            #                                  kernel_size=(3, 3),
-            #                                  padding=(1, 1)))
-            # self.cva_logits.add(gluon.nn.Activation('relu'))
-            # self.cva_logits.add(Conv2DNormed(channels=self.nfilters,
-            #                                  kernel_size=(3, 3),
-            #                                  padding=(1, 1)))
-            # self.cva_logits.add(gluon.nn.Activation('relu'))
-            # self.cva_logits.add(gluon.nn.Conv2D(2, kernel_size=1,
-            #                                     padding=0))
+            self.cva_logits = gluon.nn.HybridSequential()
+            self.cva_logits.add(Conv2DNormed(channels=self.nfilters,
+                                             kernel_size=(3, 3),
+                                             padding=(1, 1)))
+            self.cva_logits.add(gluon.nn.Activation('relu'))
+            self.cva_logits.add(Conv2DNormed(channels=self.nfilters,
+                                             kernel_size=(3, 3),
+                                             padding=(1, 1)))
+            self.cva_logits.add(gluon.nn.Activation('relu'))
+            self.cva_logits.add(gluon.nn.Conv2D(2, kernel_size=1,
+                                                padding=0))
 
 
             # This layer is trying to identify the exact coloration on HSV scale (cv2 devined)
@@ -204,28 +204,29 @@ class ResUNet_d6(HybridBlock):
         # print(conv)
 
         # CVA
-        # cva = self.cva_logits(conv)
-        # cva_logits = F.softmax(cva, axis=1)
+        cva = self.cva_logits(conv)
+        cva_logits = F.softmax(cva, axis=1)
 
         # logits
         # 1st find distance map, skeleton like, topology info
-        dist = self.distance_logits(convl) # Modification here, do not use max pooling for distance
+        # dist = self.distance_logits(convl) # Modification here, do not use max pooling for distance
+        # dist_logits = self.ChannelAct(dist)
         # dist = F.concat(convl, cva_logits)
-        # dist = self.distance_logits(dist)
         # TODO: Maybe the output not squeezed by softmax can affect other tasks
-        dist_logits = self.ChannelAct(dist)
+        # dist = self.distance_logits(dist)
         # dist   = F.softmax(dist,axis=1)
-        # dist = F.log_softmax(dist, axis=1)
 
         # Then find boundaries
         # bound = F.concat(conv, dist_logits, cva_logits)
-        bound = F.concat(conv, dist_logits)
+        # bound = F.concat(conv, dist_logits)
+        bound = conv
         bound = self.bound_logits(bound)
         bound_logits = F.sigmoid(bound) # Boundaries are not mutually exclusive the way I am creating them.
 
         # Finally, find segmentation mask
         # seg = F.concat(conv, bound_logits, dist_logits, cva_logits)
-        seg = F.concat(conv, bound_logits, dist_logits)
+        # seg = F.concat(conv, bound_logits, dist_logits)
+        seg = F.concat(conv, bound_logits)
         seg = self.logits(seg)
         #logits = F.softmax(logits,axis=1)
         seg_logits = self.ChannelAct(seg)
@@ -237,9 +238,11 @@ class ResUNet_d6(HybridBlock):
 
         if not self.from_logits:
             # return seg, bound_logits, dist_logits, convc_logits, cva
-            return seg, bound_logits, dist_logits# , cva
+            # return seg, bound_logits, dist_logits, cva
+            return seg, bound_logits, cva
         else:
             # Return without apply any sofmtax
             # regressions are still returned after sigmoid
             # return seg_logits, bound_logits, dist_logits, convc_logits, cva_logits
-            return seg_logits, bound_logits, dist_logits# , cva_logits
+            # return seg_logits, bound_logits, dist_logits, cva_logits
+            return seg_logits, bound_logits, cva_logits

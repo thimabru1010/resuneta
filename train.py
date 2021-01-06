@@ -178,8 +178,12 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
                     X, y_seg, y_bound, y_dist, y_color, y_cva = data
                     if args.multitasking:
                         # seg_logits, bound_logits, dist_logits, cva_logits = net(X)
-                        seg_logits, bound_logits, dist_logits = net(X)
-                        cva_logits = y_cva
+                        # No CVA
+                        # seg_logits, bound_logits, dist_logits = net(X)
+                        # cva_logits = y_cva
+                        # No Dist
+                        seg_logits, bound_logits, cva_logits = net(X)
+                        dist_logits = y_dist
                     # logger.debug(f'Seg logits: {seg_logits}')
                     else:
                         seg_logits = net(X)
@@ -289,8 +293,13 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
                 X, y_seg, y_bound, y_dist, y_color, y_cva = data
                 if args.multitasking:
                     # seg_logits, bound_logits, dist_logits, cva_logits = net(X)
-                    seg_logits, bound_logits, dist_logits = net(X)
-                    cva_logits = y_cva
+                    # No CVA
+                    # seg_logits, bound_logits, dist_logits = net(X)
+                    # cva_logits = y_cva
+                    # No Dist
+                    # No Dist
+                    seg_logits, bound_logits, cva_logits = net(X)
+                    dist_logits = y_dist
                 else:
                     seg_logits = net(X)
                     cva_logits = seg_logits
