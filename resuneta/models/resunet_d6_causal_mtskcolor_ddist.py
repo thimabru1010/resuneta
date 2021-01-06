@@ -117,12 +117,12 @@ class ResUNet_d6(HybridBlock):
 
 
             # distance logits -- deeper for better reconstruction
-            self.distance_logits = gluon.nn.HybridSequential()
-            self.distance_logits.add(Conv2DNormed(channels = self.nfilters,kernel_size = (3,3),padding=(1,1)))
-            self.distance_logits.add(gluon.nn.Activation('relu'))
-            self.distance_logits.add(Conv2DNormed(channels = self.nfilters,kernel_size = (3,3),padding=(1,1)))
-            self.distance_logits.add(gluon.nn.Activation('relu'))
-            self.distance_logits.add(gluon.nn.Conv2D(self.NClasses,kernel_size=1,padding=0))
+            # self.distance_logits = gluon.nn.HybridSequential()
+            # self.distance_logits.add(Conv2DNormed(channels = self.nfilters, kernel_size = (3, 3), padding=(1, 1)))
+            # self.distance_logits.add(gluon.nn.Activation('relu'))
+            # self.distance_logits.add(Conv2DNormed(channels = self.nfilters, kernel_size = (3, 3),padding=(1, 1)))
+            # self.distance_logits.add(gluon.nn.Activation('relu'))
+            # self.distance_logits.add(gluon.nn.Conv2D(self.NClasses, kernel_size=1, padding=0))
 
             # CVA logits
             self.cva_logits = gluon.nn.HybridSequential()
