@@ -209,24 +209,25 @@ class ResUNet_d6(HybridBlock):
 
         # logits
         # 1st find distance map, skeleton like, topology info
-        # dist = self.distance_logits(convl) # Modification here, do not use max pooling for distance
-        # dist_logits = self.ChannelAct(dist)
         # dist = F.concat(convl, cva_logits)
+        dist = self.distance_logits(convl) # Modification here, do not use max pooling for distance
+        dist_logits = self.ChannelAct(dist)
         # TODO: Maybe the output not squeezed by softmax can affect other tasks
         # dist = self.distance_logits(dist)
         # dist   = F.softmax(dist,axis=1)
 
         # Then find boundaries
+        # bound = conv
         # bound = F.concat(conv, dist_logits, cva_logits)
         # bound = F.concat(conv, dist_logits)
-        bound = conv
-        bound = self.bound_logits(bound)
-        bound_logits = F.sigmoid(bound) # Boundaries are not mutually exclusive the way I am creating them.
+        # bound = self.bound_logits(bound)
+        # bound_logits = F.sigmoid(bound) # Boundaries are not mutually exclusive the way I am creating them.
 
         # Finally, find segmentation mask
         # seg = F.concat(conv, bound_logits, dist_logits, cva_logits)
         # seg = F.concat(conv, bound_logits, dist_logits)
-        seg = F.concat(conv, bound_logits)
+        # seg = F.concat(conv, bound_logits)
+        seg = F.concat(conv, dist_logits)
         seg = self.logits(seg)
         #logits = F.softmax(logits,axis=1)
         seg_logits = self.ChannelAct(seg)
@@ -239,10 +240,12 @@ class ResUNet_d6(HybridBlock):
         if not self.from_logits:
             # return seg, bound_logits, dist_logits, convc_logits, cva
             # return seg, bound_logits, dist_logits, cva
-            return seg, bound_logits, cva
+            # return seg, bound_logits, cva
+            return seg, dist_logits, cva
         else:
             # Return without apply any sofmtax
             # regressions are still returned after sigmoid
             # return seg_logits, bound_logits, dist_logits, convc_logits, cva_logits
             # return seg_logits, bound_logits, dist_logits, cva_logits
-            return seg_logits, bound_logits, cva_logits
+            # return seg_logits, bound_logits, cva_logits
+            return seg_logits, dist_logits, cva_logits

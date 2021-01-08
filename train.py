@@ -182,8 +182,10 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
                         # seg_logits, bound_logits, dist_logits = net(X)
                         # cva_logits = y_cva
                         # No Dist
-                        seg_logits, bound_logits, cva_logits = net(X)
-                        dist_logits = y_dist
+                        # seg_logits, bound_logits, cva_logits = net(X)
+                        # dist_logits = y_dist
+                        seg_logits, dist_logits, cva_logits = net(X)
+                        bound_logits = y_bound
                     # logger.debug(f'Seg logits: {seg_logits}')
                     else:
                         seg_logits = net(X)
@@ -298,8 +300,10 @@ def train_model(args, net, dataloader, devices, summary_writer, from_logits,
                     # cva_logits = y_cva
                     # No Dist
                     # No Dist
-                    seg_logits, bound_logits, cva_logits = net(X)
-                    dist_logits = y_dist
+                    # seg_logits, bound_logits, cva_logits = net(X)
+                    # dist_logits = y_dist
+                    seg_logits, dist_logits, cva_logits = net(X)
+                    bound_logits = y_bound
                 else:
                     seg_logits = net(X)
                     cva_logits = seg_logits
