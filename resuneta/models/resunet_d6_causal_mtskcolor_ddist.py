@@ -110,10 +110,10 @@ class ResUNet_d6(HybridBlock):
             self.logits.add(gluon.nn.Conv2D(self.NClasses,kernel_size=1,padding=0))
 
             # bound logits
-            # self.bound_logits = gluon.nn.HybridSequential()
-            # self.bound_logits.add(Conv2DNormed(channels = self.nfilters,kernel_size = (3,3),padding=(1,1)))
-            # self.bound_logits.add(gluon.nn.Activation('relu'))
-            # self.bound_logits.add(gluon.nn.Conv2D(self.NClasses,kernel_size=1,padding=0))
+            self.bound_logits = gluon.nn.HybridSequential()
+            self.bound_logits.add(Conv2DNormed(channels = self.nfilters,kernel_size = (3,3),padding=(1,1)))
+            self.bound_logits.add(gluon.nn.Activation('relu'))
+            self.bound_logits.add(gluon.nn.Conv2D(self.NClasses,kernel_size=1,padding=0))
 
 
             # distance logits -- deeper for better reconstruction
@@ -219,9 +219,9 @@ class ResUNet_d6(HybridBlock):
         # Then find boundaries
         # bound = conv
         # bound = F.concat(conv, dist_logits, cva_logits)
-        # bound = F.concat(conv, dist_logits)
-        # bound = self.bound_logits(bound)
-        # bound_logits = F.sigmoid(bound) # Boundaries are not mutually exclusive the way I am creating them.
+        bound = F.concat(conv, dist_logits)
+        bound = self.bound_logits(bound)
+        bound_logits = F.sigmoid(bound) # Boundaries are not mutually exclusive the way I am creating them.
 
         # Finally, find segmentation mask
         # seg = F.concat(conv, bound_logits, dist_logits, cva_logits)
@@ -239,13 +239,13 @@ class ResUNet_d6(HybridBlock):
 
         if not self.from_logits:
             # return seg, bound_logits, dist_logits, convc_logits, cva
-            # return seg, bound_logits, dist_logits, cva
+            return seg, bound_logits, dist_logits, cva
             # return seg, bound_logits, cva
-            return seg, dist_logits, cva
+            # return seg, dist_logits, cva
         else:
             # Return without apply any sofmtax
             # regressions are still returned after sigmoid
             # return seg_logits, bound_logits, dist_logits, convc_logits, cva_logits
-            # return seg_logits, bound_logits, dist_logits, cva_logits
+            return seg_logits, bound_logits, dist_logits, cva_logits
             # return seg_logits, bound_logits, cva_logits
-            return seg_logits, dist_logits, cva_logits
+            # return seg_logits, dist_logits, cva_logits
