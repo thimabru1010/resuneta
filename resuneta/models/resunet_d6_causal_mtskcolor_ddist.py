@@ -203,7 +203,7 @@ class ResUNet_d6(HybridBlock):
         conv = F.relu(conv)
         # print(conv)
 
-        # CVA
+        # CVA -- Not conditioned
         cva = self.cva_logits(conv)
         cva_logits = F.softmax(cva, axis=1)
 
@@ -225,9 +225,9 @@ class ResUNet_d6(HybridBlock):
 
         # Finally, find segmentation mask
         # seg = F.concat(conv, bound_logits, dist_logits, cva_logits)
-        # seg = F.concat(conv, bound_logits, dist_logits)
+        seg = F.concat(conv, bound_logits, dist_logits)
         # seg = F.concat(conv, bound_logits)
-        seg = F.concat(conv, dist_logits)
+        # seg = F.concat(conv, dist_logits)
         seg = self.logits(seg)
         #logits = F.softmax(logits,axis=1)
         seg_logits = self.ChannelAct(seg)

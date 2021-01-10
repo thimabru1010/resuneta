@@ -81,7 +81,6 @@ def plot_confusion_matrix(cm, classes,
         plt.xlabel('Predicted label')
 
 
-
 def Test(model, patches, args):
     num_patches, weight, height, _ = patches.shape
     preds = model.predict(patches, batch_size=1)
@@ -278,6 +277,7 @@ def extract_patches(img_complete, patch_size, img_type=1):
     #print(cont)
 
     return new_img
+
 
 def gather_preds(pred):
     pred = np.array(pred)
@@ -491,27 +491,23 @@ patches_test = []
 
 for i in tqdm(range(len(input_patches))):
     img_float = input_patches[i].astype(np.float32)
-    # plt.imshow(img.astype(np.uint8))
-    # plt.show()
     # img_reshaped = img_float.reshape((img_float.shape[0] * img_float.shape[1]),
     #                                img_float.shape[2])
     # img_normed = scaler.transform(img_reshaped)
     # img_float = img_normed.reshape(img_float.shape[0], img_float.shape[1], img_float.shape[2])
     img_float = img_float.transpose((2, 0, 1))
     img_normed = mx.ndarray.array(img_float)
-    # plt.imshow(tnorm.restore(img_normed.asnumpy().transpose((1, 2, 0))))
-    # plt.show()
     img_normed = mx.nd.expand_dims(img_normed, axis=0)
 
     if args.use_multitasking:
         # preds1, preds2, preds3, preds4, preds5 = net(img_normed.copyto(ctx))
-        # preds1, preds2, preds3, preds5 = net(img_normed.copyto(ctx))
+        preds1, preds2, preds3, preds5 = net(img_normed.copyto(ctx))
         # preds1, preds2, preds3 = net(img_normed.copyto(ctx))
-        preds1, preds2, preds5 = net(img_normed.copyto(ctx))
+        # preds1, preds2, preds5 = net(img_normed.copyto(ctx))
 
         seg_preds.append(preds1.asnumpy())
         bound_preds.append(preds2.asnumpy())
-        # dist_preds.append(preds3.asnumpy())
+        dist_preds.append(preds3.asnumpy())
         # color_preds.append(preds4.asnumpy())
         cva_preds.append(preds5.asnumpy())
     else:
@@ -530,9 +526,9 @@ if args.use_multitasking:
     seg_pred = np.argmax(seg_preds, axis=-1)
     print(f'seg shape argmax: {seg_pred.shape}')
     # patches_pred = [seg_preds, gather_preds(bound_preds), gather_preds(dist_preds), gather_preds(color_preds), gather_preds(cva_preds)]
-    # patches_pred = [seg_preds, gather_preds(bound_preds), gather_preds(dist_preds), gather_preds(cva_preds)]
+    patches_pred = [seg_preds, gather_preds(bound_preds), gather_preds(dist_preds), gather_preds(cva_preds)]
     # patches_pred = [seg_preds, gather_preds(bound_preds), gather_preds(dist_preds)]
-    patches_pred = [seg_preds, gather_preds(bound_preds), gather_preds(cva_preds)]
+    # patches_pred = [seg_preds, gather_preds(bound_preds), gather_preds(cva_preds)]
     np.save(os.path.join(args.output_path, 'seg_preds.npy'), seg_preds)
 else:
     seg_preds = gather_preds(seg_preds)
@@ -737,22 +733,23 @@ def_metrics, prec, recall = compute_def_metrics(ProbList,
 
 print(def_metrics)
 # Interpolate Nan values
-metrics_copy = def_metrics.copy()
-indexes = list(range(len(def_metrics)))
-indexes.reverse()
-for i in indexes:
-    if math.isnan(def_metrics[i, 1]):
-        metrics_copy[i, 1] = 2*metrics_copy[i+1, 1] - metrics_copy[i+2, 1]
+# metrics_copy = def_metrics.copy()
+# indexes = list(range(len(def_metrics)))
+# indexes.reverse()
+# for i in indexes:
+#     if math.isnan(def_metrics[i, 1]):
+#         metrics_copy[i, 1] = 2*metrics_copy[i+1, 1] - metrics_copy[i+2, 1]
 
 # Calculates mAP
 
-Recall = metrics_copy[:, 0]
-Precision = metrics_copy[:, 1]
+# Recall = metrics_copy[:, 0]
+# Precision = metrics_copy[:, 1]
+Recall = def_metrics[:, 0]
+Precision = def_metrics[:, 1]
 
 DeltaR = Recall[1:]-Recall[:-1]
 ap = np.sum(Precision[:-1]*DeltaR)
 print('mAP:', ap)
-print('Image Saved!')
 
 fig_pr = plt.figure()
 
@@ -902,8 +899,7 @@ if args.use_multitasking:
         cva_ref = cva_ref_patches[i]
         axes_cva[0].imshow(cva_ref)
 
-        # task = 4
-        task = 2
+        task = 3
         cva_pred = patches_pred[task][i]
         # print(f'CVA shape {cva_pred.shape}')
         cva_pred = np.argmax(cva_pred, axis=-1)
