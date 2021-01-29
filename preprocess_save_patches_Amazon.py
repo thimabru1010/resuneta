@@ -15,9 +15,9 @@ from tqdm import tqdm
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 from matplotlib import rc
-rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
+# rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
 # # for Palatino and other serif fonts use:
-# rc('font',**{'family':'serif','serif':['Palatino']})
+rc('font',**{'family':'serif','serif':['Palatino']})
 rc('text', usetex=True)
 
 
@@ -571,8 +571,18 @@ if __name__ == '__main__':
 
     # Save a pie graph with classes proportions
     my_labels = 'No deforastation', 'Deforastation', 'Past Deforastation'
-    fig = plt.figure()
-    plt.pie(classes_dict.values(), labels=my_labels, autopct='%1.1f%%')
+    # fig = plt.figure()
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 10))
+    ax1.pie(classes_dict.values(), labels=my_labels, autopct='%1.1f%%')
+    ax1.set_title('Original')
+    ax1.axis('equal')
+
+    unique, counts = np.unique(final_mask, return_counts=True)
+    counts_dict_final_mask = dict(zip(unique, counts))
+    ax2.pie(counts_dict_final_mask.values(), labels=my_labels, autopct='%1.1f%%')
+    ax2.set_title('Filtered')
+    ax2.axis('equal')
     # plt.title('Classes occurrences')
-    plt.axis('equal')
-    fig.savefig('./classes_occurrences_TrainVal.jpg', dpi=300)
+
+    fig.tight_layout()
+    fig.savefig('./classes_occurrences_TrainVal&original.jpg', dpi=300)
