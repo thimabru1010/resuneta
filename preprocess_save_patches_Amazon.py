@@ -14,6 +14,11 @@ from tqdm import tqdm
 # from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
+from matplotlib import rc
+rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
+# # for Palatino and other serif fonts use:
+# rc('font',**{'family':'serif','serif':['Palatino']})
+rc('text', usetex=True)
 
 
 def compute_cva(img_t1, img_t2, th):
@@ -568,6 +573,6 @@ if __name__ == '__main__':
     my_labels = 'No deforastation', 'Deforastation', 'Past Deforastation'
     fig = plt.figure()
     plt.pie(classes_dict.values(), labels=my_labels, autopct='%1.1f%%')
-    plt.title('Classes occurrences')
+    # plt.title('Classes occurrences')
     plt.axis('equal')
     fig.savefig('./classes_occurrences_TrainVal.jpg', dpi=300)

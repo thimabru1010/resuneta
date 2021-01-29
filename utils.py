@@ -15,6 +15,7 @@ except:
 
 # Functions
 
+
 def mask_no_considered(image_ref, buffer, past_ref):
     '''
         Creation of buffer for pixel no considered
@@ -150,7 +151,8 @@ def get_distance_label(label):
     dists = np.empty_like(label, dtype=np.float32)
     for channel in range(label.shape[2]):
         patch = label[:, :, channel].astype(np.uint8)
-        dist = cv2.distanceTransform(patch, cv2.DIST_L2, 0)
+        # dist = cv2.distanceTransform(patch, cv2.DIST_L2, 0)
+        dist = cv2.distanceTransform(patch, distanceType=cv2.DIST_L2, maskSize=0)
         dist = cv2.normalize(dist, dist, 0, 1.0, cv2.NORM_MINMAX)
         dists[:, :, channel] = dist
 

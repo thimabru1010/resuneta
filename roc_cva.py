@@ -1,6 +1,9 @@
-from utils import normalization, load_npy_image
+from utils import load_npy_image
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib
+import matplotlib.patches as mpatches
+from matplotlib import colors
 import os
 import sys
 from sklearn.metrics import roc_curve, roc_auc_score
@@ -159,7 +162,7 @@ opt_tpr, opt_fpr = tpr[optimal_idx], fpr[optimal_idx]
 plt.figure()
 lw = 2
 plt.plot(fpr, tpr, color='darkorange',
-         lw=lw, label='ROC curve (area = %0.2f)' % auc)
+         lw=lw, label='ROC curve (AUC = %0.2f)' % auc)
 plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
 plt.scatter(opt_fpr, opt_tpr, color='blue', label='Optimal threshold')
 plt.xlim([0.0, 1.0])
@@ -176,23 +179,25 @@ print(f'Optimal Threshold: {optimal_threshold}')
 S1_normed = np.copy(S1)
 th = optimal_threshold
 
-import matplotlib.patches as mpatches
-from matplotlib import colors
+# fig = plt.figure()
+# plt.imshow(image_ref, cmap='jet')
+# plt.tick_params(axis="x", which = "both", bottom = False, top = False)
+# plt.tick_params(axis="y", which = "both", left = False, top = False)
+# plt.xticks([])
+# plt.yticks([])
+# plt.show()
+# fig.savefig('def_ref_only.jpg')
 
-fig = plt.figure()
-plt.imshow(image_ref, cmap='jet')
-plt.tick_params(axis="x", which = "both", bottom = False, top = False)
-plt.tick_params(axis="y", which = "both", left = False, top = False)
-plt.xticks([])
-plt.yticks([])
-plt.show()
-fig.savefig('def_ref_only.jpg')
+desired_S1 = {}
+desired_th = [optimal_threshold, 0.5, 1.0]
 
 for th in [optimal_threshold, 0.5, 0.7, 1.0, 1.5]:
     print('-------------------------------------------------------')
     print(f'TH: {th}')
     S1_normed[S1 >= th] = 1
     S1_normed[S1 < th] = 0
+    if th in desired_th:
+        desired_S1[th] = S1_normed
     print(f'S1 normed Min: {np.min(S1_normed)}, Max: {np.max(S1_normed)}')
 
     unique, counts = np.unique(S1_normed, return_counts=True)
@@ -212,11 +217,47 @@ for th in [optimal_threshold, 0.5, 0.7, 1.0, 1.5]:
     plt.close()
     # fig.savefig(f'cva_ref&def_th={th}.jpg')
 
-    fig = plt.figure()
-    plt.imshow(S1_normed, cmap='jet')
-    plt.tick_params(axis="x", which="both", bottom=False, top=False)
-    plt.tick_params(axis="y", which="both", left=False, top=False)
-    plt.xticks([])
-    plt.yticks([])
-    plt.show()
+    # fig = plt.figure()
+    # plt.imshow(S1_normed, cmap='jet')
+    # plt.tick_params(axis="x", which="both", bottom=False, top=False)
+    # plt.tick_params(axis="y", which="both", left=False, top=False)
+    # plt.xticks([])
+    # plt.yticks([])
+    # plt.show()
     # fig.savefig(f'cva_th={th}.jpg')
+
+
+fig2, axes = plt.subplots(nrows=2, ncols=2, figsize=(10, 15))
+matplotlib.rcParams.update({'font.size': 15})
+# remove the x and y ticks
+# for ax in axes:
+#     ax.set_xticks([])
+    # ax.set_yticks([])
+plt.setp(axes, xticks=[], yticks=[])
+plt.subplots_adjust(0, 0, 1, 1)
+
+axes[0, 0].imshow(image_ref, cmap='jet')
+axes[0, 0].set_title('Actual Deforestation Reference')
+
+th = optimal_threshold
+S1_normed[S1 >= th] = 1
+S1_normed[S1 < th] = 0
+axes[0, 1].imshow(S1_normed, cmap='jet')
+axes[0, 1].set_title(f'CVA magnitude with threshold={optimal_threshold:.2f}')
+
+th = 0.5
+S1_normed[S1 >= th] = 1
+S1_normed[S1 < th] = 0
+axes[1, 0].imshow(S1_normed, cmap='jet')
+axes[1, 0].set_title('CVA magnitude with threshold=0.5')
+
+th = 1.0
+S1_normed[S1 >= th] = 1
+S1_normed[S1 < th] = 0
+axes[1, 1].imshow(S1_normed, cmap='jet')
+axes[1, 1].set_title('CVA magnitude with threshold=1.0')
+
+plt.tight_layout()
+fig2.savefig('results/CVA_magnitude&DefRef.jpg')
+plt.show()
+plt.close()

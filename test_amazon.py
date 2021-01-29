@@ -754,7 +754,7 @@ print('mAP:', ap)
 fig_pr = plt.figure()
 
 # Precision x Recall curve
-plt.plot(metrics_copy[:, 0], metrics_copy[:, 1], color='darkorange', lw=2)
+plt.plot(def_metrics[:, 0], def_metrics[:, 1], color='darkorange', lw=2)
 # plt.plot(def_metrics[:, 0], def_metrics[:, 1], color='darkorange', lw=2)
 # plt.plot(metrics_copy[:, 0], metrics_copy[:, 1], color='blue', lw=2,
 #          linestyle='--')

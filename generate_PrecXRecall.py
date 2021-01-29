@@ -102,10 +102,16 @@ final_mask = mask_no_considered(image_ref, buffer, past_ref_sum)
 
 folders = ['resuneta_run3_Baseline_NoCVA', 'resuneta_run2', 'resuneta_run4',
            'resuneta_run5']
-# folders = ['resuneta_run3_Baseline_NoCVA', 'resuneta_run2']
 
 labels = dict(zip(folders, ['Baseline', 'Baseline+CVA', 'Baseline+CVA-Dist',
                             'Baseline+CVA-Bound']))
+
+# folders = ['resuneta_run2', 'resuneta_run7_CVAth=0.5', 'resuneta_run8_CVAth=1.0']
+# labels = dict(zip(folders, ['Optimal threshold=0.34', 'Threshold=0.5', 'Threshold=1.0']))
+
+# folders = ['resuneta_run2', 'resuneta_run9']
+# labels = dict(zip(folders, ['Baseline+CVA', 'Baseline+CVA small']))
+# linestyle = {'resuneta_run2': '-', 'resuneta_run9': '--'}
 
 ProbList = np.arange(start=0, stop=1, step=0.02).tolist()
 ProbList.reverse()
@@ -154,18 +160,24 @@ for folder in folders:
 
     # Precision x Recall curve
     plt.plot(def_metrics[:, 0], def_metrics[:, 1], lw=2,
+             linestyle='--',
              label=labels[folder] + f' (mAP: {ap:.2f})')
 
 plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.05])
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Precision x Recall')
 # plt.legend([f'Original', f'Interpolated'], loc="lower right")
 plt.legend()
 
-plt.show()
-plt.close()
+# plt.show()
+# plt.close()
 
 fig_pr.savefig(os.path.join('results', 'precisionXrecall_AllTasks.jpg'),
                dpi=300)
+
+# fig_pr.savefig(os.path.join('results', 'precisionXrecall_CVAth.jpg'),
+#                dpi=300)
+
+# fig_pr.savefig(os.path.join('results', 'precisionXrecall_BigXSmall.jpg'),
+#               dpi=300)
